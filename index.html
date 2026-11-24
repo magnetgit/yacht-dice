@@ -282,7 +282,7 @@ table.sheet{width:100%;border-collapse:collapse;font-size:14px;font-variant-nume
     <div class="panel">
       <div class="winner" id="winner"></div>
       <ol class="rank" id="rank"></ol>
-      <div class="row"><button id="againBtn" class="btn" type="button">다시 하기</button><button id="toLobbyBtn" class="btn ghost" type="button" hidden>대기실로</button><button id="closeOver" class="btn ghost" type="button">점수판 보기</button><button id="overLeave" class="btn ghost" type="button">나가기</button></div>
+      <div class="row"><button id="againBtn" class="btn" type="button">다시 하기</button><button id="closeOver" class="btn ghost" type="button">점수판 보기</button><button id="overLeave" class="btn ghost" type="button">나가기</button></div>
       <p class="note" id="overNote"></p>
     </div>
   </div>
@@ -1143,7 +1143,8 @@ function renderLobby(){
     $("readyBtn").hidden=true;$("startBtn").hidden=false;
     $("startBtn").disabled=!allReady;
     $("startBtn").textContent=G.players.length===1?"혼자 시작":`게임 시작 (${G.players.length}명)`;
-    $("lobbyMsg").textContent=allReady?(G.players.length===1?"친구를 기다리거나 혼자 연습할 수 있어요.":"모두 준비됐어요. 시작해 주세요."):"모든 참가자가 준비하면 시작할 수 있어요.";
+    const notReady=G.players.filter(p=>p.cid!==host&&!p.ready).map(p=>p.name);
+    $("lobbyMsg").textContent=allReady?(G.players.length===1?"친구를 기다리거나 혼자 연습할 수 있어요.":"모두 준비됐어요. 시작해 주세요."):`준비를 기다리는 중: ${notReady.join(", ")}`;
   }else{
     $("startBtn").hidden=true;$("readyBtn").hidden=!seated();
     $("readyBtn").textContent=myReady?"준비 취소":"준비";
@@ -1232,8 +1233,7 @@ function renderOver(){
     +gone.map(p=>`<li class="gone"><span class="pl">접속 끊김</span><span class="nm">"${esc(p.name)}"</span><span class="sc">${p.t}</span></li>`).join("");
   const host=isOwner();
   $("againBtn").hidden=!host;
-  $("toLobbyBtn").hidden=!host||mode!=="online";
-  $("overNote").textContent=host?(mode==="online"?"다시 하기: 지금 있는 사람 모두와 바로 새 게임 · 대기실로: 인원이나 설정을 바꾼 뒤 시작":""):"방장이 다시 하기를 누르면 바로 새 게임이 시작돼요.";
+  $("overNote").textContent=host?(mode==="online"?"다시 하기를 누르면 모두 대기실로 가요. 모두 준비하면 시작할 수 있어요.":""):"방장이 다시 하기를 누르면 대기실로 가요. 그때 준비를 눌러 주세요.";
 }
 let toastT=null;function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),2400)}
 
@@ -1252,24 +1252,14 @@ $("startBtn").onclick=()=>{
 $("leaveBtn").onclick=leaveTable;$("quitBtn").onclick=leaveTable;$("overLeave").onclick=leaveTable;
 $("endedOk").onclick=()=>{leave();$("homeMsg").textContent="종료된 게임이라 처음 화면으로 돌아왔어요."};
 $("closeOver").onclick=()=>{overDismissed=G&&G.gid;$("over").hidden=true};
-// 다시 하기: a new game right away with everyone here now (no second round of 준비).
-// Anyone who dropped can still come back in and is seated mid-game.
+// 다시 하기: everyone goes back to the waiting room; once all press 준비, the 방장 starts.
 $("againBtn").onclick=()=>{
   if(mode==="local"){startLocal(G.players.map(p=>p.name));return}
   if(!isOwner()||!G)return;
   const pr=presentCids();
-  const players=G.players.filter(p=>pr.has(p.cid)).map(p=>({cid:p.cid,name:p.name}));
-  if(!players.length)return;
-  myBoard=null;overDismissed=null;
-  commitG({phase:"play",gid:rid(),players});
-  toast("새 게임을 시작했어요!");
-};
-// 대기실로: back to the waiting room (change members or settings, then start again)
-$("toLobbyBtn").onclick=()=>{
-  if(mode!=="online"||!isOwner()||!G)return;
-  const pr=presentCids();
   commitG({phase:"lobby",players:G.players.filter(p=>pr.has(p.cid)).map(p=>({cid:p.cid,name:p.name,ready:p.cid===myCid}))});
   myReady=false;
+  toast("대기실로 돌아왔어요. 모두 준비하면 시작할 수 있어요.");
 };
 $("copyCode").onclick=()=>{
   const done=()=>toast("코드를 복사했어요: "+code);
@@ -1288,7 +1278,10 @@ let prevPhase=null;const _render=render;render=function(){
   if(G&&G.phase!==prevPhase){
     const back=G.phase==="lobby"&&prevPhase&&prevPhase!=="lobby"&&mode==="online";
     prevPhase=G.phase;
-    if(back){myReady=false;if(T)T.presence({ready:false}).catch(()=>{})}
+    if(back){
+      myReady=false;if(T)T.presence({ready:false}).catch(()=>{});
+      if(!isOwner())setTimeout(()=>toast("대기실로 돌아왔어요. 준비를 눌러 주세요!"),0);
+    }
   }
   _render();updateReg();saveTable();
 };
