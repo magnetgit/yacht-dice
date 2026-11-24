@@ -684,15 +684,43 @@ function pushBoard(){
   if(T)T.presence({board:myBoard}).catch(()=>{});
 }
 function setBoard(cid,b){if(mode==="online"){myBoard=b;pushBoard()}else boards.set(cid,b);render();maybeFinish()}
+const filled=b=>b?b.scores.filter(x=>x!==null).length:0;
 // Make sure my own board belongs to the current game; on a rejoin, pick up where I left off.
+// Sources: what I have now, this device's saved copy, and the backup the 방장 keeps for me.
+// A board only ever gains scores within one game, so the copy with the most filled boxes wins.
 function syncMyBoard(){
   if(mode!=="online"||!G||G.phase==="lobby"||!seated())return;
-  if(myBoard&&myBoard.gid===G.gid)return;
-  let b=null;try{b=JSON.parse(store.get("yd-board-"+myCid)||"null")}catch(e){}
-  if(!(validBoard(b)&&b.gid===G.gid)){const o=boards.get(myCid);b=validBoard(o)&&o.gid===G.gid?clone(o):null}
-  if(!b&&G.phase==="over")return;
-  myBoard=b?Object.assign(b,{rolling:false}):freshBoard(G.gid);
-  pushBoard();
+  const cands=[];
+  if(myBoard&&myBoard.gid===G.gid)cands.push(myBoard);
+  try{const b=JSON.parse(store.get("yd-board-"+myCid)||"null");if(validBoard(b)&&b.gid===G.gid)cands.push(b)}catch(e){}
+  for(const p of peers){const k=!p.sameTab&&p.presence&&p.presence.keep&&p.presence.keep[myCid];if(validBoard(k)&&k.gid===G.gid)cands.push(k)}
+  let best=null;for(const b of cands)if(!best||filled(b)>filled(best))best=b;
+  if(best&&best===myBoard)return;
+  if(!best){if(G.phase==="over")return;best=freshBoard(G.gid)}
+  else{best=clone(best);best.rolling=false}
+  const restored=!!myBoard&&myBoard.gid===G.gid&&filled(best)>filled(myBoard);
+  myBoard=best;pushBoard();
+  if(restored)toast("이전 기록을 불러왔어요.");
+}
+// Every player keeps a backup of anyone whose board isn't live right now (dropped, or back
+// without it) and offers it in presence until that player publishes an equally complete board.
+// Everyone does it, so it still works when the one who refreshed was the 방장.
+let lastKeep="null";
+function publishKeep(){
+  if(mode!=="online"||!T||!G)return;
+  let keep=null;
+  if(G.phase==="play"){
+    const pr=presentCids();
+    for(const p of G.players){
+      if(p.cid===myCid)continue;
+      const b=boards.get(p.cid);if(!validBoard(b)||b.gid!==G.gid)continue;
+      const live=peerByCid(p.cid),lb=live&&live.presence&&live.presence.board;
+      const ok=pr.has(p.cid)&&validBoard(lb)&&lb.gid===G.gid&&filled(lb)>=filled(b);
+      if(!ok)(keep||(keep={}))[p.cid]=b;
+    }
+  }
+  const s=JSON.stringify(keep);
+  if(s!==lastKeep){lastKeep=s;T.presence({keep}).catch(()=>{})}
 }
 
 /* ---------- online ---------- */
@@ -702,38 +730,41 @@ function attach(t){
   T.presence({name:myName,ready:myReady,game:G,cid:myCid,board:myBoard}).catch(()=>{});
 }
 let tablePw="",newRoom=null,joining=false;
-async function enterTable(c,isCreate,pwIn){
-  if(joining)return;
+// Returns "ok" or an error code. restoreG: reopen this code myself with my saved copy of the game.
+async function enterTable(c,isCreate,pwIn,restoreG){
+  if(joining)return "busy";
   const nick=$("nick").value.trim().slice(0,12);
-  if(!nick){$("homeMsg").textContent="닉네임을 먼저 적어 주세요.";$("nick").focus();return}
+  if(!nick){$("homeMsg").textContent="닉네임을 먼저 적어 주세요.";$("nick").focus();return "nonick"}
   c=c.toUpperCase().replace(/[^A-Z0-9]/g,"");
-  if(c.length<4){$("homeMsg").textContent="4글자 테이블 코드를 입력해 주세요.";$("joinCode").focus();return}
-  if(!netReady()){$("netErr").hidden=false;$("homeMsg").textContent="온라인 연결 모듈을 불러오지 못했어요.";return}
+  if(c.length<4){$("homeMsg").textContent="4글자 테이블 코드를 입력해 주세요.";$("joinCode").focus();return "nocode"}
+  if(!netReady()){$("netErr").hidden=false;$("homeMsg").textContent="온라인 연결 모듈을 불러오지 못했어요.";return "net"}
   myName=nick;store.set("yd-nick",nick);
-  let pw=isCreate?$("roomPw").value:(pwIn!==undefined?pwIn:(store.get("yd-pw-"+c)||""));
-  if(isCreate){
+  const fresh=isCreate&&!restoreG;
+  let pw=fresh?$("roomPw").value:(pwIn!==undefined?pwIn:(store.get("yd-pw-"+c)||""));
+  if(fresh){
     const pub=document.querySelector('input[name=vis]:checked').value==="pub";
     newRoom={title:($("roomTitle").value.trim()||nick+"의 방").slice(0,20),lock:!!pw,pub,lid:randId()};
   }
-  $("homeMsg").textContent=isCreate?"테이블 만드는 중…":"테이블 찾는 중…";
+  $("homeMsg").textContent=restoreG?"테이블을 다시 여는 중…":isCreate?"테이블 만드는 중…":"테이블 찾는 중…";
   joining=true;$("createBtn").disabled=$("joinBtn").disabled=$("pwGo").disabled=true;
   let t=null;
   try{
     for(let tries=0;;tries++){
       try{t=await openTable(c,isCreate,pw);break}
       catch(e){
-        if(e&&e.code==="taken"&&isCreate&&tries<4){c=newCode();continue}
+        if(e&&e.code==="taken"&&fresh&&tries<4){c=newCode();continue}
         if(e&&e.code==="badpw"){
           store.set("yd-pw-"+c,"");$("homeMsg").textContent="";
           showPwBox(c,(Dir.rooms||[]).find(r=>r.code===c)?.title||c,pw?"비밀번호가 틀렸어요. 다시 입력해 주세요.":"비밀번호가 필요한 방이에요.");
         }else $("homeMsg").textContent=e&&e.code==="kicked"?"이 방에서 내보내져서 들어갈 수 없어요.":netMsg(e);
-        return;
+        return (e&&e.code)||"net";
       }
     }
   }finally{joining=false;$("createBtn").disabled=$("joinBtn").disabled=$("pwGo").disabled=false}
   hidePwBox();
   tablePw=pw;if(pw)store.set("yd-pw-"+c,pw);
-  mode="online";code=c;creating=isCreate;G=null;mePeer=null;peers=[];myReady=false;myBoard=null;
+  store.set("yd-last-"+myCid,JSON.stringify({code:c,at:Date.now()}));
+  mode="online";code=c;creating=fresh;G=restoreG||null;mePeer=null;peers=[];myReady=false;myBoard=null;
   boards.clear();lastK.clear();resetViews();
   try{history.replaceState(null,"",location.pathname+location.search+"#"+c)}catch(e){}
   attach(t);
@@ -741,6 +772,23 @@ async function enterTable(c,isCreate,pwIn){
   if(!isCreate)joinTimer=setTimeout(()=>{if(!G)$("lobbyMsg").textContent="테이블에 연결됐지만 게임 정보를 아직 받지 못했어요. 잠시만 기다려 주세요."},5000);
   $("homeMsg").textContent="";
   render();
+  return "ok";
+}
+// After a refresh: go straight back to the table I was at. If nobody is holding it any more
+// (e.g. I was alone, or everyone refreshed), reopen it from my saved copy of the game.
+async function autoRejoin(c){
+  const lbl=t=>{$("homeMsg").textContent=t};
+  for(let i=0;i<6;i++){
+    lbl("하던 테이블에 다시 들어가는 중…"+(i?` (${i+1})`:""));
+    const r=await enterTable(c,false);
+    if(r!=="notfound"&&r!=="net")return;
+    lbl("테이블에 다시 연결하는 중이에요. 잠시만 기다려 주세요…");
+    await new Promise(res=>setTimeout(res,2500));
+    if(mode)return;
+  }
+  let g=null;try{g=JSON.parse(store.get("yd-g-"+c)||"null")}catch(e){}
+  if(validG(g)){lbl("테이블을 다시 여는 중…");const r=await enterTable(c,true,undefined,g);if(r==="taken")await enterTable(c,false)}
+  else lbl("하던 테이블을 찾지 못했어요. 코드를 확인하고 다시 입장해 주세요.");
 }
 // The relay (host) vanished: keep our copy of everything, rejoin the code or take it over.
 async function onLost(err){
@@ -768,7 +816,10 @@ function onPeers(ch){
     const pr=p.presence||{};
     if(pr.game&&validG(pr.game)&&better(pr.game,G)){G=pr.game;adopted=true}
     const c=peerCid(p);
-    if(c&&!p.sameTab&&validBoard(pr.board))boards.set(c,pr.board);
+    // never let a fresh/older copy of the same game replace a more complete one we already saw
+    if(c&&!p.sameTab&&validBoard(pr.board)){const o=boards.get(c);if(!o||o.gid!==pr.board.gid||filled(pr.board)>=filled(o))boards.set(c,pr.board)}
+    // a backup the 방장 holds for someone is as good as seeing their board
+    if(pr.keep&&typeof pr.keep==="object")for(const k in pr.keep){const kb=pr.keep[k];if(k!==myCid&&validBoard(kb)){const o=boards.get(k);if(!o||(o.gid===kb.gid&&filled(kb)>filled(o)))boards.set(k,kb)}}
   }
   if(adopted&&T)T.presence({game:G}).catch(()=>{});
   if(creating&&!G&&mePeer){creating=false;commitG(Object.assign({phase:"lobby",players:[{cid:myCid,name:myName,ready:true}],banned:[]},newRoom));return}
@@ -779,6 +830,7 @@ function onPeers(ch){
   if(T&&T.isHost)for(const p of peers)if(!p.sameTab&&banned.has(peerCid(p)))T.drop(p.peer);
   syncMyBoard();
   hostDuties();
+  publishKeep();
   render();
   maybeFinish();
 }
@@ -832,6 +884,7 @@ function setPublic(pub){
 }
 function leave(){
   for(const t of stopT.values())clearTimeout(t);stopT.clear();stopRattle();rejoining=false;tablePw="";
+  store.set("yd-last-"+myCid,"");   // I left on purpose: a refresh shouldn't pull me back in
   if(T){T.leave().catch(()=>{});T=null}
   mode=null;G=null;code=null;mePeer=null;peers=[];myBoard=null;boards.clear();lastK.clear();busy.clear();resetViews();
   try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
@@ -1146,7 +1199,14 @@ $("copyLink").onclick=()=>{
   try{navigator.clipboard.writeText(l).then(()=>toast("링크를 복사했어요."),()=>toast(l))}catch(e){toast(l)}
 };
 // reset my ready flag whenever a table returns to the lobby
-let prevPhase=null;const _render=render;render=function(){if(G&&G.phase!==prevPhase){if(G.phase==="lobby"&&prevPhase&&prevPhase!=="lobby"&&mode==="online"){myReady=false;if(T)T.presence({ready:false}).catch(()=>{})}prevPhase=G.phase}_render();updateReg()};
+let prevPhase=null;const _render=render;render=function(){if(G&&G.phase!==prevPhase){if(G.phase==="lobby"&&prevPhase&&prevPhase!=="lobby"&&mode==="online"){myReady=false;if(T)T.presence({ready:false}).catch(()=>{})}prevPhase=G.phase}_render();updateReg();saveTable()};
+// keep a copy of the table state on this device so a refresh can reopen it if nobody else holds it
+let savedG="";
+function saveTable(){
+  if(mode!=="online"||!G||!code)return;
+  const s=JSON.stringify(G);if(s===savedG)return;savedG=s;
+  store.set("yd-g-"+code,s);store.set("yd-last-"+myCid,JSON.stringify({code,at:Date.now()}));
+}
 // room list: password prompt + create-form hints
 $("pwGo").onclick=()=>{if(pwFor)enterTable(pwFor,false,$("pwInput").value)};
 $("pwInput").addEventListener("keydown",e=>{if(e.key==="Enter")$("pwGo").click()});
@@ -1182,6 +1242,11 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 paintSound();
 render();
+// refreshed while at a table (same code in the address, recent, nickname known)? go straight back in
+(()=>{
+  let last=null;try{last=JSON.parse(store.get("yd-last-"+myCid)||"null")}catch(e){}
+  if(/^[A-Z0-9]{4}$/.test(h)&&last&&last.code===h&&Date.now()-last.at<3*3600e3&&myName&&netReady())autoRejoin(h);
+})();
 })();
 </script>
 </body>
