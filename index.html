@@ -1077,21 +1077,51 @@ function syncTray(v,b,act,away){
   }
   if(landed){busy.set(v.cid,true);setTimeout(()=>{busy.set(v.cid,false);render()},maxDur+40)}
   // fresh landing with all five the same: celebrate on that board for everyone watching
-  if(landed&&b.dice.every(d=>d===b.dice[0]))setTimeout(()=>celebrate(v),Math.max(0,maxDur-120));
+  // fresh landing that makes a scoring combo: show it on that board (and say it) for everyone watching
+  if(landed){const cb=comboOf(b.dice);if(cb)setTimeout(()=>celebrate(v,cb),Math.max(0,maxDur-120))}
   v.seen.init=true;v.seen.rolling=rolling;v.seen.rollId=b?b.rollId:null;
   return rolling;
 }
-function celebrate(v){
+// The best special combo the dice make, or null. Yacht beats everything; a large straight also
+// counts as a small one, so only the larger is shown.
+const COMBOS={
+  yacht:{text:"요트!",say:"요트!",fireworks:true,color:"#ffd54a",edge:"#7a1d10",size:.26},
+  large:{text:"라지 스트레이트!",say:"라지 스트레이트!",color:"#6ec6ff",edge:"#0d3a5c",size:.1},
+  small:{text:"스몰 스트레이트!",say:"스몰 스트레이트!",color:"#8be3b0",edge:"#0f4a2b",size:.1},
+  four:{text:"포카인드!",say:"포카인드!",color:"#ff8fd8",edge:"#5c1048",size:.17},
+  full:{text:"풀하우스!",say:"풀하우스!",color:"#ffb36b",edge:"#5c2c08",size:.17}
+};
+function comboOf(d){
+  if(calc(d,11))return COMBOS.yacht;
+  if(calc(d,10))return COMBOS.large;
+  if(calc(d,9))return COMBOS.small;
+  if(calc(d,7))return COMBOS.four;
+  if(calc(d,8))return COMBOS.full;
+  return null;
+}
+// Read the combo out loud in Korean (only when sound is on); a newer call replaces the last.
+function sayCombo(text,mine){
+  if(!S.on||!("speechSynthesis" in window))return;
+  try{
+    const u=new SpeechSynthesisUtterance(text);u.lang="ko-KR";u.rate=1.05;u.pitch=1.1;u.volume=mine?1:.6;
+    const ko=speechSynthesis.getVoices().find(x=>/^ko/i.test(x.lang));if(ko)u.voice=ko;
+    speechSynthesis.cancel();speechSynthesis.speak(u);
+  }catch(e){}
+}
+function celebrate(v,cb){
+  cb=cb||COMBOS.yacht;
   const host=v.el;if(!host.isConnected)return;
   const old=host.querySelector(".celebrate");if(old)old.remove();
   const ov=document.createElement("div");ov.className="celebrate";
   const cv=document.createElement("canvas");ov.appendChild(cv);
-  const t=document.createElement("div");t.className="yachtTxt";t.textContent="요트!";ov.appendChild(t);
+  const t=document.createElement("div");t.className="yachtTxt";t.textContent=cb.text;t.style.color=cb.color;t.style.webkitTextStrokeColor=cb.edge;t.style.textShadow=`0 .06em 0 ${cb.edge},0 .12em .3em rgba(0,0,0,.45)`;ov.appendChild(t);
   host.appendChild(ov);
   const W=host.clientWidth,H=host.clientHeight,dpr=Math.min(2,window.devicePixelRatio||1);
-  t.style.fontSize=Math.round(Math.max(34,Math.min(150,W*.26)))+"px";
-  fanfare(isMine(v.cid)?1:.45);
-  if(reduced){setTimeout(()=>ov.remove(),2300);return}
+  t.style.fontSize=Math.round(Math.max(cb.fireworks?34:22,Math.min(150,W*cb.size)))+"px";
+  const mine=isMine(v.cid);
+  if(cb.fireworks)fanfare(mine?1:.45);
+  sayCombo(cb.say,mine);
+  if(reduced||!cb.fireworks){setTimeout(()=>ov.remove(),2400);return}
   cv.width=W*dpr;cv.height=H*dpr;const ctx=cv.getContext("2d");ctx.scale(dpr,dpr);
   const colors=["#ffd54a","#ff6a50","#5bc386","#6ec6ff","#ff8fd8","#ffffff"],k=Math.max(.6,Math.min(1.8,W/320));
   const parts=[];
