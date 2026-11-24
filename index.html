@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>요트 다이스 라운지</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: every player's dice board around a central score table; stacks on phones. */
+:root{
+  --bg:#e7edea; --panel:#fbfcfb; --ink:#13201d; --muted:#5a6c67; --line:#cdd9d4;
+  --accent:#c33f2b; --accent-ink:#ffffff; --brass:#a87a22;
+  --felt:#155a4e; --felt2:#0c3b33; --rim:#5c3d22; --rim2:#3b2614;
+  --die:#fbf8f1; --pip:#1c2422; --pipred:#c33f2b; --slot:#d9e3df; --good:#2c7a4b;
+  --f-display:"Black Han Sans","IBM Plex Sans KR",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Malgun Gothic",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --d:clamp(30px,6vw,44px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1312; --panel:#131e1c; --ink:#e2ebe8; --muted:#8ea29c; --line:#26372f;
+  --accent:#ff6a50; --accent-ink:#1a0703; --brass:#d8a648;
+  --felt:#11493f; --felt2:#082c26; --rim:#4a311b; --rim2:#2a1a0c;
+  --slot:#1b2a27; --good:#5bc386; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1312; --panel:#131e1c; --ink:#e2ebe8; --muted:#8ea29c; --line:#26372f;
+  --accent:#ff6a50; --accent-ink:#1a0703; --brass:#d8a648;
+  --felt:#11493f; --felt2:#082c26; --rim:#4a311b; --rim2:#2a1a0c;
+  --slot:#1b2a27; --good:#5bc386; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+[hidden]{display:none!important}
+#app{max-width:1440px;margin:0 auto;padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(26px,5vw,36px);margin:0;letter-spacing:.5px;line-height:1.1}
+h1 small{display:block;font-family:var(--f-body);font-size:12px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+.sp{flex:1}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+.btn{border:0;border-radius:10px;padding:11px 18px;font-weight:700;background:var(--accent);color:var(--accent-ink);transition:transform .08s,filter .15s;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:hover{filter:brightness(1.07)}.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.4;cursor:not-allowed;filter:none}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.small{padding:7px 12px;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;background:var(--panel)}
+.chip b{font-family:var(--f-num);letter-spacing:.12em}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px}
+label{font-size:13px;color:var(--muted);font-weight:500}
+.seg{display:flex;gap:0;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.seg label{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;cursor:pointer;color:var(--ink);font-size:14px;font-weight:600}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--ink);color:var(--bg)}
+.seg label:has(input:focus-visible){outline:3px solid var(--brass);outline-offset:-3px}
+.rlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto}
+.rlist li{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.rlist li.empty{color:var(--muted);font-size:13px;justify-content:center;border-style:dashed}
+.rinfo{display:flex;flex-direction:column;min-width:0;flex:1}
+.rinfo b{overflow-wrap:anywhere}
+.lock{color:var(--brass);display:inline-flex;vertical-align:-2px}
+input[type=text],input[type=password]{font:inherit;width:100%;padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.row>*{min-width:0}
+.field{display:flex;flex-direction:column;gap:6px;flex:1 1 180px}
+.note{color:var(--muted);font-size:13px;margin:0}
+.warn{border-left:3px solid var(--brass);padding:10px 12px;background:var(--slot);border-radius:6px;font-size:13px;margin:0}
+/* home */
+#home{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:18px;max-width:1120px;width:100%;margin:0 auto}
+#home h2,#lobby h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0 0 4px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.rules{font-size:13px;color:var(--muted);columns:2 220px;margin:0;padding-left:18px}
+.rules li{break-inside:avoid;margin-bottom:2px}
+.rules b{color:var(--ink);font-weight:600}
+/* lobby */
+#lobby{max-width:1120px;width:100%;margin:0 auto}
+.code{font-family:var(--f-num);font-size:clamp(34px,8vw,52px);letter-spacing:.2em;font-weight:600;line-height:1}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.plist li{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.tag{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.ok{color:var(--good);border-color:var(--good)}
+.tag.host{color:var(--brass);border-color:var(--brass)}
+.tag.bad{color:var(--accent);border-color:var(--accent)}
+/* game */
+.banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:40px}
+.banner .who{font-family:var(--f-display);font-size:22px;font-weight:400}
+.banner .rd{font-size:13px;color:var(--muted)}
+/* score table in the middle, my board right under it, everyone else down the sides */
+.arena{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,480px) minmax(0,1fr);grid-template-areas:"L S R" "L M R";gap:16px;align-items:start;margin-top:12px}
+#colL{grid-area:L}#colR{grid-area:R}#colM{grid-area:M;min-width:0}.center{grid-area:S}
+@media (max-width:1040px){.arena{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"S S" "M M" "L R"}}
+.bcol{display:flex;flex-direction:column;gap:12px;min-width:0}
+#colL{align-items:flex-end}#colR{align-items:flex-start}
+.bcol .pboard{width:100%;max-width:280px}
+.sheet th,.sheet td{padding:4px 5px}
+.pboard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:0;--d:clamp(18px,2.2vw,26px)}
+.pboard .tray{border-width:6px;border-radius:12px}
+.pboard .tray .hint{font-size:11px}
+.pboard .controls .btn{min-width:110px;font-size:14px;padding:9px 14px}
+.pboard.me{padding:14px;gap:10px;--d:clamp(34px,4vw,50px);border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
+.pboard.me .tray{border-width:10px}
+.pboard.me .tray .hint{font-size:14px}
+.pboard.me .controls .btn{min-width:150px;font-size:16px;padding:12px 20px}
+.pboard.away .tray{filter:grayscale(.7) brightness(.8)}
+.phead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pfoot{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;text-align:center;padding-top:2px;border-top:1px solid var(--line)}
+.pname{font-family:var(--f-display);font-size:17px;line-height:1.2;overflow-wrap:anywhere}
+.pboard.me .pname{font-size:24px}
+.ptot{margin-left:auto;font-family:var(--f-num);font-weight:600;font-size:15px}
+.pboard.me .ptot{font-size:18px}
+.pround{font-family:var(--f-num);font-size:12px;color:var(--muted)}
+.tray{position:relative;width:100%;aspect-ratio:16/10;border-radius:14px;overflow:hidden;
+  border:9px solid var(--rim);box-shadow:inset 0 0 0 2px var(--rim2),inset 0 10px 30px rgba(0,0,0,.45),0 6px 18px rgba(0,0,0,.16);
+  background:radial-gradient(120% 90% at 50% 40%,var(--felt) 0%,var(--felt2) 100%)}
+.tray::before{content:"";position:absolute;inset:0;opacity:.18;pointer-events:none;
+  background-image:repeating-radial-gradient(circle at 30% 30%,rgba(255,255,255,.06) 0 1px,transparent 1px 3px)}
+.tray .hint{position:absolute;left:6px;right:6px;bottom:6%;text-align:center;color:rgba(255,255,255,.75);font-size:13px;pointer-events:none}
+.cup{position:absolute;left:14%;top:52%;width:calc(var(--d)*1.8);height:calc(var(--d)*2);transform:translate(-50%,-50%);transform-origin:50% 90%;z-index:3;pointer-events:none}
+.cup .body{position:absolute;inset:0;clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);
+  background:linear-gradient(90deg,#3a2414,#7a4f2c 35%,#94643a 50%,#6b4325 70%,#2f1c0e)}
+.cup .band{position:absolute;left:0;right:0;height:9%;background:linear-gradient(90deg,#6e5214,#e1b955 45%,#8a6618);}
+.cup .b1{top:10%;left:8%;right:8%}.cup .b2{bottom:6%}
+.cup .top{position:absolute;left:12%;right:12%;top:-4%;height:12%;border-radius:50%;background:linear-gradient(#a57446,#4b2f19)}
+.cup.shaking{animation:shake .16s ease-in-out infinite alternate}
+@keyframes shake{0%{transform:translate(-56%,-66%) rotate(-14deg)}100%{transform:translate(-44%,-72%) rotate(12deg)}}
+.cup.pour{animation:pour .55s cubic-bezier(.3,.7,.3,1)}
+@keyframes pour{0%{transform:translate(-50%,-68%) rotate(0)}45%{transform:translate(-20%,-60%) rotate(78deg)}100%{transform:translate(-50%,-50%) rotate(0)}}
+.die{width:var(--d);height:var(--d);background:var(--die);border-radius:22%;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:calc(var(--d)*.16);gap:calc(var(--d)*.05);
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),inset 0 2px 0 rgba(255,255,255,.8),0 4px 8px rgba(0,0,0,.35);border:0;flex:none}
+.die i{display:block;border-radius:50%;background:var(--pip);box-shadow:inset 0 1px 1px rgba(0,0,0,.4)}
+.die.v1 i{background:var(--pipred);transform:scale(1.35)}
+.tray .die{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg));z-index:2}
+.die[disabled]{cursor:default}
+.die.can{cursor:pointer}
+.die.can:hover{box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),0 0 0 3px var(--brass),0 6px 12px rgba(0,0,0,.35)}
+.slots{display:flex;gap:6px;flex-wrap:wrap}
+.slot{width:calc(var(--d) + 8px);height:calc(var(--d) + 8px);border:2px dashed var(--line);border-radius:12px;display:grid;place-items:center;background:var(--slot)}
+.slot .die{box-shadow:0 0 0 3px var(--brass),0 3px 6px rgba(0,0,0,.25)}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.controls .btn{min-width:130px;font-size:16px;padding:12px 18px}
+.pips3{display:inline-flex;gap:4px}
+.pips3 span{width:9px;height:9px;border-radius:50%;border:2px solid var(--muted)}
+.pips3 span.on{background:var(--accent);border-color:var(--accent)}
+/* central score sheet */
+.center h3{font-family:var(--f-display);font-weight:400;font-size:20px;margin:0 0 8px;text-align:center}
+.sheetwrap{overflow-x:auto;min-width:0;padding:12px}
+table.sheet{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.sheet th,.sheet td{padding:6px 5px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+.sheet th:first-child,.sheet td:first-child{text-align:left;position:sticky;left:0;background:var(--panel);z-index:1}
+.sheet thead th{font-size:13px;font-weight:700;max-width:80px;overflow:hidden;text-overflow:ellipsis}
+.sheet thead th.mine{color:var(--accent)}
+.sheet td.mine{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.sheet .cat{display:flex;flex-direction:column;line-height:1.2}
+.sheet .cat small{color:var(--muted);font-size:11px}
+.sheet .num{font-family:var(--f-num);font-weight:600}
+.sheet tr.sub td{font-size:12px;color:var(--muted);background:var(--slot)}
+.sheet tr.sub td:first-child{background:var(--slot)}
+.sheet tr.total td{font-weight:700;font-size:16px;border-bottom:0}
+.sheet .pot{font-family:var(--f-num);border:1.5px dashed var(--accent);color:var(--accent);background:transparent;border-radius:8px;padding:2px 7px;min-width:38px;font-weight:600}
+.sheet .pot.zero{color:var(--muted);border-color:var(--line)}
+.sheet .pot:hover{background:var(--accent);color:var(--accent-ink);border-style:solid}
+.sheet .ghostpot{font-family:var(--f-num);color:var(--muted);opacity:.6;font-size:12px}
+.sheet .fresh{animation:flash 1.2s}
+@keyframes flash{0%{background:var(--brass);color:#fff}100%{background:transparent}}
+/* result overlay */
+#over,#ended{position:fixed;inset:0;display:grid;place-items:center;background:rgba(5,12,10,.6);z-index:20;padding:16px}
+#ended .panel h2{font-family:var(--f-display);font-weight:400;font-size:26px;margin:0}
+.rank li.gone{opacity:.75;border-style:dashed}
+.rank li.gone .pl{color:var(--muted);font-size:14px;font-family:var(--f-body);font-weight:700}
+#over .panel,#ended .panel{width:min(460px,100%);display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - 32px);overflow:auto}
+.winner{text-align:center;padding:8px 0 4px}
+.winner .wn{font-family:var(--f-display);font-size:clamp(30px,8vw,46px);line-height:1.15;overflow-wrap:anywhere}
+.winner .wr{font-family:var(--f-display);font-size:clamp(40px,11vw,64px);line-height:1;color:var(--brass);letter-spacing:.04em;animation:pop .7s cubic-bezier(.2,1.6,.4,1)}
+.winner .ws{font-family:var(--f-num);color:var(--muted)}
+@keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+.rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rank li{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid var(--line)}
+.rank li.first{border-color:var(--brass);background:color-mix(in srgb,var(--brass) 14%,transparent)}
+.rank .pl{font-family:var(--f-display);font-size:20px;min-width:52px;color:var(--brass)}
+.rank .nm{font-weight:700;overflow-wrap:anywhere}
+.rank .sc{margin-left:auto;font-family:var(--f-num);font-weight:600;font-size:18px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:30;max-width:calc(100% - 32px)}
+#toast.show{opacity:1}
+.sound{display:inline-flex;align-items:center;gap:6px}
+.sound svg{width:18px;height:18px}
+.sound.nudge{border-color:var(--accent);color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.cup.shaking{animation-duration:.5s}.cup.pour{animation:none}.winner .wr{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1><small>Yacht Dice Lounge</small>요트 다이스 라운지</h1>
+    <span class="sp"></span>
+    <span id="codeChip" class="chip" hidden>테이블 <b id="codeChipVal"></b></span>
+    <button id="soundBtn" class="btn ghost small sound" type="button" aria-pressed="true"></button>
+  </header>
+
+  <section id="home">
+    <div class="panel stack">
+      <div><h2>친구와 온라인 대전</h2><p class="note">가입 없이 테이블을 만들고 코드나 링크를 친구에게 보내 주세요. 2~8명이 각자 자기 판에서 동시에 굴려요. 중간에 튕겨도 같은 코드로 다시 들어오면 하던 데서 이어서 해요.</p></div>
+      <p id="netErr" class="warn" hidden>온라인 연결 모듈을 불러오지 못했어요. 인터넷에 연결된 상태로 페이지를 새로고침해 주세요. 아래의 한 기기 모드는 바로 할 수 있어요.</p>
+      <div class="field"><label for="nick">닉네임</label><input id="nick" type="text" maxlength="12" placeholder="예: 주사위장인" autocomplete="nickname"></div>
+      <div class="field"><label for="roomTitle">방 이름</label><input id="roomTitle" type="text" maxlength="20" placeholder="비워 두면 '닉네임의 방'"></div>
+      <div class="field"><span style="font-size:13px;color:var(--muted);font-weight:500">공개 설정</span>
+        <div class="seg" role="radiogroup" aria-label="공개 설정">
+          <label><input type="radio" name="vis" value="pub" checked>공개방</label>
+          <label><input type="radio" name="vis" value="priv">비공개방</label>
+        </div>
+        <p class="note" id="visNote"></p>
+      </div>
+      <div class="field"><label for="roomPw">비밀번호 (선택)</label><input id="roomPw" type="password" maxlength="20" placeholder="비워 두면 비밀번호 없이 입장" autocomplete="new-password"></div>
+      <button id="createBtn" class="btn" type="button">테이블 만들기</button>
+      <div class="row">
+        <div class="field"><label for="joinCode">테이블 코드</label><input id="joinCode" type="text" maxlength="6" placeholder="4글자 코드" autocomplete="off" style="text-transform:uppercase;font-family:var(--f-num);letter-spacing:.2em"></div>
+        <button id="joinBtn" class="btn ghost" type="button">입장</button>
+      </div>
+      <p id="homeMsg" class="note" role="status"></p>
+    </div>
+    <div class="panel stack">
+      <div class="row" style="align-items:center"><h2 style="flex:1;margin:0">방 목록</h2><span class="note" id="roomCount"></span></div>
+      <ul class="rlist" id="roomList"></ul>
+      <div id="pwBox" class="warn stack" hidden style="gap:8px">
+        <p id="pwMsg"></p>
+        <div class="row">
+          <div class="field" style="flex:1 1 140px"><label for="pwInput">비밀번호</label><input id="pwInput" type="password" maxlength="20" autocomplete="off"></div>
+          <button id="pwGo" class="btn" type="button">입장</button>
+          <button id="pwCancel" class="btn ghost" type="button">취소</button>
+        </div>
+      </div>
+      <p class="note">비공개방은 목록에 이름만 보이고, 코드나 링크를 받은 사람만 들어갈 수 있어요.</p>
+    </div>
+    <div class="panel stack">
+      <div><h2>한 기기에서 같이 하기</h2><p class="note">한 화면에 모두의 판이 나와요. 각자 자기 판에서 굴리세요.</p></div>
+      <div class="row" id="localNames"></div>
+      <button id="localBtn" class="btn ghost" type="button">이 기기에서 시작</button>
+      <div>
+        <p class="note" style="margin-bottom:6px"><b style="color:var(--ink)">점수 규칙</b> · 한 번에 최대 3번 굴리고, 12칸을 한 번씩 채워요.</p>
+        <ul class="rules">
+          <li><b>Aces~Sixes</b> 해당 눈의 합</li>
+          <li><b>보너스</b> 상단 합 63점 이상이면 +35</li>
+          <li><b>Choice</b> 주사위 5개의 합</li>
+          <li><b>4 of a Kind</b> 같은 눈 4개 이상 · 5개의 합</li>
+          <li><b>Full House</b> 같은 눈 3개+2개 · 5개의 합</li>
+          <li><b>S. Straight</b> 4개 연속 · 15점</li>
+          <li><b>L. Straight</b> 5개 연속 · 30점</li>
+          <li><b>Yacht</b> 5개 모두 같은 눈 · 50점</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="lobby" class="panel stack" hidden>
+    <div class="row" style="align-items:center">
+      <div style="flex:1 1 200px"><h2 id="lobbyTitle">대기실</h2><p class="note" id="lobbyInfo"></p><p class="note">친구에게 코드나 링크를 보내 주세요. 친구도 이 페이지를 열고 코드를 입력하면 들어와요.</p></div>
+      <div class="code" id="lobbyCode"></div>
+      <button id="copyCode" class="btn ghost small" type="button">코드 복사</button>
+      <button id="copyLink" class="btn ghost small" type="button" hidden>링크 복사</button>
+    </div>
+    <p id="lobbyMsg" class="note" role="status"></p>
+    <ul class="plist" id="plist"></ul>
+    <div class="row">
+      <button id="readyBtn" class="btn" type="button" hidden>준비</button>
+      <button id="startBtn" class="btn" type="button" hidden>게임 시작</button>
+      <span class="sp"></span>
+      <button id="leaveBtn" class="btn ghost" type="button">나가기</button>
+    </div>
+  </section>
+
+  <section id="game" hidden>
+    <div class="banner">
+      <span class="who" id="statusMain"></span>
+      <span class="rd" id="statusSub"></span>
+      <span class="sp"></span>
+      <button id="quitBtn" class="btn ghost small" type="button">나가기</button>
+    </div>
+    <div class="arena">
+      <div class="bcol" id="colL"></div>
+      <div class="panel sheetwrap center"><h3>점수판</h3><table class="sheet" id="sheet"></table></div>
+      <div id="colM"></div>
+      <div class="bcol" id="colR"></div>
+    </div>
+  </section>
+
+  <div id="over" hidden>
+    <div class="panel">
+      <div class="winner" id="winner"></div>
+      <ol class="rank" id="rank"></ol>
+      <div class="row"><button id="againBtn" class="btn" type="button">다시 하기</button><button id="closeOver" class="btn ghost" type="button">점수판 보기</button><button id="overLeave" class="btn ghost" type="button">나가기</button></div>
+      <p class="note" id="overNote"></p>
+    </div>
+  </div>
+  <div id="ended" hidden>
+    <div class="panel" role="alertdialog" aria-labelledby="endedTitle">
+      <h2 id="endedTitle">종료된 게임입니다.</h2>
+      <p class="note">연결이 끊긴 사이에 게임이 끝났어요. 결과에는 마지막으로 입력된 점수가 기록됐어요.</p>
+      <div class="row"><button id="endedOk" class="btn" type="button">확인</button></div>
+    </div>
+  </div>
+  <div id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const MAXP=8;
+const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const isInt=(x,lo,hi)=>Number.isInteger(x)&&x>=lo&&x<=hi;
+
+/* ---------- rules ---------- */
+const CATS=[
+ ["Aces","1의 합"],["Deuces","2의 합"],["Threes","3의 합"],["Fours","4의 합"],["Fives","5의 합"],["Sixes","6의 합"],
+ ["Choice","5개의 합"],["4 of a Kind","4개 이상 · 합"],["Full House","3+2 · 합"],["S. Straight","4연속 · 15"],["L. Straight","5연속 · 30"],["Yacht","5개 같음 · 50"]];
+function calc(d,i){
+  const c=[0,0,0,0,0,0,0];let s=0;for(const v of d){c[v]++;s+=v}
+  if(i<6)return c[i+1]*(i+1);
+  if(i===6)return s;
+  const mx=Math.max(...c);
+  if(i===7)return mx>=4?s:0;
+  if(i===8){const nz=c.filter(x=>x>0).sort().join();return nz==="2,3"?s:0}
+  const has=a=>a.every(v=>c[v]>0);
+  if(i===9)return(has([1,2,3,4])||has([2,3,4,5])||has([3,4,5,6]))?15:0;
+  if(i===10)return(has([1,2,3,4,5])||has([2,3,4,5,6]))?30:0;
+  return mx===5?50:0;
+}
+function totals(sc){let up=0,lo=0;(sc||[]).forEach((v,i)=>{if(v==null)return;if(i<6)up+=v;else lo+=v});const bonus=up>=63?35:0;return{up,bonus,lo,total:up+bonus+lo}}
+const rnd6=()=>{const a=new Uint32Array(1);crypto.getRandomValues(a);return 1+(a[0]%6)};
+const rid=()=>Math.floor(Math.random()*2e9)+1;
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function ordinal(n){const s=n%100>=11&&n%100<=13?"TH":({1:"ST",2:"ND",3:"RD"}[n%10]||"TH");return n+s}
+
+/* ---------- sound ---------- */
+const S={ctx:null,master:null,noise:null,on:store.get("yd-sound")!=="off",rattle:null};
+function unlock(){
+  if(!S.ctx){
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext;S.ctx=new AC();
+      S.master=S.ctx.createGain();S.master.gain.value=.9;S.master.connect(S.ctx.destination);
+      const len=S.ctx.sampleRate*.6,b=S.ctx.createBuffer(1,len,S.ctx.sampleRate),d=b.getChannelData(0);
+      for(let i=0;i<len;i++)d[i]=Math.random()*2-1;S.noise=b;
+    }catch(e){S.ctx=null}
+  }
+  if(S.ctx&&S.ctx.state==="suspended")S.ctx.resume().catch(()=>{});
+  paintSound();
+}
+document.addEventListener("pointerdown",unlock,true);
+document.addEventListener("keydown",unlock,true);
+function ready(){return S.on&&S.ctx&&S.ctx.state==="running"}
+function clack(when,amp,freq){
+  if(!ready())return;const c=S.ctx;
+  const src=c.createBufferSource();src.buffer=S.noise;
+  const bp=c.createBiquadFilter();bp.type="bandpass";bp.frequency.value=freq;bp.Q.value=5;
+  const g=c.createGain();g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(amp,when+.002);g.gain.exponentialRampToValueAtTime(.0001,when+.07);
+  src.connect(bp);bp.connect(g);g.connect(S.master);src.start(when,Math.random()*.4,.09);
+  const o=c.createOscillator();o.type="triangle";o.frequency.setValueAtTime(freq*.42,when);o.frequency.exponentialRampToValueAtTime(freq*.25,when+.05);
+  const og=c.createGain();og.gain.setValueAtTime(.0001,when);og.gain.exponentialRampToValueAtTime(amp*.55,when+.003);og.gain.exponentialRampToValueAtTime(.0001,when+.06);
+  o.connect(og);og.connect(S.master);o.start(when);o.stop(when+.08);
+}
+function thump(when,amp){
+  if(!ready())return;const c=S.ctx;
+  const src=c.createBufferSource();src.buffer=S.noise;
+  const lp=c.createBiquadFilter();lp.type="lowpass";lp.frequency.value=380;
+  const g=c.createGain();g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(amp,when+.005);g.gain.exponentialRampToValueAtTime(.0001,when+.16);
+  src.connect(lp);lp.connect(g);g.connect(S.master);src.start(when,0,.2);
+}
+function startRattle(){
+  if(S.rattle||!S.ctx)return;
+  const tick=()=>{if(ready()){const t=S.ctx.currentTime;const n=1+Math.floor(Math.random()*3);for(let k=0;k<n;k++)clack(t+Math.random()*.04,.12+Math.random()*.22,1700+Math.random()*2200);if(Math.random()<.25)thump(t,.18)}S.rattle=setTimeout(tick,45+Math.random()*55)};
+  tick();
+}
+function stopRattle(){if(S.rattle){clearTimeout(S.rattle);S.rattle=null}}
+function paintSound(){
+  const b=$("soundBtn");const live=S.ctx&&S.ctx.state==="running";
+  b.setAttribute("aria-pressed",S.on?"true":"false");
+  b.innerHTML=(S.on?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>')+(S.on?(live?"소리 켜짐":"소리 켜기"):"소리 꺼짐");
+  b.classList.toggle("nudge",S.on&&!live);
+}
+$("soundBtn").onclick=()=>{
+  if(S.on&&!(S.ctx&&S.ctx.state==="running")){unlock();}else{S.on=!S.on;store.set("yd-sound",S.on?"on":"off")}
+  unlock();paintSound();if(ready())clack(S.ctx.currentTime+.01,.4,2600);
+};
+
+/* ---------- network: PeerJS star, no sign-up ----------
+   The table code is the host's peer id; the host relays everyone's presence.
+   If the host drops, the remaining players race to re-open the same code. */
+const PFX="ydlounge-";
+const myCid=(()=>{
+  const q=new URLSearchParams(location.search).get("cid"); // test hook: two tabs in one browser
+  if(q&&/^[a-z0-9]{8,40}$/.test(q))return q;
+  let c=store.get("yd-cid");if(!c||!/^[a-z0-9]{8,40}$/.test(c)){c=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>(b%36).toString(36)).join("");store.set("yd-cid",c)}return c})();
+function netReady(){return typeof window.Peer==="function"}
+function openTable(c,asHost,pw){
+  pw=pw||"";
+  return new Promise((resolve,reject)=>{
+    const hostId=PFX+c.toLowerCase();
+    let peer;try{peer=asHost?new Peer(hostId,{debug:0}):new Peer({debug:0})}catch(e){reject({code:"net"});return}
+    const pres={},conns=new Map(),heard=new Map();
+    let myId=null,onPeersFn=null,onErrFn=null,closed=false,settled=false,hostConn=null,to=null,hb=null,hostHeard=0;
+    const shut=()=>{closed=true;clearInterval(hb);window.removeEventListener("pagehide",shut);try{peer.destroy()}catch(_){}};
+    window.addEventListener("pagehide",shut);
+    const fail=e=>{if(!settled){settled=true;clearTimeout(to);shut();reject(e)}};
+    const lost=e=>{if(settled&&!closed){shut();if(onErrFn)onErrFn(e)}};
+    function emitPeers(){if(onPeersFn&&!closed)onPeersFn({peers:Object.keys(pres).map(id=>({peer:id,presence:pres[id],sameTab:id===myId}))})}
+    function broadcast(){const msg={t:"peers",pres};for(const k of conns.values())if(k.open)try{k.send(msg)}catch(e){}emitPeers()}
+    const api={
+      isHost:asHost,
+      onPeers(fn,err){onPeersFn=fn;onErrFn=err;emitPeers()},
+      presence(patch){
+        if(closed||!myId)return Promise.resolve();
+        pres[myId]=Object.assign({},pres[myId],patch);
+        if(asHost)broadcast();else{if(hostConn&&hostConn.open)try{hostConn.send({t:"p",patch})}catch(e){}emitPeers()}
+        return Promise.resolve();
+      },
+      leave(){shut();return Promise.resolve()},
+      // relay only: cut one guest off and tell them they were removed
+      drop(id){
+        const k=conns.get(id);if(!k)return;
+        conns.delete(id);heard.delete(id);delete pres[id];
+        try{k.send({t:"kick"})}catch(e){}
+        setTimeout(()=>{try{k.close()}catch(e){}},300);broadcast();
+      }
+    };
+    to=setTimeout(()=>fail({code:asHost?"net":"notfound"}),12000);
+    peer.on("error",e=>{
+      const t=e&&e.type;
+      if(t==="unavailable-id")fail({code:"taken"});
+      else if(t==="peer-unavailable")fail({code:"notfound"});
+      else if(!settled)fail({code:"net"});
+    });
+    peer.on("disconnected",()=>{if(!closed)setTimeout(()=>{try{if(!closed&&!peer.destroyed&&peer.disconnected)peer.reconnect()}catch(e){}},1500)});
+    peer.on("open",pid=>{
+      myId=pid;pres[myId]={};
+      if(asHost){
+        settled=true;clearTimeout(to);resolve(api);
+        // heartbeat: ping guests, and drop any guest silent for 15 s
+        hb=setInterval(()=>{
+          const now=Date.now();let changed=false;
+          for(const [id,k] of conns){if(now-(heard.get(id)||0)>15000){conns.delete(id);heard.delete(id);delete pres[id];changed=true;try{k.close()}catch(e){}}else if(k.open)try{k.send({t:"hb"})}catch(e){}}
+          if(changed)broadcast();
+        },2000);
+        peer.on("connection",k=>{
+          // a guest is let in only after its first message carries the right password
+          let ok=false;
+          k.on("open",()=>setTimeout(()=>{if(!ok)try{k.close()}catch(e){}},8000));
+          k.on("data",m=>{
+            if(!ok){
+              if(!m||m.t!=="auth")return;
+              if(pw&&m.pw!==pw){try{k.send({t:"deny"})}catch(e){}setTimeout(()=>{try{k.close()}catch(e){}},400);return}
+              if(conns.size>=MAXP+6){try{k.close()}catch(e){}return}
+              ok=true;conns.set(k.peer,k);heard.set(k.peer,Date.now());pres[k.peer]=pres[k.peer]||{};broadcast();return;
+            }
+            heard.set(k.peer,Date.now());
+            if(!m||m.t!=="p"||!m.patch||typeof m.patch!=="object"||Array.isArray(m.patch))return;
+            try{if(JSON.stringify(m.patch).length>80000)return}catch(e){return}
+            pres[k.peer]=Object.assign({},pres[k.peer],m.patch);broadcast();
+          });
+          const gone=()=>{if(conns.get(k.peer)===k){conns.delete(k.peer);heard.delete(k.peer);delete pres[k.peer];broadcast()}};
+          k.on("close",gone);k.on("error",gone);
+        });
+      }else{
+        hostConn=peer.connect(hostId,{reliable:true});
+        hostConn.on("open",()=>{try{hostConn.send({t:"auth",pw})}catch(e){}});
+        hostConn.on("data",m=>{
+          hostHeard=Date.now();
+          if(m&&m.t==="deny"){fail({code:"badpw"});return}
+          if(m&&m.t==="kick"){if(settled)lost({code:"kicked"});else fail({code:"kicked"});return}
+          if(!m||m.t!=="peers"||!m.pres||typeof m.pres!=="object")return;
+          if(!settled){
+            settled=true;clearTimeout(to);resolve(api);
+            // heartbeat: ping the host, and treat 15 s of silence as the host being gone
+            hb=setInterval(()=>{if(Date.now()-hostHeard>15000){lost({code:"hostgone"});return}if(hostConn.open)try{hostConn.send({t:"hb"})}catch(e){}},2000);
+          }
+          const mine=pres[myId];for(const k in pres)delete pres[k];
+          for(const k in m.pres)if(m.pres[k]&&typeof m.pres[k]==="object")pres[k]=m.pres[k];
+          pres[myId]=mine;emitPeers();
+        });
+        hostConn.on("close",()=>lost({code:"hostgone"}));
+        hostConn.on("error",()=>lost({code:"hostgone"}));
+      }
+    });
+  });
+}
+function newCode(){const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<4;i++)s+=A[Math.floor(Math.random()*A.length)];return s}
+/* ---------- room directory ----------
+   Whichever open page grabs the well-known hub id first keeps the list of open rooms;
+   table hosts register with it and every start screen receives the list. If the hub
+   page closes, the remaining pages race to take over. */
+const HUB=PFX+"hub-v1";
+const Dir={peer:null,conn:null,hub:false,rooms:null,reg:null,regSent:"",gen:0,heard:0,timer:null,hubConns:new Map(),hubRooms:new Map(),shown:""};
+// A private room is listed by name only: its code never leaves the table.
+function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)}
+function dirStop(){Dir.gen++;clearInterval(Dir.timer);Dir.timer=null;try{if(Dir.peer)Dir.peer.destroy()}catch(e){}Dir.peer=null;Dir.conn=null;Dir.hub=false;Dir.hubConns.clear();Dir.hubRooms.clear()}
+function dirRestart(delay){dirStop();const g=Dir.gen;setTimeout(()=>{if(g===Dir.gen)dirStart()},delay)}
+function dirStart(){
+  if(!netReady())return;
+  dirStop();const g=Dir.gen;
+  let peer;try{peer=new Peer({debug:0})}catch(e){dirRestart(5000);return}
+  Dir.peer=peer;let opened=false;
+  const to=setTimeout(()=>{if(g===Dir.gen&&!opened)dirBecomeHub()},8000);
+  peer.on("error",e=>{
+    if(g!==Dir.gen)return;
+    if(e&&e.type==="peer-unavailable"){clearTimeout(to);dirBecomeHub()}
+    else if(!opened){clearTimeout(to);dirRestart(4000+Math.random()*3000)}
+  });
+  peer.on("open",()=>{
+    if(g!==Dir.gen)return;
+    const conn=peer.connect(HUB,{reliable:true});
+    conn.on("open",()=>{
+      if(g!==Dir.gen)return;
+      opened=true;clearTimeout(to);Dir.conn=conn;Dir.heard=Date.now();Dir.regSent="";dirSendReg(true);
+      Dir.timer=setInterval(()=>{if(Date.now()-Dir.heard>12000){dirRestart(300+Math.random()*1500);return}dirSendReg(true)},3000);
+    });
+    conn.on("data",m=>{
+      if(g!==Dir.gen)return;Dir.heard=Date.now();
+      if(m&&m.t==="list"&&Array.isArray(m.rooms)){Dir.rooms=m.rooms.filter(validRoom).slice(0,100);renderRooms()}
+    });
+    const gone=()=>{if(g===Dir.gen&&opened)dirRestart(300+Math.random()*1500)};
+    conn.on("close",gone);conn.on("error",gone);
+  });
+}
+function dirBecomeHub(){
+  dirStop();const g=Dir.gen;
+  let peer;try{peer=new Peer(HUB,{debug:0})}catch(e){dirRestart(3000);return}
+  Dir.peer=peer;
+  peer.on("error",e=>{if(g===Dir.gen&&!Dir.hub)dirRestart(e&&e.type==="unavailable-id"?300+Math.random()*1000:5000)});
+  peer.on("disconnected",()=>{if(g===Dir.gen)setTimeout(()=>{try{if(g===Dir.gen&&peer.disconnected&&!peer.destroyed)peer.reconnect()}catch(e){}},1500)});
+  peer.on("open",()=>{
+    if(g!==Dir.gen)return;
+    Dir.hub=true;Dir.regSent="";
+    peer.on("connection",k=>{
+      k.on("open",()=>{Dir.hubConns.set(k.peer,{k,heard:Date.now()});hubBroadcast()});
+      k.on("data",m=>{
+        const c=Dir.hubConns.get(k.peer);if(c)c.heard=Date.now();
+        if(m&&m.t==="reg"){if(validRoom(m.room))Dir.hubRooms.set(k.peer,m.room);else Dir.hubRooms.delete(k.peer);hubBroadcast()}
+      });
+      const gone=()=>{Dir.hubConns.delete(k.peer);if(Dir.hubRooms.delete(k.peer))hubBroadcast()};
+      k.on("close",gone);k.on("error",gone);
+    });
+    Dir.timer=setInterval(()=>{
+      const now=Date.now();
+      for(const [id,c] of Dir.hubConns)if(now-c.heard>12000){Dir.hubConns.delete(id);Dir.hubRooms.delete(id);try{c.k.close()}catch(e){}}
+      hubBroadcast();
+    },3000);
+    hubBroadcast();
+  });
+}
+function hubBroadcast(){
+  const all=[...Dir.hubRooms.values()];if(Dir.reg)all.push(Dir.reg);
+  const seen=new Set();const rooms=all.filter(r=>!seen.has(r.id)&&seen.add(r.id));
+  Dir.rooms=rooms;const msg={t:"list",rooms};
+  for(const c of Dir.hubConns.values())if(c.k.open)try{c.k.send(msg)}catch(e){}
+  renderRooms();
+}
+function dirSendReg(force){
+  const s=JSON.stringify(Dir.reg);
+  if(Dir.hub){if(s!==Dir.regSent){Dir.regSent=s;hubBroadcast()}return}
+  if(!Dir.conn||!Dir.conn.open||(!force&&s===Dir.regSent))return;
+  Dir.regSent=s;try{Dir.conn.send({t:"reg",room:Dir.reg})}catch(e){}
+}
+// Keep this table's entry in the room list up to date (only the table's host lists it).
+function updateReg(){
+  let r=null;
+  if(mode==="online"&&T&&T.isHost&&G&&code){
+    const pr=presentCids();
+    const count=G.phase==="lobby"?G.players.length:G.players.filter(p=>pr.has(p.cid)).length;
+    const pub=G.pub!==false;
+    r={id:listId(),pub,title:String(G.title||"").slice(0,20)||"요트 테이블",lock:!!G.lock,count:Math.min(count,MAXP),phase:G.phase};
+    if(pub)r.code=code;
+  }
+  if(JSON.stringify(r)!==JSON.stringify(Dir.reg)){Dir.reg=r;dirSendReg(false)}
+}
+// Listing id: random, made when the room is created and carried in G, so it reveals nothing
+// about the code and stays the same if another member takes over relaying the table.
+const randId=()=>Array.from(crypto.getRandomValues(new Uint8Array(10)),b=>(b%36).toString(36)).join("");
+function listId(){return G&&typeof G.lid==="string"&&/^[a-z0-9]{6,20}$/.test(G.lid)?G.lid:(G.lid=randId())}
+const LOCK='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-label="비밀번호 방"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+function renderRooms(){
+  const box=$("roomList");
+  let html;
+  if(!netReady())html='<li class="empty">온라인 연결을 쓸 수 없어요.</li>';
+  else if(Dir.rooms===null)html='<li class="empty">방 목록 불러오는 중…</li>';
+  else{
+    const rooms=Dir.rooms.slice().sort((a,b)=>(a.phase==="lobby"?0:1)-(b.phase==="lobby"?0:1)||a.title.localeCompare(b.title,"ko"));
+    $("roomCount").textContent=rooms.length?rooms.length+"개":"";
+    html=rooms.length?rooms.map(r=>{
+      const full=r.phase==="lobby"&&r.count>=MAXP;
+      const st=r.phase==="lobby"?"대기 중":r.phase==="play"?"게임 중":"게임 끝";
+      const tags=(r.pub?"":' <span class="tag">비공개</span>')+(r.lock?` <span class="lock">${LOCK}</span>`:"");
+      const btn=!r.pub?'<span class="note" style="white-space:nowrap">코드로만 입장</span>'
+        :`<button class="btn small${r.phase==="lobby"?"":" ghost"}" type="button" data-code="${esc(r.code)}" data-lock="${r.lock?1:""}" data-title="${esc(r.title)}"${full?" disabled":""}>${full?"가득 참":r.phase==="lobby"?"입장":"들어가기"}</button>`;
+      return `<li><div class="rinfo"><span><b>${esc(r.title)}</b>${tags}</span><span class="note">${r.count}/${MAXP} · ${st}${r.pub?" · "+esc(r.code):""}</span></div>${btn}</li>`;
+    }).join(""):'<li class="empty">지금 열린 방이 없어요. 방을 만들어 보세요.</li>';
+  }
+  if(html===Dir.shown)return;   // the hub re-sends the list every few seconds; skip no-op redraws
+  Dir.shown=html;box.innerHTML=html;
+  box.querySelectorAll("button[data-code]").forEach(b=>b.onclick=()=>{
+    const c=b.dataset.code;
+    if(b.dataset.lock&&!store.get("yd-pw-"+c))showPwBox(c,b.dataset.title,"비밀번호가 필요한 방이에요.");
+    else enterTable(c,false);
+  });
+}
+let pwFor=null;
+function showPwBox(c,title,msg){
+  pwFor=c;$("pwBox").hidden=false;
+  $("pwMsg").innerHTML=`<b>${esc(title||c)}</b> · ${esc(msg)}`;
+  $("pwInput").value="";setTimeout(()=>$("pwInput").focus(),0);
+}
+function hidePwBox(){pwFor=null;$("pwBox").hidden=true}
+function netMsg(e){return e&&e.code==="notfound"?"이 코드의 테이블을 찾지 못했어요. 코드가 맞는지, 방장이 페이지를 열어 두었는지 확인해 주세요.":e&&e.code==="taken"?"이미 쓰고 있는 코드예요. 다시 시도해 주세요.":"연결 서버에 닿지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요."}
+
+/* ---------- state ----------
+   G (shared, versioned): {phase:"lobby"|"play", gid, players:[{cid,name,ready}]}
+   Each player's board lives in their own presence and only they write it. */
+let mode=null;               // "online" | "local"
+let T=null,code=null,G=null,peers=[],mePeer=null,creating=false,joinTimer=null,rejoining=false;
+let myName=(store.get("yd-nick")||"").slice(0,12);
+let myReady=false,myBoard=null,overDismissed=null;
+const boards=new Map();      // cid -> last known board (others online; everyone locally)
+const lastK=new Map();       // cid -> last score key already toasted
+const busy=new Map();        // cid -> landing animation running
+const stopT=new Map();       // cid -> auto-stop timer
+
+function freshBoard(gid){return{gid,dice:[1,2,3,4,5],held:[false,false,false,false,false],mask:[false,false,false,false,false],rolls:0,rolling:false,rollId:0,scores:Array(12).fill(null),last:null}}
+function validBoard(b){
+  try{
+    return !!b&&typeof b==="object"&&isInt(b.gid,1,2e9)&&isInt(b.rolls,0,3)&&typeof b.rolling==="boolean"&&isInt(b.rollId,0,2e9)
+      &&Array.isArray(b.dice)&&b.dice.length===5&&b.dice.every(v=>isInt(v,1,6))
+      &&Array.isArray(b.held)&&b.held.length===5&&Array.isArray(b.mask)&&b.mask.length===5
+      &&Array.isArray(b.scores)&&b.scores.length===12&&b.scores.every(v=>v===null||isInt(v,0,50));
+  }catch(e){return false}
+}
+function validG(g){
+  try{
+    if(!g||typeof g!=="object"||!isInt(g.v,1,1e9)||!["lobby","play","over"].includes(g.phase))return false;
+    if(!Array.isArray(g.players)||g.players.length<1||g.players.length>MAXP)return false;
+    for(const p of g.players)if(!p||typeof p.cid!=="string"||!/^[A-Za-z0-9]{1,40}$/.test(p.cid)||typeof p.name!=="string"||p.name.length>12)return false;
+    if(g.phase!=="lobby"&&!isInt(g.gid,1,2e9))return false;
+    if(g.title!==undefined&&(typeof g.title!=="string"||g.title.length>20))return false;
+    if(g.lock!==undefined&&typeof g.lock!=="boolean")return false;
+    if(g.pub!==undefined&&typeof g.pub!=="boolean")return false;
+    if(g.lid!==undefined&&(typeof g.lid!=="string"||!/^[a-z0-9]{6,20}$/.test(g.lid)))return false;
+    if(g.banned!==undefined&&(!Array.isArray(g.banned)||g.banned.length>50||!g.banned.every(c=>typeof c==="string"&&c.length<=40)))return false;
+    if(g.phase==="over"){
+      if(!Array.isArray(g.final)||g.final.length!==g.players.length)return false;
+      for(const f of g.final)if(!f||typeof f.cid!=="string"||typeof f.name!=="string"||f.name.length>12||!isInt(f.t,0,500)||typeof f.away!=="boolean")return false;
+    }
+    return true;
+  }catch(e){return false}
+}
+function better(a,b){if(!b)return true;if(a.v!==b.v)return a.v>b.v;return String(a.w)>String(b.w)}
+const done=b=>!!b&&b.scores.every(v=>v!==null);
+function peerCid(p){const c=p&&p.presence&&p.presence.cid;return typeof c==="string"&&/^[a-z0-9]{8,40}$/.test(c)?c:null}
+function peerName(p){const n=p&&p.presence&&typeof p.presence.name==="string"?p.presence.name.slice(0,12).trim():"";return n||"손님"}
+function peerByCid(c){return peers.find(p=>peerCid(p)===c)}
+function presentCids(){const s=new Set();for(const p of peers){const c=peerCid(p);if(c)s.add(c)}return s}
+function isAway(cid){return mode==="online"&&!presentCids().has(cid)}
+function boardOf(cid){if(!G||G.phase==="lobby")return null;const b=mode==="online"&&cid===myCid?myBoard:boards.get(cid);return b&&b.gid===G.gid?b:null}
+function isMine(cid){return mode==="local"||cid===myCid}
+function seated(){return !!(G&&G.players.some(p=>p.cid===myCid))}
+function effHost(){if(!G)return null;if(mode==="local")return myCid;const pr=presentCids();const h=G.players.find(p=>pr.has(p.cid));return h?h.cid:null}
+function isOver(){return !!G&&G.phase==="over"}
+// The game ends once everyone still connected has filled all 12 boxes. Anyone who dropped
+// and hasn't come back is recorded as disconnected with their last known score.
+function maybeFinish(){
+  if(!G||G.phase!=="play")return;
+  if(mode==="online"&&effHost()!==myCid)return;
+  const here=G.players.filter(p=>!isAway(p.cid));
+  if(!here.length||!here.every(p=>done(boardOf(p.cid))))return;
+  const final=G.players.map(p=>{const b=boardOf(p.cid);return{cid:p.cid,name:p.name,t:totals(b&&b.scores).total,away:!done(b)}});
+  commitG(Object.assign(clone(G),{phase:"over",final}));
+}
+
+function commitG(ng){
+  // room settings ride along on every version unless explicitly changed
+  if(G)for(const k of ["title","lock","pub","banned","lid"])if(ng[k]===undefined&&G[k]!==undefined)ng[k]=G[k];
+  ng.v=(G?G.v:0)+1;ng.w=mePeer||"local";G=ng;
+  if(mode==="online"&&T)T.presence({game:G}).catch(()=>{});
+  syncMyBoard();render();
+}
+function pushBoard(){
+  if(mode!=="online"||!myBoard)return;
+  store.set("yd-board",JSON.stringify(myBoard));
+  if(T)T.presence({board:myBoard}).catch(()=>{});
+}
+function setBoard(cid,b){if(mode==="online"){myBoard=b;pushBoard()}else boards.set(cid,b);render();maybeFinish()}
+// Make sure my own board belongs to the current game; on a rejoin, pick up where I left off.
+function syncMyBoard(){
+  if(mode!=="online"||!G||G.phase==="lobby"||!seated())return;
+  if(myBoard&&myBoard.gid===G.gid)return;
+  let b=null;try{b=JSON.parse(store.get("yd-board")||"null")}catch(e){}
+  if(!(validBoard(b)&&b.gid===G.gid)){const o=boards.get(myCid);b=validBoard(o)&&o.gid===G.gid?clone(o):null}
+  if(!b&&G.phase==="over")return;
+  myBoard=b?Object.assign(b,{rolling:false}):freshBoard(G.gid);
+  pushBoard();
+}
+
+/* ---------- online ---------- */
+function attach(t){
+  T=t;
+  T.onPeers(onPeers,onLost);
+  T.presence({name:myName,ready:myReady,game:G,cid:myCid,board:myBoard}).catch(()=>{});
+}
+let tablePw="",newRoom=null,joining=false;
+async function enterTable(c,isCreate,pwIn){
+  if(joining)return;
+  const nick=$("nick").value.trim().slice(0,12);
+  if(!nick){$("homeMsg").textContent="닉네임을 먼저 적어 주세요.";$("nick").focus();return}
+  c=c.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  if(c.length<4){$("homeMsg").textContent="4글자 테이블 코드를 입력해 주세요.";$("joinCode").focus();return}
+  if(!netReady()){$("netErr").hidden=false;$("homeMsg").textContent="온라인 연결 모듈을 불러오지 못했어요.";return}
+  myName=nick;store.set("yd-nick",nick);
+  let pw=isCreate?$("roomPw").value:(pwIn!==undefined?pwIn:(store.get("yd-pw-"+c)||""));
+  if(isCreate){
+    const pub=document.querySelector('input[name=vis]:checked').value==="pub";
+    newRoom={title:($("roomTitle").value.trim()||nick+"의 방").slice(0,20),lock:!!pw,pub,lid:randId()};
+  }
+  $("homeMsg").textContent=isCreate?"테이블 만드는 중…":"테이블 찾는 중…";
+  joining=true;$("createBtn").disabled=$("joinBtn").disabled=$("pwGo").disabled=true;
+  let t=null;
+  try{
+    for(let tries=0;;tries++){
+      try{t=await openTable(c,isCreate,pw);break}
+      catch(e){
+        if(e&&e.code==="taken"&&isCreate&&tries<4){c=newCode();continue}
+        if(e&&e.code==="badpw"){
+          store.set("yd-pw-"+c,"");$("homeMsg").textContent="";
+          showPwBox(c,(Dir.rooms||[]).find(r=>r.code===c)?.title||c,pw?"비밀번호가 틀렸어요. 다시 입력해 주세요.":"비밀번호가 필요한 방이에요.");
+        }else $("homeMsg").textContent=e&&e.code==="kicked"?"이 방에서 내보내져서 들어갈 수 없어요.":netMsg(e);
+        return;
+      }
+    }
+  }finally{joining=false;$("createBtn").disabled=$("joinBtn").disabled=$("pwGo").disabled=false}
+  hidePwBox();
+  tablePw=pw;if(pw)store.set("yd-pw-"+c,pw);
+  mode="online";code=c;creating=isCreate;G=null;mePeer=null;peers=[];myReady=false;myBoard=null;
+  boards.clear();lastK.clear();resetViews();
+  try{history.replaceState(null,"",location.pathname+location.search+"#"+c)}catch(e){}
+  attach(t);
+  clearTimeout(joinTimer);
+  if(!isCreate)joinTimer=setTimeout(()=>{if(!G)$("lobbyMsg").textContent="테이블에 연결됐지만 게임 정보를 아직 받지 못했어요. 잠시만 기다려 주세요."},5000);
+  $("homeMsg").textContent="";
+  render();
+}
+// The relay (host) vanished: keep our copy of everything, rejoin the code or take it over.
+async function onLost(err){
+  if(mode!=="online"||rejoining)return;
+  if(err&&err.code==="kicked"){kickedOut();return}
+  rejoining=true;T=null;peers=peers.filter(p=>p.sameTab);
+  toast("연결이 끊겼어요. 다시 연결하는 중…");render();
+  const c=code,until=Date.now()+90000;
+  while(mode==="online"&&code===c&&Date.now()<until){
+    try{const t=await openTable(c,false,tablePw);if(mode!=="online"||code!==c){t.leave();break}attach(t);rejoining=false;toast("다시 연결됐어요.");return}
+    catch(e){if(e&&e.code==="kicked"){rejoining=false;kickedOut();return}}
+    await new Promise(r=>setTimeout(r,400+Math.random()*1200));
+    if(mode!=="online"||code!==c)break;
+    try{const t=await openTable(c,true,tablePw);if(mode!=="online"||code!==c){t.leave();break}attach(t);rejoining=false;toast("테이블을 이어받았어요.");return}catch(e){}
+    await new Promise(r=>setTimeout(r,1500));
+  }
+  rejoining=false;
+  if(mode==="online"&&code===c){toast("다시 연결하지 못했어요. 같은 코드로 다시 입장해 주세요.");leave()}
+}
+function onPeers(ch){
+  peers=ch.peers.slice();
+  const mine=peers.find(p=>p.sameTab);if(mine)mePeer=mine.peer;
+  let adopted=false;
+  for(const p of peers){
+    const pr=p.presence||{};
+    if(pr.game&&validG(pr.game)&&better(pr.game,G)){G=pr.game;adopted=true}
+    const c=peerCid(p);
+    if(c&&!p.sameTab&&validBoard(pr.board))boards.set(c,pr.board);
+  }
+  if(adopted&&T)T.presence({game:G}).catch(()=>{});
+  if(creating&&!G&&mePeer){creating=false;commitG(Object.assign({phase:"lobby",players:[{cid:myCid,name:myName,ready:true}],banned:[]},newRoom));return}
+  if(G)creating=false;
+  const banned=new Set(G&&G.banned||[]);
+  if(banned.has(myCid)){kickedOut();return}
+  // whoever relays the table also shuts the door on removed players
+  if(T&&T.isHost)for(const p of peers)if(!p.sameTab&&banned.has(peerCid(p)))T.drop(p.peer);
+  syncMyBoard();
+  hostDuties();
+  render();
+  maybeFinish();
+}
+function hostDuties(){
+  if(mode!=="online"||!G||G.phase!=="lobby"||effHost()!==myCid)return;
+  const pr=presentCids();const list=[];
+  for(const p of G.players)if(pr.has(p.cid)){const peer=peerByCid(p.cid);list.push({cid:p.cid,name:p.cid===myCid?myName:peerName(peer),ready:p.cid===myCid?true:!!(peer&&peer.presence&&peer.presence.ready===true)})}
+  for(const p of peers){
+    if(list.length>=MAXP)break;
+    const c=peerCid(p);if(!c||list.some(x=>x.cid===c)||(G.banned||[]).includes(c))continue;
+    if(!p.presence||typeof p.presence.name!=="string")continue;
+    list.push({cid:c,name:peerName(p),ready:p.presence.ready===true});
+  }
+  if(JSON.stringify(list)!==JSON.stringify(G.players)){const ng=clone(G);ng.players=list;commitG(ng)}
+}
+// 방장 only: remove a player and keep them out of this room
+function kick(cid){
+  if(mode!=="online"||!G||G.phase==="over"||effHost()!==myCid||cid===myCid)return;
+  const p=G.players.find(x=>x.cid===cid);if(!p)return;
+  if(!confirm(`"${p.name}"님을 이 방에서 내보낼까요? 다시 들어올 수 없어요.`))return;
+  const ng=clone(G);ng.players=ng.players.filter(x=>x.cid!==cid);ng.banned=[...(G.banned||[]),cid].slice(-50);
+  if(!ng.players.length)return;
+  commitG(ng);toast(`${p.name}님을 내보냈어요.`);
+}
+function kickedOut(){
+  const title=G&&G.title;
+  leave();
+  $("homeMsg").textContent=`방장이 ${title?"「"+title+"」":"이 방"}에서 내보냈어요.`;
+}
+function setPublic(pub){
+  if(mode!=="online"||!G||effHost()!==myCid)return;
+  commitG(Object.assign(clone(G),{pub}));
+  toast(pub?"공개방으로 바꿨어요. 목록에서 바로 들어올 수 있어요.":"비공개방으로 바꿨어요. 목록에는 '비공개'로 보이고, 코드나 링크로만 들어올 수 있어요.");
+}
+function leave(){
+  for(const t of stopT.values())clearTimeout(t);stopT.clear();stopRattle();rejoining=false;tablePw="";
+  if(T){T.leave().catch(()=>{});T=null}
+  mode=null;G=null;code=null;mePeer=null;peers=[];myBoard=null;boards.clear();lastK.clear();busy.clear();resetViews();
+  try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+  render();
+}
+
+/* ---------- board actions (each player only touches their own board) ---------- */
+function canAct(cid){
+  if(!G||G.phase!=="play"||!isMine(cid))return false;
+  if(mode==="online"&&!seated())return false;
+  const b=boardOf(cid);return !!b&&!done(b);
+}
+function doRoll(cid){
+  if(!canAct(cid)||busy.get(cid))return;
+  const b0=boardOf(cid);
+  if(b0.rolling){doStop(cid);return}
+  if(b0.rolls>=3||b0.held.every(Boolean))return;
+  const b=clone(b0);b.rolling=true;setBoard(cid,b);
+  clearTimeout(stopT.get(cid));stopT.set(cid,setTimeout(()=>{const x=boardOf(cid);if(x&&x.rolling)doStop(cid)},3500));
+}
+function doStop(cid){
+  const b0=boardOf(cid);if(!canAct(cid)||!b0.rolling)return;
+  clearTimeout(stopT.get(cid));
+  const b=clone(b0);
+  b.mask=b.held.map(h=>!h);
+  b.dice=b.dice.map((v,i)=>b.held[i]?v:rnd6());
+  b.rolls++;b.rolling=false;b.rollId=rid();
+  setBoard(cid,b);
+}
+function toggleHold(cid,i){
+  const b0=boardOf(cid);
+  if(!canAct(cid)||b0.rolling||busy.get(cid)||b0.rolls<1||b0.rolls>=3)return;
+  const b=clone(b0);b.held[i]=!b.held[i];setBoard(cid,b);
+}
+function pick(cid,c){
+  const b0=boardOf(cid);
+  if(!canAct(cid)||b0.rolling||busy.get(cid)||b0.rolls<1||b0.scores[c]!==null)return;
+  const b=clone(b0);const pts=calc(b.dice,c);
+  b.scores[c]=pts;b.last={c,pts,k:rid()};
+  b.rolls=0;b.rolling=false;b.held=[false,false,false,false,false];b.mask=[false,false,false,false,false];
+  setBoard(cid,b);
+}
+
+/* ---------- per-player board views ---------- */
+const PIPS={1:[[2,2]],2:[[1,3],[3,1]],3:[[1,3],[2,2],[3,1]],4:[[1,1],[1,3],[3,1],[3,3]],5:[[1,1],[1,3],[2,2],[3,1],[3,3]],6:[[1,1],[2,1],[3,1],[1,3],[2,3],[3,3]]};
+function face(el,v){el.className=el.className.replace(/\bv\d\b/g,"").trim()+" v"+v;el.innerHTML=PIPS[v].map(([r,c])=>`<i style="grid-area:${r}/${c}"></i>`).join("");el.setAttribute("aria-label","주사위 "+v)}
+const posCache=new Map();
+function positions(seed){
+  if(posCache.has(seed))return posCache.get(seed);
+  // 3x2 grid of cells to the right of the cup; each die gets its own cell, so dice never overlap
+  const r=mulberry(seed||7),cells=[];
+  for(const y of[33,67])for(const x of[42,62,82])cells.push({x,y});
+  for(let i=cells.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[cells[i],cells[j]]=[cells[j],cells[i]]}
+  const out=cells.slice(0,5).map(c=>({x:c.x+(r()*6-3),y:c.y+(r()*8-4),r:Math.round(r()*44-22)}));
+  posCache.set(seed,out);return out;
+}
+const views=new Map();
+function resetViews(){for(const v of views.values())v.el.remove();views.clear()}
+function makeView(cid){
+  const el=document.createElement("div");el.className="pboard";
+  el.innerHTML=`<div class="phead"><span class="pips3" aria-label="굴린 횟수"><span></span><span></span><span></span></span><span class="pround"></span><span class="ptot"></span></div>
+<div class="tray"><div class="cup"><div class="top"></div><div class="body"></div><div class="band b1"></div><div class="band b2"></div></div><div class="hint"></div></div>
+<div class="slots"></div>
+<div class="controls"><button class="btn rollb" type="button">굴리기</button><span class="note rnote"></span></div>
+<div class="pfoot"><span class="pname"></span><span class="ptags"></span><button class="btn ghost small kickb" type="button" hidden>내보내기</button></div>`;
+  const q=s=>el.querySelector(s);
+  const v={cid,el,tray:q(".tray"),cup:q(".cup"),hint:q(".hint"),slots:q(".slots"),rollBtn:q(".rollb"),rnote:q(".rnote"),ctrl:q(".controls"),
+    pips:q(".pips3"),name:q(".pname"),tags:q(".ptags"),tot:q(".ptot"),round:q(".pround"),dieEls:[],slotEls:[],seen:{init:false,rolling:false,rollId:null}};
+  for(let i=0;i<5;i++){
+    const d=document.createElement("button");d.type="button";d.className="die";d.onclick=()=>toggleHold(cid,i);face(d,i+1);v.dieEls.push(d);
+    const s=document.createElement("div");s.className="slot";v.slotEls.push(s);v.slots.appendChild(s);
+  }
+  v.rollBtn.onclick=()=>doRoll(cid);
+  v.kickBtn=el.querySelector(".kickb");v.kickBtn.onclick=()=>kick(cid);
+  return v;
+}
+// Draw one board's tray; animate a fresh landing for everyone watching.
+function syncTray(v,b,act,away){
+  const rolling=!!b&&b.rolling&&!away;
+  const first=!v.seen.init;
+  const landed=!!b&&!first&&!rolling&&b.rollId!==v.seen.rollId&&b.rolls>0;
+  v.cup.classList.toggle("shaking",rolling);
+  if(landed){v.cup.classList.remove("pour");void v.cup.offsetWidth;v.cup.classList.add("pour");setTimeout(()=>v.cup.classList.remove("pour"),600);if(ready())thump(S.ctx.currentTime,isMine(v.cid)?.5:.2)}
+  const pos=positions(b?b.rollId:0);
+  const trect=v.tray.getBoundingClientRect();
+  const can=act&&b&&!rolling&&b.rolls>0&&b.rolls<3;
+  let maxDur=0;
+  for(let i=0;i<5;i++){
+    const el=v.dieEls[i];
+    el.classList.toggle("can",!!can);el.disabled=!can;
+    const show=!!b&&b.rolls>0&&!(rolling&&!b.held[i]);
+    if(!show){el.remove();continue}
+    if(b.held[i]){
+      el.style.left=el.style.top="";el.style.removeProperty("--r");el.getAnimations().forEach(a=>a.cancel());
+      if(el.parentNode!==v.slotEls[i])v.slotEls[i].appendChild(el);
+      face(el,b.dice[i]);continue;
+    }
+    const p=pos[i];
+    if(el.parentNode!==v.tray)v.tray.appendChild(el);
+    el.style.left=p.x+"%";el.style.top=p.y+"%";el.style.setProperty("--r",p.r+"deg");
+    if(landed&&b.mask[i]){
+      const dur=reduced?220:780+i*70;maxDur=Math.max(maxDur,dur);
+      const dx=(0.14-p.x/100)*trect.width,dy=(0.5-p.y/100)*trect.height;
+      const r0=p.r-360-Math.round(Math.random()*180);
+      el.animate(reduced?[{opacity:0},{opacity:1}]:[
+        {transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${r0}deg) scale(.5)`,opacity:0},
+        {offset:.12,opacity:1},
+        {offset:.6,transform:`translate(-50%,-50%) translate(${dx*.05}px,${dy*.05}px) rotate(${p.r+18}deg) scale(1.1)`},
+        {offset:.78,transform:`translate(-50%,-50%) translate(0px,-7px) rotate(${p.r-6}deg) scale(1.03)`},
+        {transform:`translate(-50%,-50%) rotate(${p.r}deg) scale(1)`,opacity:1}],{duration:dur,easing:"cubic-bezier(.2,.6,.3,1)"});
+      if(!reduced){
+        const final=b.dice[i];let n=0;
+        const iv=setInterval(()=>{face(el,1+Math.floor(Math.random()*6));if(++n>dur*.6/70){clearInterval(iv);face(el,final)}},70);
+        if(S.ctx){const t=S.ctx.currentTime,a=isMine(v.cid)?1:.4;clack(t+dur*.6/1000,.55*a,2400+Math.random()*900);clack(t+dur*.78/1000,.25*a,2800+Math.random()*700);clack(t+dur*.95/1000,.1*a,3200)}
+      }else face(el,b.dice[i]);
+    }else face(el,b.dice[i]);
+  }
+  if(landed){busy.set(v.cid,true);setTimeout(()=>{busy.set(v.cid,false);render()},maxDur+40)}
+  v.seen.init=true;v.seen.rolling=rolling;v.seen.rollId=b?b.rollId:null;
+  return rolling;
+}
+function paintView(v,p){
+  const b=boardOf(p.cid),away=isAway(p.cid),mine=isMine(p.cid)&&(mode==="local"||seated()),act=canAct(p.cid)&&!away;
+  v.el.classList.toggle("me",mode==="online"&&p.cid===myCid);
+  v.el.classList.toggle("away",away);
+  v.name.textContent=p.name;
+  const fin=done(b);
+  v.tags.innerHTML=(mode==="online"&&p.cid===myCid?'<span class="tag">나</span> ':"")+(away?'<span class="tag bad">연결 끊김</span>':fin?'<span class="tag ok">완료</span>':"");
+  const filled=b?b.scores.filter(x=>x!==null).length:0;
+  v.round.textContent=fin?"":`${Math.min(filled+1,12)}/12`;
+  v.tot.textContent=b?totals(b.scores).total:0;
+  [...v.pips.children].forEach((s,i)=>s.classList.toggle("on",!!b&&i<b.rolls));
+  const rolling=syncTray(v,b,act,away);
+  let hint="";
+  if(away)hint=fin?"":"연결이 끊겼어요 · 다시 들어오면 이어서 해요";
+  else if(!b)hint="준비 중…";
+  else if(fin)hint="12칸 완료!";
+  else if(rolling)hint=act?"흔드는 중… 멈추기를 눌러 주세요":"흔드는 중…";
+  else if(b.rolls===0)hint=mine?"굴리기를 눌러 시작하세요":"";
+  v.hint.textContent=hint;
+  v.ctrl.hidden=!mine||fin;
+  v.kickBtn.hidden=!(mode==="online"&&G.phase==="play"&&effHost()===myCid&&p.cid!==myCid);
+  if(mine&&b){
+    v.rollBtn.textContent=b.rolling?"멈추기":(b.rolls===0?"굴리기":"다시 굴리기");
+    v.rollBtn.disabled=!act||(!b.rolling&&(b.rolls>=3||busy.get(p.cid)||b.held.every(Boolean)));
+    v.rnote.textContent=b.rolling?"":b.rolls>=3?"점수판에서 칸을 골라 주세요":b.rolls>0?"주사위를 눌러 고정하거나 점수판에서 칸을 고르세요":"";
+  }
+  // toast other players' scoring
+  if(b&&b.last&&!isMine(p.cid)){
+    if(lastK.has(p.cid)&&lastK.get(p.cid)!==b.last.k)toast(`${p.name} · ${CATS[b.last.c][0]} ${b.last.pts}점`);
+    lastK.set(p.cid,b.last.k);
+  }else if(!lastK.has(p.cid))lastK.set(p.cid,b&&b.last?b.last.k:null);
+  return rolling&&(mode==="local"||p.cid===myCid);
+}
+
+/* ---------- render ---------- */
+function show(id){for(const s of["home","lobby","game"])$(s).hidden=s!==id}
+function render(){
+  $("codeChip").hidden=!(mode==="online"&&code);$("codeChipVal").textContent=code||"";
+  if(!mode){show("home");$("over").hidden=true;$("ended").hidden=true;stopRattle();return}
+  if(!G||G.phase==="lobby"){if(mode==="online")renderLobby();$("over").hidden=true;$("ended").hidden=true;stopRattle();return}
+  show("game");renderGame();
+}
+function renderLobby(){
+  show("lobby");$("lobbyCode").textContent=code;$("copyLink").hidden=!shareLink();
+  const ul=$("plist");ul.innerHTML="";
+  if(!G){$("readyBtn").hidden=true;$("startBtn").hidden=true;if(!$("lobbyMsg").textContent)$("lobbyMsg").textContent="테이블을 찾는 중…";return}
+  clearTimeout(joinTimer);
+  const host=effHost(),amHost=host===myCid,pub=G.pub!==false;
+  $("lobbyTitle").textContent=G.title?"대기실 · "+G.title:"대기실";
+  // room settings line; the 방장 can flip public/private here
+  const info=$("lobbyInfo");info.innerHTML="";
+  info.insertAdjacentHTML("beforeend",`<span class="tag${pub?" ok":""}">${pub?"공개방":"비공개방"}</span> ${G.lock?`<span class="tag"><span class="lock">${LOCK}</span> 비밀번호</span> `:""}`);
+  if(amHost){
+    const b=document.createElement("button");b.type="button";b.className="btn ghost small";b.style.marginLeft="6px";
+    b.textContent=pub?"비공개로 바꾸기":"공개로 바꾸기";b.onclick=()=>setPublic(!pub);info.appendChild(b);
+  }
+  G.players.forEach(p=>{
+    const li=document.createElement("li");
+    li.innerHTML=`<b>${esc(p.name)}</b>${p.cid===myCid?' <span class="tag">나</span>':""}<span class="sp"></span>${p.cid===host?'<span class="tag host">방장</span>':(p.ready?'<span class="tag ok">준비 완료</span>':'<span class="tag">대기 중</span>')}`;
+    if(amHost&&p.cid!==myCid){const k=document.createElement("button");k.type="button";k.className="btn ghost small";k.textContent="내보내기";k.onclick=()=>kick(p.cid);li.appendChild(k)}
+    ul.appendChild(li);
+  });
+  const allReady=G.players.filter(p=>p.cid!==host).every(p=>p.ready);
+  if(myCid===host){
+    $("readyBtn").hidden=true;$("startBtn").hidden=false;
+    $("startBtn").disabled=!allReady;
+    $("startBtn").textContent=G.players.length===1?"혼자 시작":`게임 시작 (${G.players.length}명)`;
+    $("lobbyMsg").textContent=allReady?(G.players.length===1?"친구를 기다리거나 혼자 연습할 수 있어요.":"모두 준비됐어요. 시작해 주세요."):"모든 참가자가 준비하면 시작할 수 있어요.";
+  }else{
+    $("startBtn").hidden=true;$("readyBtn").hidden=!seated();
+    $("readyBtn").textContent=myReady?"준비 취소":"준비";
+    $("readyBtn").className=myReady?"btn ghost":"btn";
+    $("lobbyMsg").textContent=seated()?"준비를 누르면 방장이 게임을 시작할 수 있어요.":(G.players.length>=MAXP?"자리가 가득 찼어요. 다음 판을 기다려 주세요.":"자리에 앉는 중…");
+  }
+}
+function renderGame(){
+  const ps=G.players;
+  for(const [c,v] of views)if(!ps.some(p=>p.cid===c)){v.el.remove();views.delete(c)}
+  // my board big under the central score table; everyone else alternates left/right
+  const meP=mode==="online"?ps.find(p=>p.cid===myCid):null;
+  const cols=[[],[]];ps.filter(p=>p!==meP).forEach((p,i)=>cols[i%2].push(p));
+  let rattle=false;
+  [[$("colM"),meP?[meP]:[]],[$("colL"),cols[0]],[$("colR"),cols[1]]].forEach(([col,list])=>{
+    list.forEach((p,i)=>{
+      let v=views.get(p.cid);if(!v){v=makeView(p.cid);views.set(p.cid,v)}
+      if(col.children[i]!==v.el)col.insertBefore(v.el,col.children[i]||null);
+      if(paintView(v,p))rattle=true;
+    });
+  });
+  if(rattle)startRattle();else stopRattle();
+  // status line
+  const away=ps.filter(p=>isAway(p.cid)&&!done(boardOf(p.cid))).map(p=>p.name);
+  const fin=isOver();
+  if(fin)$("statusMain").textContent="게임 종료";
+  else if(mode==="local")$("statusMain").textContent="각자 자기 판에서 굴려요";
+  else if(!seated())$("statusMain").textContent="관전 중";
+  else if(done(myBoard))$("statusMain").textContent="내 12칸 완료 · 다른 사람을 기다려요";
+  else{const f=myBoard?myBoard.scores.filter(x=>x!==null).length:0;$("statusMain").textContent=`내 라운드 ${Math.min(f+1,12)} / 12`}
+  $("statusSub").textContent=fin?"":away.length?`연결 끊김: ${away.join(", ")} · 돌아오면 이어서 해요 (나머지가 다 끝내면 마지막 점수로 기록돼요)`:(rejoining?"다시 연결하는 중…":"");
+  renderSheet();
+  renderOver();
+}
+let flashed=new Map();
+function renderSheet(){
+  const ps=G.players;
+  let h="<thead><tr><th>항목</th>";
+  const goneSet=new Set(isOver()?G.final.filter(f=>f.away).map(f=>f.cid):[]);
+  ps.forEach(p=>h+=`<th class="${mode==="online"&&p.cid===myCid?"mine":""}" title="${esc(p.name)}">${esc(p.name)}${goneSet.has(p.cid)?'<br><span class="tag bad">접속 끊김</span>':""}</th>`);
+  h+="</tr></thead><tbody>";
+  const bs=ps.map(p=>boardOf(p.cid));
+  const row=c=>{
+    let r=`<tr><td><span class="cat">${CATS[c][0]}<small>${CATS[c][1]}</small></span></td>`;
+    ps.forEach((p,i)=>{
+      const b=bs[i],mineCol=mode==="online"&&p.cid===myCid;let cell="";
+      if(b){
+        const v=b.scores[c];
+        if(v!==null)cell=`<span class="num${b.last&&b.last.c===c&&flashed.get(p.cid)!==b.last.k?" fresh":""}">${v}</span>`;
+        else if(b.rolls>0&&!b.rolling&&!busy.get(p.cid)&&!isAway(p.cid)){const pt=calc(b.dice,c);cell=canAct(p.cid)?`<button type="button" class="pot${pt===0?" zero":""}" data-cid="${esc(p.cid)}" data-c="${c}">${pt}</button>`:`<span class="ghostpot">${pt}</span>`}
+      }
+      r+=`<td class="${mineCol?"mine":""}">${cell}</td>`;
+    });
+    return r+"</tr>";
+  };
+  for(let c=0;c<6;c++)h+=row(c);
+  h+=`<tr class="sub"><td>상단 소계</td>${bs.map(b=>`<td class="num">${totals(b&&b.scores).up}/63</td>`).join("")}</tr>`;
+  h+=`<tr class="sub"><td>보너스 +35</td>${bs.map(b=>`<td class="num">${totals(b&&b.scores).bonus?"+35":"·"}</td>`).join("")}</tr>`;
+  for(let c=6;c<12;c++)h+=row(c);
+  // after the end, totals come from the recorded result (covers boards this view never saw)
+  const tot=i=>{if(isOver()){const f=G.final.find(x=>x.cid===ps[i].cid);if(f)return f.t}return totals(bs[i]&&bs[i].scores).total};
+  h+=`<tr class="total"><td>총점</td>${ps.map((p,i)=>`<td class="num">${tot(i)}</td>`).join("")}</tr></tbody>`;
+  $("sheet").innerHTML=h;
+  ps.forEach((p,i)=>{if(bs[i]&&bs[i].last)flashed.set(p.cid,bs[i].last.k)});
+  $("sheet").querySelectorAll("button.pot").forEach(b=>b.onclick=()=>pick(b.dataset.cid,+b.dataset.c));
+}
+// Finishers are ranked (ties share a place); disconnected players follow, unranked.
+function standings(){
+  const list=G.final.filter(f=>!f.away).map(f=>({name:f.name,cid:f.cid,t:f.t})).sort((a,b)=>b.t-a.t);
+  list.forEach((x,i)=>x.rank=i>0&&x.t===list[i-1].t?list[i-1].rank:i+1);
+  const gone=G.final.filter(f=>f.away).map(f=>({name:f.name,cid:f.cid,t:f.t,away:true})).sort((a,b)=>b.t-a.t);
+  return {list,gone};
+}
+function renderOver(){
+  if(!isOver()){$("over").hidden=true;$("ended").hidden=true;return}
+  // I dropped out and came back after the end: tell me, then back to the start screen.
+  const meF=mode==="online"?G.final.find(f=>f.cid===myCid):null;
+  if(meF&&meF.away){$("ended").hidden=false;$("over").hidden=true;return}
+  $("ended").hidden=true;
+  if(overDismissed===G.gid){$("over").hidden=true;return}
+  $("over").hidden=false;
+  const {list,gone}=standings();
+  const winners=list.filter(x=>x.rank===1);
+  $("winner").innerHTML=winners.length?`<div class="wn">${winners.map(w=>`"${esc(w.name)}"`).join(" · ")}</div><div class="wr">1ST!</div><div class="ws">${winners[0].t}점${winners.length>1?" · 공동 우승":""}</div>`:"";
+  $("rank").innerHTML=list.map(p=>`<li class="${p.rank===1?"first":""}"><span class="pl">${ordinal(p.rank)}</span><span class="nm">"${esc(p.name)}" ${ordinal(p.rank)}!</span><span class="sc">${p.t}</span></li>`).join("")
+    +gone.map(p=>`<li class="gone"><span class="pl">접속 끊김</span><span class="nm">"${esc(p.name)}"</span><span class="sc">${p.t}</span></li>`).join("");
+  const host=mode==="local"||effHost()===myCid;
+  $("againBtn").hidden=!host;
+  $("overNote").textContent=host?"":"방장이 다시 하기를 누르면 대기실로 돌아가요.";
+}
+let toastT=null;function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),2400)}
+
+/* ---------- wiring ---------- */
+$("nick").value=myName;
+$("createBtn").onclick=()=>enterTable(newCode(),true);
+$("joinBtn").onclick=()=>enterTable($("joinCode").value,false);
+$("joinCode").addEventListener("keydown",e=>{if(e.key==="Enter")$("joinBtn").click()});
+$("nick").addEventListener("keydown",e=>{if(e.key==="Enter")$("createBtn").click()});
+$("readyBtn").onclick=()=>{myReady=!myReady;if(T)T.presence({ready:myReady}).catch(()=>{});renderLobby()};
+$("startBtn").onclick=()=>{
+  if(!G||effHost()!==myCid)return;
+  myBoard=null;
+  commitG({phase:"play",gid:rid(),players:G.players.map(p=>({cid:p.cid,name:p.name}))});
+};
+$("leaveBtn").onclick=leave;$("quitBtn").onclick=leave;$("overLeave").onclick=leave;
+$("endedOk").onclick=()=>{leave();$("homeMsg").textContent="종료된 게임이라 처음 화면으로 돌아왔어요."};
+$("closeOver").onclick=()=>{overDismissed=G&&G.gid;$("over").hidden=true};
+$("againBtn").onclick=()=>{
+  if(mode==="local"){startLocal(G.players.map(p=>p.name));return}
+  if(effHost()!==myCid)return;
+  const pr=presentCids();
+  commitG({phase:"lobby",players:G.players.filter(p=>pr.has(p.cid)).map(p=>({cid:p.cid,name:p.name,ready:p.cid===myCid}))});
+  myReady=false;
+};
+$("copyCode").onclick=()=>{
+  const done=()=>toast("코드를 복사했어요: "+code);
+  try{navigator.clipboard.writeText(code).then(done,()=>toast("코드: "+code))}catch(e){toast("코드: "+code)}
+};
+// A link only works when the page is hosted on the web (not opened as a local file).
+function shareLink(){return /^https?:$/.test(location.protocol)&&code?location.origin+location.pathname+"#"+code:null}
+$("copyLink").onclick=()=>{
+  const l=shareLink();if(!l)return;
+  try{navigator.clipboard.writeText(l).then(()=>toast("링크를 복사했어요."),()=>toast(l))}catch(e){toast(l)}
+};
+// reset my ready flag whenever a table returns to the lobby
+let prevPhase=null;const _render=render;render=function(){if(G&&G.phase!==prevPhase){if(G.phase==="lobby"&&prevPhase&&prevPhase!=="lobby"&&mode==="online"){myReady=false;if(T)T.presence({ready:false}).catch(()=>{})}prevPhase=G.phase}_render();updateReg()};
+// room list: password prompt + create-form hints
+$("pwGo").onclick=()=>{if(pwFor)enterTable(pwFor,false,$("pwInput").value)};
+$("pwInput").addEventListener("keydown",e=>{if(e.key==="Enter")$("pwGo").click()});
+$("pwCancel").onclick=hidePwBox;
+function paintVis(){const pub=document.querySelector('input[name=vis]:checked').value==="pub";$("visNote").textContent=pub?"방 목록에서 누구나 보고 바로 들어올 수 있어요.":"방 목록에 '비공개'로만 보이고, 코드나 링크를 받은 사람만 들어와요."}
+document.querySelectorAll('input[name=vis]').forEach(r=>r.addEventListener("change",paintVis));paintVis();
+
+// local mode
+const ln=$("localNames");
+for(let i=0;i<MAXP;i++){const f=document.createElement("div");f.className="field";f.style.flex="1 1 110px";f.innerHTML=`<label for="ln${i}">플레이어 ${i+1}</label><input id="ln${i}" type="text" maxlength="12" placeholder="${i<2?"이름":"비워 두면 제외"}">`;ln.appendChild(f)}
+$("ln0").value="플레이어 1";$("ln1").value="플레이어 2";
+function startLocal(names){
+  mode="local";boards.clear();lastK.clear();busy.clear();resetViews();
+  const gid=rid();
+  const players=names.map((n,i)=>({cid:"L"+i,name:n}));
+  players.forEach(p=>boards.set(p.cid,freshBoard(gid)));
+  G=null;commitG({phase:"play",gid,players});
+}
+$("localBtn").onclick=()=>{
+  const names=Array.from({length:MAXP},(_,i)=>$("ln"+i).value.trim().slice(0,12)).filter(Boolean);
+  if(!names.length){toast("이름을 한 명 이상 적어 주세요.");return}
+  startLocal(names);
+};
+document.addEventListener("keydown",e=>{
+  if(mode!=="online"||!G||G.phase!=="play"||e.target.tagName==="INPUT")return;
+  if(e.code==="Space"){e.preventDefault();doRoll(myCid)}
+  else if(/^Digit[1-5]$/.test(e.code))toggleHold(myCid,+e.code.slice(5)-1);
+});
+
+const h=(location.hash||"").replace("#","").toUpperCase();
+if(/^[A-Z0-9]{4}$/.test(h)){$("joinCode").value=h;$("homeMsg").textContent="초대받은 테이블 코드("+h+")가 입력됐어요. 닉네임을 적고 입장을 눌러 주세요.";if(!myName)setTimeout(()=>$("nick").focus(),0)}
+$("netErr").hidden=netReady();
+renderRooms();dirStart();
+paintSound();
+render();
+})();
+</script>
+</body>
+</html>
