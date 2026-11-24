@@ -104,12 +104,18 @@ input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
 #home{width:100%;max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 .hero{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:4px 2px 2px}
 .hero .lead{margin:4px 0 0;font-size:15px;color:var(--ink2);max-width:62ch}
-.home-grid{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:18px;align-items:start}
-.home-col{display:flex;flex-direction:column;gap:18px;min-width:0}
+/* desktop: my cards stacked on the left, the room list as one tall card on the right */
+.home-grid{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);
+  grid-template-areas:"me rooms" "join rooms" "create rooms";grid-template-rows:auto auto 1fr;gap:18px;align-items:start}
+.home-col{display:contents}
+.me-card{grid-area:me}.a-join{grid-area:join}.a-create{grid-area:create}
+.rooms{grid-area:rooms;align-self:stretch}
+.rooms .rlist{flex:1 1 auto;max-height:620px;min-height:240px}
+.rooms .rlist li.empty{flex:1;align-items:center;text-align:center;line-height:1.7}
+/* phones: nickname, join by code, room list, then create */
 @media (max-width:860px){
-  .home-grid{display:flex;flex-direction:column;align-items:stretch}
-  .home-col{display:contents}
-  .o1{order:1}.o2{order:2}.o3{order:3}.o4{order:4}.o5{order:5}
+  .home-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"me" "join" "rooms" "create";grid-template-rows:none}
+  .rooms .rlist{max-height:420px;min-height:0}
 }
 .me-card{display:flex;flex-direction:column;gap:8px;background:linear-gradient(160deg,color-mix(in srgb,var(--felt) 9%,var(--panel)),var(--panel) 70%)}
 .join-row{display:flex;gap:8px}
@@ -263,6 +269,8 @@ table.sheet{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;
 .rank .sc{margin-left:auto;font-family:var(--f-num);font-weight:600;font-size:18px}
 #toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:999px;font-size:14px;font-weight:500;opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;z-index:30;max-width:calc(100% - 32px);box-shadow:var(--shadow-lg)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+.updbar{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:12px;
+  padding:8px 8px 8px 16px;border-radius:999px;background:var(--ink);color:var(--bg);font-size:14px;font-weight:600;box-shadow:var(--shadow-lg);max-width:calc(100% - 32px)}
 .sound{display:inline-flex;align-items:center;gap:6px}
 .soundbar{display:inline-flex;align-items:center;gap:10px;padding:4px 12px 4px 4px;border-radius:999px;background:var(--panel);border:1px solid var(--line2);box-shadow:var(--shadow)}
 .soundbar .sound{border:0;box-shadow:none;background:transparent;border-radius:999px}
@@ -326,15 +334,15 @@ table.sheet{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;
         <p class="lead">방을 만들고 코드나 링크를 보내면 끝이에요. 중간에 튕겨도 같은 코드로 들어오면 하던 데서 이어서 해요.</p>
       </div>
     </div>
-    <p id="netErr" class="warn" hidden>온라인 연결 모듈을 불러오지 못했어요. 인터넷에 연결된 상태로 페이지를 새로고침해 주세요. 한 기기 모드는 바로 할 수 있어요.</p>
+    <p id="netErr" class="warn" hidden>온라인 연결 모듈을 불러오지 못했어요. 인터넷에 연결된 상태로 페이지를 새로고침해 주세요.</p>
     <div class="home-grid">
       <div class="home-col">
-        <div class="panel me-card o1">
+        <div class="panel me-card">
           <label for="nick">내 닉네임</label>
           <input id="nick" type="text" maxlength="12" placeholder="예: 주사위장인" autocomplete="nickname">
           <p id="homeMsg" class="note status" role="status"></p>
         </div>
-        <div class="panel stack o4">
+        <div class="panel stack a-create">
           <div class="card-h"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><h2>방 만들기</h2></div>
           <div class="field"><label for="roomTitle">방 이름</label><input id="roomTitle" type="text" maxlength="20" placeholder="비워 두면 '닉네임의 방'"></div>
           <div class="field"><span class="lbl">공개 설정</span>
@@ -347,7 +355,7 @@ table.sheet{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;
           <div class="field"><label for="roomPw">비밀번호 <span style="font-weight:400">(선택)</span></label><input id="roomPw" type="password" maxlength="20" placeholder="비워 두면 비밀번호 없이 입장" autocomplete="new-password"></div>
           <button id="createBtn" class="btn block" type="button">테이블 만들기</button>
         </div>
-        <div class="panel stack o2">
+        <div class="panel stack a-join">
           <div class="card-h"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 4 7 20M17 4l-2 16M4 9h16M3 15h16"/></svg></span><h2>코드로 입장</h2></div>
           <div class="join-row">
             <input id="joinCode" type="text" maxlength="6" placeholder="ABCD" autocomplete="off" aria-label="테이블 코드">
@@ -356,7 +364,7 @@ table.sheet{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;
         </div>
       </div>
       <div class="home-col">
-        <div class="panel stack rooms o3">
+        <div class="panel stack rooms">
           <div class="card-h"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></span><h2>방 목록</h2><span id="roomCount" class="count"></span><span class="sp"></span>
             <button id="roomRefresh" class="btn ghost small" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>새로고침</button></div>
           <ul class="rlist" id="roomList"></ul>
@@ -369,12 +377,6 @@ table.sheet{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;
             </div>
           </div>
           <p class="note">비공개방은 이름만 보이고, 코드나 링크를 받은 사람만 들어갈 수 있어요.</p>
-        </div>
-        <div class="panel stack o5">
-          <div class="card-h"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18h2"/></svg></span><h2>한 기기에서 같이 하기</h2></div>
-          <p class="note">한 화면에 모두의 판이 나와요. 각자 자기 판에서 굴리세요.</p>
-          <div class="names" id="localNames"></div>
-          <button id="localBtn" class="btn ghost block" type="button">이 기기에서 시작</button>
           <details class="rules-d">
             <summary>점수 규칙 보기 · 최대 3번 굴리고 12칸을 한 번씩 채워요</summary>
             <ul class="rules">
@@ -666,104 +668,166 @@ function openTable(c,asHost,pw){
 }
 function newCode(){const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<4;i++)s+=A[Math.floor(Math.random()*A.length)];return s}
 /* ---------- room directory ----------
-   Whichever open page grabs the well-known hub id first keeps the list of open rooms;
-   table hosts register with it and every start screen receives the list. If the hub
-   page closes, the remaining pages race to take over. */
-const HUB=PFX+"hub-v1";
-const Dir={peer:null,conn:null,hub:false,rooms:null,reg:null,regSent:"",lastReg:0,gen:0,heard:0,timer:null,hubConns:new Map(),hubRooms:new Map(),shown:""};
-// release the directory id right away when the page goes, so another page can take over the list fast
-window.addEventListener("pagehide",()=>{try{if(Dir.peer)Dir.peer.destroy()}catch(e){}});
+   No server: open pages keep the room list for each other, at several "keeper" slots (well-known
+   peer ids). Every page connects to each keeper that answers and merges what they report, so one
+   dead keeper (a phone left in the background, an old tab, a blocked network) can't take the list
+   down; it is simply skipped. If fewer than two keepers answer, a page takes a free slot itself.
+   Every member of a table announces it to every keeper it can reach, so a room shows up as long
+   as anyone in it gets through. The "hub2" ids also keep older versions of the page apart. */
+const HUBS=[0,1,2,3,4,5].map(i=>PFX+"hub2-"+i);
+const Dir={cpeer:null,hpeer:null,hubSlot:-1,hubConns:new Map(),reg:null,rooms:null,shown:"",timer:null,gen:0,claimAt:0,noHubSince:0,
+  slots:HUBS.map((id,i)=>({i,id,conn:null,heard:0,retryAt:0,free:0,deadUntil:0,rooms:[],lastReg:0,regSent:""}))};
+// release our ids right away when the page goes, so others can take over quickly
+window.addEventListener("pagehide",()=>{try{if(Dir.cpeer)Dir.cpeer.destroy()}catch(e){}try{if(Dir.hpeer)Dir.hpeer.destroy()}catch(e){}});
+if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code}};
 // A private room is listed by name only: its code never leaves the table.
-function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)}
-function dirStop(){Dir.gen++;clearInterval(Dir.timer);Dir.timer=null;try{if(Dir.peer)Dir.peer.destroy()}catch(e){}Dir.peer=null;Dir.conn=null;Dir.hub=false;Dir.hubConns.clear();Dir.hubRooms.clear()}
-function dirRestart(delay){dirStop();const g=Dir.gen;setTimeout(()=>{if(g===Dir.gen)dirStart()},delay)}
+function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)&&(r.ts===undefined||(typeof r.ts==="number"&&isFinite(r.ts)))}
+function liveHubs(){return Dir.slots.filter(s=>s.conn&&s.conn.open).length+(Dir.hubSlot>=0?1:0)}
+function dirStop(){
+  Dir.gen++;clearInterval(Dir.timer);Dir.timer=null;
+  for(const s of Dir.slots){try{if(s.conn)s.conn.close()}catch(e){}s.conn=null;s.rooms=[];s.retryAt=0;s.free=0;s.deadUntil=0;s.regSent=""}
+  try{if(Dir.cpeer)Dir.cpeer.destroy()}catch(e){}Dir.cpeer=null;
+  try{if(Dir.hpeer)Dir.hpeer.destroy()}catch(e){}Dir.hpeer=null;Dir.hubSlot=-1;Dir.hubConns.clear();
+}
 function dirStart(){
   if(!netReady())return;
   dirStop();const g=Dir.gen;
-  let peer;try{peer=new Peer({debug:0})}catch(e){dirRestart(5000);return}
-  Dir.peer=peer;let opened=false;
-  const to=setTimeout(()=>{if(g===Dir.gen&&!opened)dirBecomeHub()},8000);
-  peer.on("error",e=>{
+  Dir.noHubSince=Date.now();Dir.claimAt=Date.now()+1200+Math.random()*2500;
+  let p;try{p=new Peer({debug:0})}catch(e){setTimeout(()=>{if(g===Dir.gen)dirStart()},5000);return}
+  Dir.cpeer=p;
+  p.on("open",()=>{if(g===Dir.gen)dirTick()});
+  p.on("error",e=>{
     if(g!==Dir.gen)return;
-    if(e&&e.type==="peer-unavailable"){clearTimeout(to);dirBecomeHub()}
-    else if(!opened){clearTimeout(to);dirRestart(4000+Math.random()*3000)}
+    if(e&&e.type==="peer-unavailable"){
+      // nobody holds that slot: note it as free (we may claim it) and stop waiting on it
+      const msg=String(e.message||"");const s=Dir.slots.find(x=>msg.includes(x.id));
+      if(s){s.free=Date.now();s.retryAt=Date.now()+15000;if(s.conn){try{s.conn.close()}catch(_){}s.conn=null}}
+      dirTick();return;
+    }
+    if(p.destroyed||!p.open)setTimeout(()=>{if(g===Dir.gen)dirStart()},4000+Math.random()*3000);
   });
-  peer.on("open",()=>{
-    if(g!==Dir.gen)return;
-    const conn=peer.connect(HUB,{reliable:true});
-    conn.on("open",()=>{
-      if(g!==Dir.gen)return;
-      opened=true;clearTimeout(to);Dir.conn=conn;Dir.heard=Date.now();Dir.regSent="";dirSendReg(true);
-      Dir.timer=setInterval(()=>{if(Date.now()-Dir.heard>25000){dirRestart(300+Math.random()*1500);return}dirSendReg(true)},3000);
-    });
-    conn.on("data",m=>{
-      if(g!==Dir.gen)return;Dir.heard=Date.now();
-      if(m&&m.t==="list"&&Array.isArray(m.rooms)){
-        Dir.rooms=m.rooms.filter(validRoom).slice(0,100);renderRooms();
-        // answer the hub from the message event too, so a background tab (slowed timers) stays listed
-        if(Date.now()-Dir.lastReg>4000)dirSendReg(true);
-      }
-    });
-    const gone=()=>{if(g===Dir.gen&&opened)dirRestart(300+Math.random()*1500)};
-    conn.on("close",gone);conn.on("error",gone);
-  });
+  p.on("disconnected",()=>{if(g===Dir.gen)setTimeout(()=>{try{if(g===Dir.gen&&p.disconnected&&!p.destroyed)p.reconnect()}catch(e){}},1500)});
+  Dir.timer=setInterval(()=>{if(g===Dir.gen)dirTick()},3000);
+  renderRooms();
 }
-function dirBecomeHub(){
-  dirStop();const g=Dir.gen;
-  let peer;try{peer=new Peer(HUB,{debug:0})}catch(e){dirRestart(3000);return}
-  Dir.peer=peer;
-  peer.on("error",e=>{if(g===Dir.gen&&!Dir.hub)dirRestart(e&&e.type==="unavailable-id"?300+Math.random()*1000:5000)});
-  peer.on("disconnected",()=>{if(g===Dir.gen)setTimeout(()=>{try{if(g===Dir.gen&&peer.disconnected&&!peer.destroyed)peer.reconnect()}catch(e){}},1500)});
-  peer.on("open",()=>{
-    if(g!==Dir.gen)return;
-    Dir.hub=true;Dir.regSent="";
-    peer.on("connection",k=>{
-      k.on("open",()=>{Dir.hubConns.set(k.peer,{k,heard:Date.now()});hubBroadcast()});
+function dirTick(){
+  const now=Date.now(),p=Dir.cpeer;
+  if(p&&!p.destroyed&&p.open){
+    for(const s of Dir.slots){
+      if(s.i===Dir.hubSlot)continue;
+      if(s.conn&&s.conn.open){
+        if(now-s.heard>25000){try{s.conn.close()}catch(e){}s.conn=null;s.rooms=[];s.retryAt=now+2000;continue}
+        sendReg(s,true);continue;
+      }
+      if(!s.conn&&now>=s.retryAt)connectSlot(s);
+    }
+  }
+  if(Dir.hubSlot>=0){
+    for(const [id,c] of Dir.hubConns)if(now-c.heard>25000){Dir.hubConns.delete(id);try{c.k.close()}catch(e){}}
+    hubBroadcast();
+  }
+  maybeClaim();
+  mergeRooms();
+}
+function connectSlot(s){
+  const g=Dir.gen;let c;
+  try{c=Dir.cpeer.connect(s.id,{reliable:true})}catch(e){s.retryAt=Date.now()+10000;return}
+  s.conn=c;
+  // No answer: the slot is either empty or held by a keeper that never answers. The server does
+  // not reliably say which, so we try to take the slot (maybeClaim); if it turns out to be taken,
+  // claimSlot marks it unresponsive and we move on (a dead keeper used to stall everyone).
+  const to=setTimeout(()=>{if(g===Dir.gen&&s.conn===c&&!c.open){try{c.close()}catch(e){}s.conn=null;
+    s.retryAt=Date.now()+(s.deadUntil>Date.now()?45000:6000);if(!(s.deadUntil>Date.now()))s.free=Date.now()}},6000);
+  c.on("open",()=>{if(g!==Dir.gen||s.conn!==c)return;clearTimeout(to);s.heard=Date.now();s.free=0;s.regSent="";sendReg(s,true);mergeRooms()});
+  c.on("data",m=>{
+    if(g!==Dir.gen||s.conn!==c)return;s.heard=Date.now();
+    if(m&&m.t==="list"&&Array.isArray(m.rooms)){
+      s.rooms=m.rooms.filter(validRoom).slice(0,100);mergeRooms();
+      // answer from the message event too, so a background tab (slowed timers) stays listed
+      if(Date.now()-s.lastReg>4000)sendReg(s,true);
+    }
+  });
+  const gone=()=>{if(s.conn===c){clearTimeout(to);s.conn=null;s.rooms=[];s.retryAt=Date.now()+1500;mergeRooms()}};
+  c.on("close",gone);c.on("error",gone);
+}
+function sendReg(s,force){
+  if(!s.conn||!s.conn.open)return;
+  const str=JSON.stringify(Dir.reg);if(!force&&str===s.regSent)return;
+  s.regSent=str;s.lastReg=Date.now();
+  try{s.conn.send({t:"reg",room:Dir.reg})}catch(e){}
+}
+function dirSetReg(r){
+  Dir.reg=r;
+  for(const s of Dir.slots)sendReg(s,false);
+  if(Dir.hubSlot>=0)hubBroadcast();else mergeRooms();
+}
+// become a keeper when fewer than two answer and a slot is known to be free
+function maybeClaim(){
+  if(Dir.hpeer||Dir.hubSlot>=0)return;
+  const now=Date.now();if(now<Dir.claimAt||liveHubs()>=2)return;
+  const s=Dir.slots.find(x=>x.free&&now-x.free<30000&&!(x.conn&&x.conn.open)&&!(x.deadUntil>now));
+  if(s)claimSlot(s);
+}
+function claimSlot(s){
+  const g=Dir.gen;let hp;try{hp=new Peer(s.id,{debug:0})}catch(e){return}
+  Dir.hpeer=hp;
+  hp.on("error",()=>{
+    if(g!==Dir.gen||Dir.hpeer!==hp||Dir.hubSlot>=0)return;
+    // taken: either someone just became keeper (we will connect to them) or it is held by one
+    // that never answers; don't try to take it again for a minute
+    try{hp.destroy()}catch(_){}Dir.hpeer=null;s.free=0;s.deadUntil=Date.now()+60000;s.retryAt=Date.now()+800;Dir.claimAt=Date.now()+600+Math.random()*1500;
+  });
+  hp.on("disconnected",()=>{if(g===Dir.gen)setTimeout(()=>{try{if(Dir.hpeer===hp&&hp.disconnected&&!hp.destroyed)hp.reconnect()}catch(e){}},1500)});
+  hp.on("open",()=>{
+    if(g!==Dir.gen||Dir.hpeer!==hp)return;
+    Dir.hubSlot=s.i;s.free=0;if(s.conn){try{s.conn.close()}catch(e){}s.conn=null}
+    hp.on("connection",k=>{
+      k.on("open",()=>{Dir.hubConns.set(k.peer,{k,heard:Date.now(),room:null});hubBroadcast()});
       k.on("data",m=>{
-        const c=Dir.hubConns.get(k.peer);if(c)c.heard=Date.now();
-        if(m&&m.t==="reg"){if(validRoom(m.room))Dir.hubRooms.set(k.peer,m.room);else Dir.hubRooms.delete(k.peer);hubBroadcast()}
+        const c=Dir.hubConns.get(k.peer);if(!c)return;c.heard=Date.now();
+        if(m&&m.t==="reg"){c.room=validRoom(m.room)?Object.assign({},m.room,{ts:Date.now()}):null;hubBroadcast()}
       });
-      const gone=()=>{Dir.hubConns.delete(k.peer);if(Dir.hubRooms.delete(k.peer))hubBroadcast()};
+      const gone=()=>{if(Dir.hubConns.delete(k.peer))hubBroadcast()};
       k.on("close",gone);k.on("error",gone);
     });
-    Dir.timer=setInterval(()=>{
-      const now=Date.now();
-      for(const [id,c] of Dir.hubConns)if(now-c.heard>25000){Dir.hubConns.delete(id);Dir.hubRooms.delete(id);try{c.k.close()}catch(e){}}
-      hubBroadcast();
-    },3000);
     hubBroadcast();
   });
 }
+const latest=list=>{const by=new Map();for(const r of list){const o=by.get(r.id);if(!o||(r.ts||0)>=(o.ts||0))by.set(r.id,r)}return [...by.values()]};
+function hubList(){
+  const all=[];for(const c of Dir.hubConns.values())if(c.room)all.push(c.room);
+  if(Dir.reg)all.push(Object.assign({},Dir.reg,{ts:Date.now()}));
+  return latest(all).slice(0,100);
+}
 function hubBroadcast(){
-  const all=[...Dir.hubRooms.values()];if(Dir.reg)all.push(Dir.reg);
-  const seen=new Set();const rooms=all.filter(r=>!seen.has(r.id)&&seen.add(r.id));
-  Dir.rooms=rooms;const msg={t:"list",rooms};
+  const msg={t:"list",rooms:hubList()};
   for(const c of Dir.hubConns.values())if(c.k.open)try{c.k.send(msg)}catch(e){}
+  mergeRooms();
+}
+// what this page shows: every keeper's list merged, plus our own room
+function mergeRooms(){
+  const any=liveHubs()>0;
+  if(any)Dir.noHubSince=0;else if(!Dir.noHubSince)Dir.noHubSince=Date.now();
+  const all=[];for(const s of Dir.slots)if(s.conn&&s.conn.open)all.push(...s.rooms);
+  if(Dir.hubSlot>=0)all.push(...hubList());
+  if(Dir.reg)all.push(Object.assign({},Dir.reg,{ts:Date.now()}));
+  Dir.rooms=any||Dir.reg?latest(all):null;
   renderRooms();
 }
-function dirSendReg(force){
-  const s=JSON.stringify(Dir.reg);
-  if(Dir.hub){if(s!==Dir.regSent){Dir.regSent=s;hubBroadcast()}return}
-  if(!Dir.conn||!Dir.conn.open||(!force&&s===Dir.regSent))return;
-  Dir.regSent=s;Dir.lastReg=Date.now();try{Dir.conn.send({t:"reg",room:Dir.reg})}catch(e){}
-}
-// 새로고침: ask the list again now (or, if this page keeps the list, just redraw it)
-function refreshRooms(){
-  if(!netReady())return;
-  if(Dir.hub){hubBroadcast();return}
-  Dir.rooms=null;Dir.shown="";renderRooms();dirStart();
-}
-// Keep this table's entry in the room list up to date (only the table's host lists it).
+// 새로고침: reconnect to the keepers from scratch
+function refreshRooms(){if(!netReady())return;Dir.rooms=null;Dir.shown="";dirStart()}
+// Keep this table's entry in the room list up to date. Every member announces it, so the room
+// is listed as long as anyone in it can reach a keeper.
 function updateReg(){
   let r=null;
-  if(mode==="online"&&T&&T.isHost&&G&&code){
+  if(mode==="online"&&T&&G&&code&&!rejoining){
     const pr=presentCids();
     const count=G.phase==="over"?G.players.filter(p=>pr.has(p.cid)).length:G.players.length;
     const pub=G.pub!==false;
     r={id:listId(),pub,title:String(G.title||"").slice(0,20)||"요트 테이블",lock:!!G.lock,count:Math.min(count,MAXP),phase:G.phase};
     if(pub)r.code=code;
   }
-  if(JSON.stringify(r)!==JSON.stringify(Dir.reg)){Dir.reg=r;dirSendReg(false)}
+  if(JSON.stringify(r)!==JSON.stringify(Dir.reg))dirSetReg(r);
 }
 // Listing id: random, made when the room is created and carried in G, so it reveals nothing
 // about the code and stays the same if another member takes over relaying the table.
@@ -774,7 +838,9 @@ function renderRooms(){
   const box=$("roomList");
   let html;
   if(!netReady())html='<li class="empty">온라인 연결을 쓸 수 없어요.</li>';
-  else if(Dir.rooms===null)html='<li class="empty">방 목록 불러오는 중…</li>';
+  else if(Dir.rooms===null)html=Dir.noHubSince&&Date.now()-Dir.noHubSince>20000
+    ?'<li class="empty">방 목록에 연결하지 못했어요. 코드로는 들어갈 수 있어요.<br>잠시 뒤 새로고침을 눌러 보세요.</li>'
+    :'<li class="empty">방 목록 불러오는 중…</li>';
   else{
     const rooms=Dir.rooms.slice().sort((a,b)=>(a.phase==="lobby"?0:1)-(b.phase==="lobby"?0:1)||a.title.localeCompare(b.title,"ko"));
     $("roomCount").textContent=rooms.length?rooms.length+"개":"0개";
@@ -1566,10 +1632,7 @@ $("roomRefresh").onclick=refreshRooms;
 function paintVis(){const pub=document.querySelector('input[name=vis]:checked').value==="pub";$("visNote").textContent=pub?"방 목록에서 누구나 보고 바로 들어올 수 있어요.":"방 목록에 '비공개'로만 보이고, 코드나 링크를 받은 사람만 들어와요."}
 document.querySelectorAll('input[name=vis]').forEach(r=>r.addEventListener("change",paintVis));paintVis();
 
-// local mode
-const ln=$("localNames");
-for(let i=0;i<MAXP;i++){const f=document.createElement("div");f.className="field";f.style.flex="1 1 110px";f.innerHTML=`<label for="ln${i}">플레이어 ${i+1}</label><input id="ln${i}" type="text" maxlength="12" placeholder="${i<2?"이름":"비워 두면 제외"}">`;ln.appendChild(f)}
-$("ln0").value="플레이어 1";$("ln1").value="플레이어 2";
+// same-device mode (no longer offered on the start screen; kept for 다시 하기 if ever in it)
 function startLocal(names){
   mode="local";boards.clear();lastK.clear();busy.clear();resetViews();
   const gid=rid();
@@ -1577,11 +1640,6 @@ function startLocal(names){
   players.forEach(p=>boards.set(p.cid,freshBoard(gid)));
   G=null;commitG({phase:"play",gid,players});
 }
-$("localBtn").onclick=()=>{
-  const names=Array.from({length:MAXP},(_,i)=>$("ln"+i).value.trim().slice(0,12)).filter(Boolean);
-  if(!names.length){toast("이름을 한 명 이상 적어 주세요.");return}
-  startLocal(names);
-};
 document.addEventListener("keydown",e=>{
   if(mode!=="online"||!G||G.phase!=="play"||e.target.tagName==="INPUT")return;
   if(e.code==="Space"){e.preventDefault();doRoll(myCid)}
@@ -1592,6 +1650,22 @@ const h=(location.hash||"").replace("#","").toUpperCase();
 if(/^[A-Z0-9]{4}$/.test(h)){$("joinCode").value=h;$("homeMsg").textContent="초대받은 테이블 코드("+h+")가 입력됐어요. 닉네임을 적고 입장을 눌러 주세요.";if(!myName)setTimeout(()=>$("nick").focus(),0)}
 $("netErr").hidden=netReady();
 renderRooms();dirStart();
+// New-version notice: every few minutes, compare our version with the one now on the site.
+// (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
+const APP_VER="2026-11-24d";
+function checkVersion(){
+  if(!/^https?:$/.test(location.protocol))return;
+  fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
+    const m=t.match(/const APP_VER="([^"]+)"/);if(m&&m[1]!==APP_VER)showUpdate();
+  }).catch(()=>{});
+}
+function showUpdate(){
+  if($("updBar"))return;
+  const d=document.createElement("div");d.id="updBar";d.className="updbar";d.setAttribute("role","status");
+  d.innerHTML='<span>새 버전이 있어요</span><button class="btn small" type="button">새로고침</button>';
+  d.querySelector("button").onclick=()=>location.reload();document.body.appendChild(d);
+}
+setTimeout(checkVersion,15000);setInterval(checkVersion,180000);
 paintSound();
 render();
 // refreshed while at a table (same code in the address, recent, nickname known)? go straight back in
