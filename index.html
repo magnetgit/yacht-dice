@@ -269,6 +269,38 @@ table.sheet{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;
 .rank .sc{margin-left:auto;font-family:var(--f-num);font-weight:600;font-size:18px}
 #toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:999px;font-size:14px;font-weight:500;opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;z-index:30;max-width:calc(100% - 32px);box-shadow:var(--shadow-lg)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+/* chat: input bar at the bottom; new messages appear just above it and push older ones up,
+   then fade after a few seconds. The full history opens in a panel. */
+body.chat-on #app{padding-bottom:96px}
+#chatBar{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:25;
+  width:min(560px,calc(100% - 24px));display:flex;gap:8px;align-items:center;padding:6px;border-radius:16px;
+  background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line2);box-shadow:var(--shadow-lg);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#chatBar input{height:40px;flex:1;min-width:0;background:var(--field)}
+#chatBar .btn{height:40px;padding:0 14px}
+#chatHistBtn{position:relative}
+#chatHistBtn .dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+#chatFeed{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:24;
+  width:min(560px,calc(100% - 24px));display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:6px;pointer-events:none}
+/* text only, no bubble box, so the board behind stays visible; a dark outline keeps it readable */
+.cbub{max-width:92%;padding:1px 4px;color:#fff;font-size:15px;font-weight:600;line-height:1.35;overflow-wrap:anywhere;
+  text-shadow:0 0 2px rgba(0,0,0,.95),0 0 4px rgba(0,0,0,.8),0 1px 2px rgba(0,0,0,.9);
+  animation:cbIn .25s ease-out;transition:opacity .6s,transform .6s}
+.cbub b{color:#ffd76a;font-weight:800;margin-right:6px}
+.cbub.mine b{color:#ff9f7a}
+.cbub.out{opacity:0;transform:translateY(-6px)}
+@keyframes cbIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#chatHist{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#chatHist .panel{width:min(520px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:10px;padding:18px}
+#chatHist h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
+#chatHistList{list-style:none;margin:0;padding:0;overflow:auto;display:flex;flex-direction:column;gap:8px;min-height:120px}
+#chatHistList li{padding:8px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line)}
+#chatHistList li.mine{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+#chatHistList .meta{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--muted)}
+#chatHistList .meta b{color:var(--ink);font-size:13px}
+#chatHistList .txt{margin-top:2px;overflow-wrap:anywhere}
+#chatHistList li.empty{color:var(--muted);text-align:center;border-style:dashed;background:transparent}
+@media (prefers-reduced-motion:reduce){.cbub{animation:none}}
 .updbar{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:12px;
   padding:8px 8px 8px 16px;border-radius:999px;background:var(--ink);color:var(--bg);font-size:14px;font-weight:600;box-shadow:var(--shadow-lg);max-width:calc(100% - 32px)}
 .sound{display:inline-flex;align-items:center;gap:6px}
@@ -462,6 +494,18 @@ table.sheet{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;
       <h2 id="endedTitle">종료된 게임입니다.</h2>
       <p class="note">연결이 끊긴 사이에 게임이 끝났어요. 결과에는 마지막으로 입력된 점수가 기록됐어요.</p>
       <div class="row"><button id="endedOk" class="btn" type="button">확인</button></div>
+    </div>
+  </div>
+  <div id="chatFeed" aria-live="polite" hidden></div>
+  <form id="chatBar" hidden autocomplete="off">
+    <button id="chatHistBtn" class="btn ghost small" type="button" aria-label="채팅 내역">내역</button>
+    <input id="chatInput" type="text" maxlength="100" placeholder="채팅 입력 (Enter로 보내기)" aria-label="채팅 입력">
+    <button id="chatSend" class="btn small" type="submit">보내기</button>
+  </form>
+  <div id="chatHist" hidden>
+    <div class="panel" role="dialog" aria-labelledby="chatHistTitle">
+      <div class="row" style="align-items:center"><h2 id="chatHistTitle" style="flex:1">채팅 내역</h2><button id="chatHistClose" class="btn ghost small" type="button">닫기</button></div>
+      <ul id="chatHistList"></ul>
     </div>
   </div>
   <div id="toast" role="status" aria-live="polite"></div>
@@ -1105,7 +1149,7 @@ function publishKeep(){
 function attach(t){
   T=t;
   T.onPeers(onPeers,onLost);
-  T.presence({name:myName,ready:myReady,game:G,cid:myCid,board:myBoard}).catch(()=>{});
+  T.presence({name:myName,ready:myReady,game:G,cid:myCid,board:myBoard,chat:chat.mine}).catch(()=>{});
 }
 let tablePw="",newRoom=null,joining=false;
 // Returns "ok" or an error code. restoreG: reopen this code myself with my saved copy of the game.
@@ -1147,7 +1191,7 @@ async function enterTable(c,isCreate,pwIn,restoreG,quick){
   tablePw=pw;if(pw)store.set("yd-pw-"+c,pw);
   store.set("yd-last-"+myCid,JSON.stringify({code:c,at:Date.now()}));
   mode="online";code=c;creating=fresh;G=restoreG||null;mePeer=null;peers=[];myReady=false;myBoard=null;
-  boards.clear();lastK.clear();resetViews();
+  boards.clear();lastK.clear();resetViews();chatReset(c);
   try{history.replaceState(null,"",location.pathname+location.search+"#"+c)}catch(e){}
   attach(t);
   clearTimeout(joinTimer);
@@ -1208,6 +1252,7 @@ function onPeers(ch){
     if(pr.keep&&typeof pr.keep==="object")for(const k in pr.keep){const kb=pr.keep[k];if(k!==myCid&&validBoard(kb)){const o=boards.get(k);if(!o||(o.gid===kb.gid&&filled(kb)>filled(o)))boards.set(k,kb)}}
   }
   if(adopted&&T)T.presence({game:G}).catch(()=>{});
+  chatIngest();
   if(creating&&!G&&mePeer){creating=false;commitG(Object.assign({phase:"lobby",players:[{cid:myCid,name:myName,ready:true}],banned:[]},newRoom));return}
   if(G)creating=false;
   const banned=new Set(G&&G.banned||[]);
@@ -1303,7 +1348,7 @@ function setPublic(pub){
   toast(pub?"공개방으로 바꿨어요. 목록에서 바로 들어올 수 있어요.":"비공개방으로 바꿨어요. 목록에는 '비공개'로 보이고, 코드나 링크로만 들어올 수 있어요.");
 }
 function leave(){
-  stopBot();
+  stopBot();chatClear();
   for(const t of stopT.values())clearTimeout(t);stopT.clear();stopRattle();rejoining=false;tablePw="";
   store.set("yd-last-"+myCid,"");   // I left on purpose: a refresh shouldn't pull me back in
   if(T){T.leave().catch(()=>{});T=null}
@@ -1737,7 +1782,7 @@ let prevPhase=null;const _render=render;render=function(){
       if(!isOwner())setTimeout(()=>toast("대기실로 돌아왔어요. 준비를 눌러 주세요!"),0);
     }
   }
-  _render();updateReg();saveTable();
+  _render();updateReg();saveTable();chatUI();
 };
 // keep a copy of the table state on this device so a refresh can reopen it if nobody else holds it
 let savedG="";
@@ -1802,6 +1847,93 @@ async function runBot(gid){
 }
 $("aiBtn").onclick=()=>startAI(document.querySelector('input[name=aidiff]:checked').value);
 {const lv=store.get("yd-ailevel");const r=document.querySelector(`input[name=aidiff][value="${lv}"]`);if(r)r.checked=true}
+/* ---------- chat ----------
+   Each player keeps their own last few messages in their presence; everyone merges what they
+   see by message id. No extra connection is needed, it works through the relay, and a player
+   who reconnects still receives recent messages. History lives only while you are in the room:
+   it survives a refresh (tab-only storage) and is wiped when you leave, so nothing is kept. */
+const tabStore={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+const chat={code:null,mine:[],log:[],seen:new Set(),ready:false,unread:false,lastSend:0};
+function chatReset(c){
+  chat.code=c;chat.mine=[];chat.log=[];chat.seen=new Set();chat.ready=false;chat.unread=false;
+  try{const saved=JSON.parse(tabStore.get("yd-chat-"+c)||"[]");if(Array.isArray(saved))for(const m of saved.slice(-150)){if(m&&typeof m.id==="string"&&!chat.seen.has(m.id)){chat.seen.add(m.id);chat.log.push(m)}}}catch(e){}
+  $("chatFeed").innerHTML="";
+}
+function chatSave(){if(chat.code)tabStore.set("yd-chat-"+chat.code,JSON.stringify(chat.log.slice(-150)))}
+function chatClear(){if(chat.code)tabStore.del("yd-chat-"+chat.code);chat.code=null;chat.mine=[];chat.log=[];chat.seen=new Set();$("chatFeed").innerHTML="";$("chatHist").hidden=true}
+const validMsg=m=>m&&typeof m==="object"&&typeof m.id==="string"&&/^[a-z0-9]{4,16}$/.test(m.id)&&typeof m.x==="string"&&m.x.length>0&&m.x.length<=100&&typeof m.t==="number"&&isFinite(m.t);
+function chatAdd(m,float){
+  if(chat.seen.has(m.id))return;chat.seen.add(m.id);
+  chat.log.push(m);chat.log.sort((a,b)=>a.t-b.t);if(chat.log.length>150)chat.log.splice(0,chat.log.length-150);
+  chatSave();
+  if(float)chatFloat(m);
+  if(!$("chatHist").hidden)chatRenderHist();else if(float&&m.cid!==myCid)chat.unread=true;
+  chatBadge();
+}
+function chatIngest(){
+  if(mode!=="online")return;
+  const banned=new Set(G&&G.banned||[]);
+  for(const p of peers){
+    if(p.sameTab)continue;
+    const c=peerCid(p),list=p.presence&&p.presence.chat;
+    if(!c||banned.has(c)||!Array.isArray(list))continue;
+    for(const m of list.slice(-12))if(validMsg(m)&&!chat.seen.has(m.id)){
+      // float only fresh messages, and not the backlog we receive right after joining
+      chatAdd({id:m.id,cid:c,name:peerName(p),t:m.t,x:m.x},chat.ready&&Date.now()-m.t<20000);
+      if(chat.ready&&ready())blip(880,1320,.06,.07);
+    }
+  }
+  chat.ready=true;
+}
+function chatSend(){
+  const inp=$("chatInput"),x=inp.value.replace(/\s+/g," ").trim().slice(0,100);
+  if(!x||mode!=="online"||!T)return;
+  const now=Date.now();if(now-chat.lastSend<600)return;chat.lastSend=now;
+  const m={id:Math.random().toString(36).slice(2,10)+now.toString(36).slice(-4),t:now,x};
+  chat.mine.push(m);if(chat.mine.length>12)chat.mine.shift();
+  T.presence({chat:chat.mine}).catch(()=>{});
+  chatAdd({id:m.id,cid:myCid,name:myName,t:m.t,x:m.x},true);
+  inp.value="";
+}
+// a bubble above the input; older bubbles move up as new ones arrive, then fade away
+function chatFloat(m){
+  const feed=$("chatFeed");
+  const d=document.createElement("div");d.className="cbub"+(m.cid===myCid?" mine":"");
+  const b=document.createElement("b");b.textContent=m.name||"손님";d.appendChild(b);d.appendChild(document.createTextNode(m.x));
+  feed.appendChild(d);
+  while(feed.children.length>6)feed.firstChild.remove();
+  setTimeout(()=>{d.classList.add("out");setTimeout(()=>d.remove(),650)},8000);
+}
+function chatRenderHist(){
+  const ul=$("chatHistList");ul.innerHTML="";
+  if(!chat.log.length){ul.innerHTML='<li class="empty">아직 대화가 없어요.</li>';return}
+  for(const m of chat.log){
+    const li=document.createElement("li");if(m.cid===myCid)li.className="mine";
+    const meta=document.createElement("div");meta.className="meta";
+    const b=document.createElement("b");b.textContent=m.name||"손님";
+    const tm=document.createElement("span");const dt=new Date(m.t);tm.textContent=String(dt.getHours()).padStart(2,"0")+":"+String(dt.getMinutes()).padStart(2,"0");
+    meta.append(b,tm);
+    const tx=document.createElement("div");tx.className="txt";tx.textContent=m.x;
+    li.append(meta,tx);ul.appendChild(li);
+  }
+  ul.scrollTop=ul.scrollHeight;
+}
+function chatBadge(){
+  const b=$("chatHistBtn");let dot=b.querySelector(".dot");
+  if(chat.unread&&!dot){dot=document.createElement("span");dot.className="dot";b.appendChild(dot)}
+  else if(!chat.unread&&dot)dot.remove();
+}
+// chat is shown in online rooms only (waiting room and game)
+function chatUI(){
+  const on=mode==="online"&&!!G;
+  $("chatBar").hidden=!on;$("chatFeed").hidden=!on;document.body.classList.toggle("chat-on",on);
+  if(!on)$("chatHist").hidden=true;
+}
+$("chatBar").addEventListener("submit",e=>{e.preventDefault();chatSend()});
+$("chatHistBtn").onclick=()=>{chat.unread=false;chatBadge();chatRenderHist();$("chatHist").hidden=false};
+$("chatHistClose").onclick=()=>{$("chatHist").hidden=true};
+$("chatHist").addEventListener("click",e=>{if(e.target.id==="chatHist")$("chatHist").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("chatHist").hidden)$("chatHist").hidden=true});
 // same-device mode (no longer offered on the start screen; kept for 다시 하기 if ever in it)
 function startLocal(names){
   mode="local";boards.clear();lastK.clear();busy.clear();resetViews();
@@ -1822,7 +1954,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-24h";
+const APP_VER="2026-11-24i";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
