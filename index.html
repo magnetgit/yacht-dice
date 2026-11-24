@@ -1240,19 +1240,29 @@ function syncTray(v,b,act,away){
   if(landed){busy.set(v.cid,true);setTimeout(()=>{busy.set(v.cid,false);render()},maxDur+40)}
   // fresh landing with all five the same: celebrate on that board for everyone watching
   // fresh landing that makes a scoring combo: show it on that board (and say it) for everyone watching
-  if(landed){const cb=comboOf(b.dice);if(cb)setTimeout(()=>celebrate(v,cb),Math.max(0,maxDur-120))}
+  if(landed){const cb=comboOf(b.dice);if(cb&&firstShow(v.cid,b,cb))setTimeout(()=>celebrate(v,cb),Math.max(0,maxDur-120))}
   v.seen.init=true;v.seen.rolling=rolling;v.seen.rollId=b?b.rollId:null;
   return rolling;
 }
 // The best special combo the dice make, or null. Yacht beats everything; a large straight also
 // counts as a small one, so only the larger is shown.
 const COMBOS={
-  yacht:{text:"요트!",say:"요트!",fireworks:true,color:"#ffd54a",edge:"#7a1d10",size:.26},
-  large:{text:"라지 스트레이트!",say:"라지 스트레이트!",color:"#6ec6ff",edge:"#0d3a5c",size:.1},
-  small:{text:"스몰 스트레이트!",say:"스몰 스트레이트!",color:"#8be3b0",edge:"#0f4a2b",size:.1},
-  four:{text:"포카인드!",say:"포카인드!",color:"#ff8fd8",edge:"#5c1048",size:.17},
-  full:{text:"풀하우스!",say:"풀하우스!",color:"#ffb36b",edge:"#5c2c08",size:.17}
+  yacht:{id:"yacht",cat:11,text:"요트!",say:"요트!",fireworks:true,color:"#ffd54a",edge:"#7a1d10",size:.26},
+  large:{id:"large",cat:10,text:"라지 스트레이트!",say:"라지 스트레이트!",color:"#6ec6ff",edge:"#0d3a5c",size:.1},
+  small:{id:"small",cat:9,text:"스몰 스트레이트!",say:"스몰 스트레이트!",color:"#8be3b0",edge:"#0f4a2b",size:.1},
+  four:{id:"four",cat:7,text:"포카인드!",say:"포카인드!",color:"#ff8fd8",edge:"#5c1048",size:.17},
+  full:{id:"full",cat:8,text:"풀하우스!",say:"풀하우스!",color:"#ffb36b",edge:"#5c2c08",size:.17}
 };
+// Each combo is shown (and spoken) only the first time it comes up for a player in a game,
+// and never once that player has already filled its box.
+const shownCombos=new Map();
+function firstShow(cid,b,cb){
+  if(b.scores[cb.cat]!==null)return false;
+  const k=b.gid+":"+cid;let set=shownCombos.get(k);
+  if(!set){set=new Set();shownCombos.set(k,set)}
+  if(set.has(cb.id))return false;
+  set.add(cb.id);return true;
+}
 function comboOf(d){
   if(calc(d,11))return COMBOS.yacht;
   if(calc(d,10))return COMBOS.large;
