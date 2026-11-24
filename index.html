@@ -264,6 +264,15 @@ table.sheet{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;
 #toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:999px;font-size:14px;font-weight:500;opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;z-index:30;max-width:calc(100% - 32px);box-shadow:var(--shadow-lg)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .sound{display:inline-flex;align-items:center;gap:6px}
+.soundbar{display:inline-flex;align-items:center;gap:10px;padding:4px 12px 4px 4px;border-radius:999px;background:var(--panel);border:1px solid var(--line2);box-shadow:var(--shadow)}
+.soundbar .sound{border:0;box-shadow:none;background:transparent;border-radius:999px}
+.vol{--p:80%;-webkit-appearance:none;appearance:none;width:110px;height:6px;border-radius:999px;cursor:pointer;margin:0;
+  background:linear-gradient(90deg,var(--accent) 0 var(--p),var(--line2) var(--p) 100%)}
+.vol.off{background:linear-gradient(90deg,var(--muted) 0 var(--p),var(--line2) var(--p) 100%);opacity:.6}
+.vol::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--panel);border:2px solid var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.vol::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--panel);border:2px solid var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.vol.off::-webkit-slider-thumb{border-color:var(--muted)}
+.vol:focus-visible{outline:3px solid color-mix(in srgb,var(--brass) 70%,transparent);outline-offset:4px}
 .sound svg{width:18px;height:18px}
 .sound.nudge{border-color:var(--accent);color:var(--accent)}
 /* combo / Yacht celebration over the board that rolled it */
@@ -276,12 +285,17 @@ table.sheet{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;
 @keyframes yachtFade{0%,85%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.cup.shaking{animation-duration:.5s}.cup.pour{animation:none}.winner .wr{animation:none}}
 @media (max-width:520px){
-  header{flex-wrap:nowrap}
+  header{flex-wrap:nowrap;gap:8px}
   header>.sp{display:none}
-  .brand{flex:1;min-width:0}
-  h1{white-space:nowrap;font-size:23px}
-  .logo{width:38px;height:38px;border-radius:11px}
+  .brand{flex:1;min-width:0;gap:10px}
+  .brand h1{min-width:0;overflow:hidden;text-overflow:ellipsis}
+  h1{white-space:nowrap;font-size:20px}
+  h1 small{font-size:9.5px;letter-spacing:.16em}
+  .soundbar{flex:none}
+  .logo{width:34px;height:34px;border-radius:10px}.logo svg{width:21px;height:21px}
   .sound .st{display:none}
+  .soundbar{padding-right:10px;gap:4px}
+  .vol{width:52px}
   .sound{padding:8px 10px}
   .panel{padding:16px}
   .lobby-card{padding:18px}
@@ -299,7 +313,10 @@ table.sheet{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;
     </div>
     <span class="sp"></span>
     <span id="codeChip" class="chip" hidden>테이블 <b id="codeChipVal"></b></span>
-    <button id="soundBtn" class="btn ghost small sound" type="button" aria-pressed="true"></button>
+    <div class="soundbar">
+      <button id="soundBtn" class="btn ghost small sound" type="button" aria-pressed="true"></button>
+      <input id="volume" class="vol" type="range" min="0" max="100" step="5" aria-label="소리 크기" title="소리 크기">
+    </div>
   </header>
 
   <section id="home">
@@ -473,12 +490,16 @@ function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a
 function ordinal(n){const s=n%100>=11&&n%100<=13?"TH":({1:"ST",2:"ND",3:"RD"}[n%10]||"TH");return n+s}
 
 /* ---------- sound ---------- */
-const S={ctx:null,master:null,noise:null,on:store.get("yd-sound")!=="off",rattle:null};
+// S.vol (0..1) is the master volume for every sound and the spoken combo names; kept on this device.
+const S={ctx:null,master:null,noise:null,on:store.get("yd-sound")!=="off",rattle:null,
+  vol:(()=>{const v=store.get("yd-vol");const n=v===null?80:+v;return Math.min(100,Math.max(0,isFinite(n)?n:80))/100})()};
+function setVol(v){S.vol=Math.min(1,Math.max(0,v));store.set("yd-vol",String(Math.round(S.vol*100)));if(S.master)S.master.gain.value=.9*S.vol;paintVol()}
+function paintVol(){const el=$("volume");el.value=Math.round(S.vol*100);el.style.setProperty("--p",Math.round(S.vol*100)+"%");el.setAttribute("aria-valuetext",Math.round(S.vol*100)+"%");el.classList.toggle("off",!S.on)}
 function unlock(){
   if(!S.ctx){
     try{
       const AC=window.AudioContext||window.webkitAudioContext;S.ctx=new AC();
-      S.master=S.ctx.createGain();S.master.gain.value=.9;S.master.connect(S.ctx.destination);
+      S.master=S.ctx.createGain();S.master.gain.value=.9*S.vol;S.master.connect(S.ctx.destination);
       const len=S.ctx.sampleRate*.6,b=S.ctx.createBuffer(1,len,S.ctx.sampleRate),d=b.getChannelData(0);
       for(let i=0;i<len;i++)d[i]=Math.random()*2-1;S.noise=b;
     }catch(e){S.ctx=null}
@@ -512,12 +533,20 @@ function startRattle(){
   tick();
 }
 function stopRattle(){if(S.rattle){clearTimeout(S.rattle);S.rattle=null}}
-function paintSound(){
+function paintSound(){if($("volume"))paintVol();
   const b=$("soundBtn");const live=S.ctx&&S.ctx.state==="running";
   b.setAttribute("aria-pressed",S.on?"true":"false");
   b.innerHTML=(S.on?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>')+'<span class="st">'+(S.on?(live?"소리 켜짐":"소리 켜기"):"소리 꺼짐")+"</span>";b.setAttribute("aria-label",S.on?(live?"소리 켜짐":"소리 켜기"):"소리 꺼짐");
   b.classList.toggle("nudge",S.on&&!live);
 }
+// volume bar: moving it also turns sound on, and plays a short preview at the new level
+let volPrev=0;
+$("volume").addEventListener("input",e=>{
+  const nv=+e.target.value/100;   // read first: unlock() repaints the bar from the old value
+  unlock();setVol(nv);
+  if(!S.on&&S.vol>0){S.on=true;store.set("yd-sound","on");paintSound()}
+  const n=Date.now();if(n-volPrev>140&&ready()){volPrev=n;clack(S.ctx.currentTime+.01,.4,2600)}
+});
 $("soundBtn").onclick=()=>{
   if(S.on&&!(S.ctx&&S.ctx.state==="running")){unlock();}else{S.on=!S.on;store.set("yd-sound",S.on?"on":"off")}
   unlock();paintSound();if(ready())clack(S.ctx.currentTime+.01,.4,2600);
@@ -1236,7 +1265,7 @@ function comboOf(d){
 function sayCombo(text,mine){
   if(!S.on||!("speechSynthesis" in window))return;
   try{
-    const u=new SpeechSynthesisUtterance(text);u.lang="ko-KR";u.rate=1.05;u.pitch=1.1;u.volume=mine?1:.6;
+    const u=new SpeechSynthesisUtterance(text);u.lang="ko-KR";u.rate=1.05;u.pitch=1.1;u.volume=(mine?1:.6)*S.vol;if(u.volume<=0)return;
     const ko=speechSynthesis.getVoices().find(x=>/^ko/i.test(x.lang));if(ko)u.voice=ko;
     speechSynthesis.cancel();speechSynthesis.speak(u);
   }catch(e){}
