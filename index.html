@@ -180,6 +180,15 @@ table.sheet{width:100%;border-collapse:collapse;font-size:14px;font-variant-nume
 .sound{display:inline-flex;align-items:center;gap:6px}
 .sound svg{width:18px;height:18px}
 .sound.nudge{border-color:var(--accent);color:var(--accent)}
+/* Yacht celebration: fireworks over the board that rolled it, plus a big 요트! */
+.pboard{position:relative}
+.celebrate{position:absolute;inset:0;pointer-events:none;z-index:6;display:grid;place-items:center;overflow:hidden;border-radius:inherit}
+.celebrate canvas{position:absolute;inset:0;width:100%;height:100%}
+.yachtTxt{position:relative;font-family:var(--f-display);line-height:1;color:#ffd54a;paint-order:stroke fill;-webkit-text-stroke:.07em #7a1d10;
+  text-shadow:0 .06em 0 #7a1d10,0 .12em .3em rgba(0,0,0,.45);animation:yachtPop 2.4s cubic-bezier(.2,1.6,.4,1) forwards;white-space:nowrap}
+@keyframes yachtPop{0%{transform:scale(.2) rotate(-14deg);opacity:0}14%{transform:scale(1.18) rotate(5deg);opacity:1}24%{transform:scale(1) rotate(-3deg)}34%{transform:scale(1.04) rotate(1deg)}82%{transform:scale(1);opacity:1}100%{transform:scale(1.12) translateY(-.15em);opacity:0}}
+@media (prefers-reduced-motion:reduce){.yachtTxt{animation:yachtFade 2.2s forwards}}
+@keyframes yachtFade{0%,85%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.cup.shaking{animation-duration:.5s}.cup.pour{animation:none}.winner .wr{animation:none}}
 </style>
 </head>
@@ -1067,8 +1076,49 @@ function syncTray(v,b,act,away){
     }else face(el,b.dice[i]);
   }
   if(landed){busy.set(v.cid,true);setTimeout(()=>{busy.set(v.cid,false);render()},maxDur+40)}
+  // fresh landing with all five the same: celebrate on that board for everyone watching
+  if(landed&&b.dice.every(d=>d===b.dice[0]))setTimeout(()=>celebrate(v),Math.max(0,maxDur-120));
   v.seen.init=true;v.seen.rolling=rolling;v.seen.rollId=b?b.rollId:null;
   return rolling;
+}
+function celebrate(v){
+  const host=v.el;if(!host.isConnected)return;
+  const old=host.querySelector(".celebrate");if(old)old.remove();
+  const ov=document.createElement("div");ov.className="celebrate";
+  const cv=document.createElement("canvas");ov.appendChild(cv);
+  const t=document.createElement("div");t.className="yachtTxt";t.textContent="요트!";ov.appendChild(t);
+  host.appendChild(ov);
+  const W=host.clientWidth,H=host.clientHeight,dpr=Math.min(2,window.devicePixelRatio||1);
+  t.style.fontSize=Math.round(Math.max(34,Math.min(150,W*.26)))+"px";
+  fanfare(isMine(v.cid)?1:.45);
+  if(reduced){setTimeout(()=>ov.remove(),2300);return}
+  cv.width=W*dpr;cv.height=H*dpr;const ctx=cv.getContext("2d");ctx.scale(dpr,dpr);
+  const colors=["#ffd54a","#ff6a50","#5bc386","#6ec6ff","#ff8fd8","#ffffff"],k=Math.max(.6,Math.min(1.8,W/320));
+  const parts=[];
+  const burst=(x,y)=>{
+    const n=44,c=colors[Math.floor(Math.random()*colors.length)];
+    for(let i=0;i<n;i++){const a=Math.PI*2*i/n+Math.random()*.25,s=(1.6+Math.random()*3)*k;
+      parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,c:Math.random()<.3?colors[Math.floor(Math.random()*colors.length)]:c,r:(1.4+Math.random()*1.8)*k})}
+    if(ready())clack(S.ctx.currentTime,.18,900+Math.random()*500);
+  };
+  [[.28,.3,0],[.72,.26,170],[.5,.48,360],[.18,.56,540],[.82,.52,690],[.5,.18,860],[.35,.4,1050]].forEach(([fx,fy,d])=>setTimeout(()=>burst(W*fx,H*fy),d));
+  const start=performance.now();
+  (function frame(now){
+    ctx.clearRect(0,0,W,H);
+    for(const p of parts){p.vy+=.055*k;p.vx*=.985;p.vy*=.985;p.x+=p.vx;p.y+=p.vy;p.life-=.011;
+      if(p.life>0){ctx.globalAlpha=p.life;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.3);ctx.fill()}}
+    ctx.globalAlpha=1;
+    if(now-start<2500&&ov.isConnected)requestAnimationFrame(frame);else ov.remove();
+  })(start);
+}
+// short rising fanfare (only if sound is on); quieter for someone else's board
+function fanfare(vol){
+  if(!ready())return;const c=S.ctx,t0=c.currentTime+.02;
+  [[523.25,0],[659.25,.09],[783.99,.18],[1046.5,.27],[1318.5,.42]].forEach(([f,d],i)=>{
+    const o=c.createOscillator(),g=c.createGain();o.type=i===4?"sine":"triangle";o.frequency.value=f;
+    const len=i===4?.6:.16;g.gain.setValueAtTime(.0001,t0+d);g.gain.exponentialRampToValueAtTime(.22*vol,t0+d+.015);g.gain.exponentialRampToValueAtTime(.0001,t0+d+len);
+    o.connect(g);g.connect(S.master);o.start(t0+d);o.stop(t0+d+len+.05);
+  });
 }
 function paintView(v,p){
   const b=boardOf(p.cid),away=isAway(p.cid),mine=isMine(p.cid)&&(mode==="local"||seated()),act=canAct(p.cid)&&!away;
