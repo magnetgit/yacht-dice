@@ -652,6 +652,20 @@ $("soundBtn").onclick=()=>{
    The table code is the host's peer id; the host relays everyone's presence.
    If the host drops, the remaining players race to re-open the same code. */
 const PFX="ydlounge-";
+// Relay (TURN) servers. Two devices normally connect directly; on mobile networks (5G/LTE),
+// many iPhones and some Wi-Fi this fails and the data must go through a relay. PeerJS's own
+// free relays are gone, so we use a Metered TURN credential (TURN-only; it cannot manage the
+// account). The TLS-on-443 entry gets through strict networks that only allow web traffic.
+// Test hook: add ?relay to the address to force every connection through the relay.
+const ICE_SERVERS=[
+  {urls:"stun:stun.l.google.com:19302"},
+  {urls:"stun:stun.relay.metered.ca:80"},
+  {urls:["turn:global.relay.metered.ca:80","turn:global.relay.metered.ca:80?transport=tcp",
+         "turn:global.relay.metered.ca:443","turns:global.relay.metered.ca:443?transport=tcp"],
+   username:"4b03f6e616c1f0533e50746b",credential:"ON8PZuwcRO1HihNK"}
+];
+const PEER_OPTS={debug:0,config:Object.assign({iceServers:ICE_SERVERS},
+  new URLSearchParams(location.search).has("relay")?{iceTransportPolicy:"relay"}:{})};
 const myCid=(()=>{
   const q=new URLSearchParams(location.search).get("cid"); // test hook: two tabs in one browser
   if(q&&/^[a-z0-9]{8,40}$/.test(q))return q;
@@ -661,7 +675,7 @@ function openTable(c,asHost,pw,hostWait){
   pw=pw||"";
   return new Promise((resolve,reject)=>{
     const hostId=PFX+c.toLowerCase();
-    let peer;try{peer=asHost?new Peer(hostId,{debug:0}):new Peer({debug:0})}catch(e){reject({code:"net"});return}
+    let peer;try{peer=asHost?new Peer(hostId,PEER_OPTS):new Peer(PEER_OPTS)}catch(e){reject({code:"net"});return}
     const pres={},conns=new Map(),heard=new Map(),lastTo=new Map();
     let lastSent=0;
     let myId=null,onPeersFn=null,onErrFn=null,closed=false,settled=false,hostConn=null,to=null,hb=null,hostHeard=0;
@@ -789,7 +803,7 @@ function dirStart(){
   if(!netReady())return;
   dirStop();const g=Dir.gen;
   Dir.noHubSince=Date.now();Dir.claimAt=Date.now()+1200+Math.random()*2500;
-  let p;try{p=new Peer({debug:0})}catch(e){setTimeout(()=>{if(g===Dir.gen)dirStart()},5000);return}
+  let p;try{p=new Peer(PEER_OPTS)}catch(e){setTimeout(()=>{if(g===Dir.gen)dirStart()},5000);return}
   Dir.cpeer=p;
   p.on("open",()=>{if(g===Dir.gen)dirTick()});
   p.on("error",e=>{
@@ -865,7 +879,7 @@ function maybeClaim(){
   if(s)claimSlot(s);
 }
 function claimSlot(s){
-  const g=Dir.gen;let hp;try{hp=new Peer(s.id,{debug:0})}catch(e){return}
+  const g=Dir.gen;let hp;try{hp=new Peer(s.id,PEER_OPTS)}catch(e){return}
   Dir.hpeer=hp;
   hp.on("error",()=>{
     if(g!==Dir.gen||Dir.hpeer!==hp||Dir.hubSlot>=0)return;
@@ -1808,7 +1822,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-24g";
+const APP_VER="2026-11-24h";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
