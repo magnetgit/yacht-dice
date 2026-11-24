@@ -657,7 +657,7 @@ const myCid=(()=>{
   if(q&&/^[a-z0-9]{8,40}$/.test(q))return q;
   let c=store.get("yd-cid");if(!c||!/^[a-z0-9]{8,40}$/.test(c)){c=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>(b%36).toString(36)).join("");store.set("yd-cid",c)}return c})();
 function netReady(){return typeof window.Peer==="function"}
-function openTable(c,asHost,pw){
+function openTable(c,asHost,pw,hostWait){
   pw=pw||"";
   return new Promise((resolve,reject)=>{
     const hostId=PFX+c.toLowerCase();
@@ -739,7 +739,7 @@ function openTable(c,asHost,pw){
         });
       }else{
         hostConn=peer.connect(hostId,{reliable:true});
-        clearTimeout(to);to=setTimeout(()=>fail({code:"unreachable"}),9000);   // step 2: reach the host
+        clearTimeout(to);to=setTimeout(()=>fail({code:"unreachable"}),hostWait||9000);   // step 2: reach the host
         hostConn.on("open",()=>{try{hostConn.send({t:"auth",pw})}catch(e){}});
         hostConn.on("data",m=>{
           hostHeard=Date.now();
@@ -1095,7 +1095,7 @@ function attach(t){
 }
 let tablePw="",newRoom=null,joining=false;
 // Returns "ok" or an error code. restoreG: reopen this code myself with my saved copy of the game.
-async function enterTable(c,isCreate,pwIn,restoreG){
+async function enterTable(c,isCreate,pwIn,restoreG,quick){
   if(joining)return "busy";
   const nick=$("nick").value.trim().slice(0,12);
   if(!nick){$("homeMsg").textContent="닉네임을 먼저 적어 주세요.";$("nick").focus();return "nonick"}
@@ -1114,9 +1114,10 @@ async function enterTable(c,isCreate,pwIn,restoreG){
   let t=null;
   try{
     for(let tries=0;;tries++){
-      try{t=await openTable(c,isCreate,pw);break}
+      try{t=await openTable(c,isCreate,pw,quick?6000:0);break}
       catch(e){
         if(e&&e.code==="taken"&&fresh&&tries<4){c=newCode();continue}
+        if(quick&&e&&e.code!=="badpw"&&e.code!=="kicked")return e.code||"net";
         if(!isCreate&&e&&(e.code==="unreachable"||e.code==="notfound"||e.code==="net")&&tries<1){
           $("homeMsg").textContent=`한 번 더 연결해 보는 중… (2/2)`;await new Promise(r=>setTimeout(r,800));continue;
         }
@@ -1145,17 +1146,21 @@ async function enterTable(c,isCreate,pwIn,restoreG){
 // (e.g. I was alone, or everyone refreshed), reopen it from my saved copy of the game.
 async function autoRejoin(c){
   const lbl=t=>{$("homeMsg").textContent=t};
-  for(let i=0;i<6;i++){
-    lbl("하던 테이블에 다시 들어가는 중…"+(i?` (${i+1})`:""));
-    const r=await enterTable(c,false);
-    if(r!=="notfound"&&r!=="net"&&r!=="unreachable")return;
-    lbl("테이블에 다시 연결하는 중이에요. 잠시만 기다려 주세요…");
-    await new Promise(res=>setTimeout(res,2500));
-    if(mode)return;
-  }
   let g=null;try{g=JSON.parse(store.get("yd-g-"+c)||"null")}catch(e){}
-  if(validG(g)){lbl("테이블을 다시 여는 중…");const r=await enterTable(c,true,undefined,g);if(r==="taken")await enterTable(c,false)}
-  else lbl("하던 테이블을 찾지 못했어요. 코드를 확인하고 다시 입장해 주세요.");
+  const canReopen=validG(g),until=Date.now()+60000;
+  try{history.replaceState(null,"",location.pathname+location.search+"#"+c)}catch(e){}
+  $("joinCode").value=c;
+  for(let n=1;Date.now()<until&&!mode;n++){
+    lbl(n===1?"하던 테이블에 다시 들어가는 중…":"테이블에 다시 연결하는 중이에요. 잠시만 기다려 주세요… ("+n+")");
+    const r=await enterTable(c,false,undefined,undefined,true);
+    if(mode||!["notfound","net","unreachable","busy"].includes(r))return;   // in, or wrong password / kicked
+    if(canReopen){
+      const r2=await enterTable(c,true,undefined,g,true);
+      if(mode||r2==="ok")return;
+    }
+    await new Promise(res=>setTimeout(res,700+Math.random()*900));
+  }
+  if(!mode)lbl("하던 테이블에 다시 들어가지 못했어요. 코드를 확인하고 다시 입장해 주세요.");
 }
 // The relay (host) vanished: keep our copy of everything, rejoin the code or take it over.
 async function onLost(err){
@@ -1165,12 +1170,12 @@ async function onLost(err){
   toast("연결이 끊겼어요. 다시 연결하는 중…");render();
   const c=code,until=Date.now()+90000;
   while(mode==="online"&&code===c&&Date.now()<until){
-    try{const t=await openTable(c,false,tablePw);if(mode!=="online"||code!==c){t.leave();break}attach(t);rejoining=false;toast("다시 연결됐어요.");return}
+    try{const t=await openTable(c,false,tablePw,6000);if(mode!=="online"||code!==c){t.leave();break}attach(t);rejoining=false;toast("다시 연결됐어요.");return}
     catch(e){if(e&&e.code==="kicked"){rejoining=false;kickedOut();return}}
     await new Promise(r=>setTimeout(r,400+Math.random()*1200));
     if(mode!=="online"||code!==c)break;
     try{const t=await openTable(c,true,tablePw);if(mode!=="online"||code!==c){t.leave();break}attach(t);rejoining=false;toast("테이블을 이어받았어요.");return}catch(e){}
-    await new Promise(r=>setTimeout(r,1500));
+    await new Promise(r=>setTimeout(r,700+Math.random()*900));
   }
   rejoining=false;
   if(mode==="online"&&code===c){toast("다시 연결하지 못했어요. 같은 코드로 다시 입장해 주세요.");leave()}
@@ -1803,7 +1808,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-24f";
+const APP_VER="2026-11-24g";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
@@ -1823,12 +1828,15 @@ document.addEventListener("visibilitychange",()=>{
   for(const p of [Dir.cpeer,Dir.hpeer])try{if(p&&!p.destroyed&&p.disconnected)p.reconnect()}catch(e){}
   if(Dir.cpeer)dirTick();
 });
+window.addEventListener("pageshow",e=>{if(e.persisted)location.reload()});
 paintSound();
 render();
 // refreshed while at a table (same code in the address, recent, nickname known)? go straight back in
 (()=>{
   let last=null;try{last=JSON.parse(store.get("yd-last-"+myCid)||"null")}catch(e){}
-  if(/^[A-Z0-9]{4}$/.test(h)&&last&&last.code===h&&Date.now()-last.at<3*3600e3&&myName&&netReady())autoRejoin(h);
+  if(!last||!/^[A-Z0-9]{4}$/.test(last.code||"")||!myName||!netReady())return;
+  const age=Date.now()-last.at;
+  if(/^[A-Z0-9]{4}$/.test(h)?(last.code===h&&age<3*3600e3):age<30*60e3)autoRejoin(last.code);
 })();
 })();
 </script>
