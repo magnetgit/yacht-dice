@@ -757,9 +757,11 @@ function openTable(c,asHost,pw,hostWait){
     to=setTimeout(()=>fail({code:"net"}),12000);   // step 1: reach the signalling server
     peer.on("error",e=>{
       const t=e&&e.type;
-      if(t==="unavailable-id")fail({code:"taken"});
+      if(t==="unavailable-id"&&!settled)fail({code:"taken"});
       else if(t==="peer-unavailable")fail({code:"notfound"});
       else if(!settled)fail({code:"net"});
+      // the relay came back from sleep and someone else holds the table id now: rejoin as a guest
+      else if(asHost&&t==="unavailable-id")lost({code:"hostgone"});
     });
     peer.on("disconnected",()=>{if(!closed)setTimeout(()=>{try{if(!closed&&!peer.destroyed&&peer.disconnected)peer.reconnect()}catch(e){}},1500)});
     peer.on("open",pid=>{
@@ -1232,6 +1234,7 @@ async function onLost(err){
     catch(e){if(e&&e.code==="kicked"){rejoining=false;kickedOut();return}}
     await new Promise(r=>setTimeout(r,400+Math.random()*1200));
     if(mode!=="online"||code!==c)break;
+    if(!G)continue;
     try{const t=await openTable(c,true,tablePw);if(mode!=="online"||code!==c){t.leave();break}attach(t);rejoining=false;toast("테이블을 이어받았어요.");return}catch(e){}
     await new Promise(r=>setTimeout(r,700+Math.random()*900));
   }
@@ -1641,7 +1644,7 @@ function renderLobby(){
     $("startBtn").disabled=!allReady;
     $("startBtn").textContent=G.players.length===1?"혼자 시작":`게임 시작 (${G.players.length}명)`;
     const notReady=G.players.filter(p=>p.cid!==host&&!p.ready).map(p=>p.name);
-    $("lobbyMsg").textContent=allReady?(G.players.length===1?"친구를 기다리거나 혼자 연습할 수 있어요.":"모두 준비됐어요. 시작해 주세요."):`준비를 기다리는 중: ${notReady.join(", ")}`;
+    $("lobbyMsg").textContent=allReady?(G.players.length===1?"친구를 기다리거나 혼자 연습할 수 있어요. 코드를 보낸 뒤에는 이 화면으로 돌아와 주세요. 다른 앱에 가 있으면(특히 아이폰) 연결이 멈춰서 친구가 들어오지 못해요.":"모두 준비됐어요. 시작해 주세요."):`준비를 기다리는 중: ${notReady.join(", ")}`;
   }else{
     $("startBtn").hidden=true;$("readyBtn").hidden=!seated();
     $("readyBtn").textContent=myReady?"준비 취소":"준비";
@@ -1954,7 +1957,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-24i";
+const APP_VER="2026-11-24j";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
