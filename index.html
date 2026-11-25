@@ -382,6 +382,8 @@ button.chip:hover{border-color:var(--accent)}
 .sound.nudge{border-color:var(--accent);color:var(--accent)}
 .soundbar .vbtn{border:0;box-shadow:none;background:transparent;border-radius:999px;padding:6px 8px;display:inline-flex;align-items:center}
 .vbtn svg{width:18px;height:18px}
+.d3b{font-weight:800;font-size:12.5px;letter-spacing:.02em;min-width:34px;justify-content:center}
+.d3b[aria-pressed="false"]{color:var(--muted)}
 .vstyles{display:flex;gap:6px;flex-wrap:wrap}
 .vstyles label{flex:1;min-width:90px}
 .vstyles input{position:absolute;opacity:0}
@@ -453,6 +455,7 @@ button.chip:hover{border-color:var(--accent)}
     <div class="soundbar">
       <button id="soundBtn" class="btn ghost small sound" type="button" aria-pressed="true"></button>
       <input id="volume" class="vol" type="range" min="0" max="100" step="5" aria-label="소리 크기" title="소리 크기">
+      <button id="d3Btn" class="btn ghost small vbtn d3b" type="button" aria-pressed="true">3D</button>
       <button id="voiceBtn" class="btn ghost small vbtn" type="button" aria-haspopup="dialog" aria-label="목소리 고르기" title="목소리 고르기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M18 6.5a4 4 0 0 1 0 5M20.5 4a7.5 7.5 0 0 1 0 10"/></svg></button>
     </div>
   </header>
@@ -1642,16 +1645,39 @@ function positions(seed){
    simulated first; once we know which side of each die ends up on top, that side is painted with
    the right number. When the dice come to rest, the flat dice take over at exactly the same spots
    and angles. If the libraries can't load (or reduced motion is on), the old 2D animation is used. */
-const D3={ok:false,anims:new Set(),loop:false,geo:null,tex:null,texKey:""};
-if(!reduced)Promise.all([
-  import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js"),
-  import("https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js")
-]).then(([T3,C])=>{
-  const r=new T3.WebGLRenderer({alpha:true,antialias:true});
-  r.setClearColor(0x000000,0);r.shadowMap.enabled=true;r.shadowMap.type=T3.PCFSoftShadowMap;
-  Object.assign(D3,{ok:true,T3,C,r});
-  try{render()}catch(e){}
-}).catch(()=>{});
+// D3.on: this device's choice (the 3D/2D button in the header); slower phones can switch to the
+// light 2D dice. Each person sees every board in the mode they picked. The 3D libraries are only
+// loaded while 3D is on.
+const D3={ok:false,on:store.get("yd-dice3d")!=="off",loading:false,anims:new Set(),loop:false,geo:null,tex:null,texKey:""};
+const d3on=()=>D3.ok&&D3.on&&!reduced;
+function d3Load(){
+  if(D3.ok||D3.loading||reduced||!D3.on)return;
+  D3.loading=true;
+  Promise.all([
+    import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js"),
+    import("https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js")
+  ]).then(([T3,C])=>{
+    const r=new T3.WebGLRenderer({alpha:true,antialias:true});
+    r.setClearColor(0x000000,0);r.shadowMap.enabled=true;r.shadowMap.type=T3.PCFSoftShadowMap;
+    Object.assign(D3,{ok:true,T3,C,r});
+    try{render()}catch(e){}
+  }).catch(()=>{}).finally(()=>{D3.loading=false});
+}
+d3Load();
+function setDice3d(on){
+  D3.on=on;store.set("yd-dice3d",on?"on":"off");
+  if(!on){
+    for(const a of [...D3.anims])a.stop();
+    for(const v of views.values()){
+      if(v.restCv){v.restCv.remove();v.restCv=null}v.rest=null;
+      v.tray.classList.remove("c3");v.cup.style.cssText="";
+      for(const el of v.dieEls){el.classList.remove("ghost");el.style.visibility=""}
+    }
+  }else d3Load();
+  paintDice3d();try{render()}catch(e){}
+  toast(on?"주사위를 3D로 보여 줘요.":"주사위를 2D로 보여 줘요. 화면이 더 가벼워져요.");
+}
+function paintDice3d(){const b=$("d3Btn");if(!b)return;b.textContent=D3.on&&!reduced?"3D":"2D";b.setAttribute("aria-pressed",D3.on?"true":"false");b.title=D3.on?"주사위 3D로 보는 중 · 누르면 2D(가벼운 화면)로 바꿔요":"주사위 2D로 보는 중 · 누르면 3D로 바꿔요";b.disabled=reduced}
 // local "up" direction of each face's picture, in BoxGeometry face order (+x,-x,+y,-y,+z,-z)
 const TEXUP=[[0,1,0],[0,1,0],[0,0,-1],[0,0,1],[0,1,0],[0,1,0]];
 const D3LIGHT={amb:1.15,dir:1.9};
@@ -1772,7 +1798,7 @@ function d3Stage(Wu,Hu,W,H){
 // every ~0.13 s the dice get tossed, and each hit makes a clack. The throw then continues from
 // exactly these positions and speeds (d3SimFrom).
 function d3Shake(v,b,idx){
-  if(!D3.ok||reduced||!v.el.isConnected)return;
+  if(!d3on()||!v.el.isConnected)return;
   const u=trayUnits(v);if(!u)return;
   const {W,H,d,Wu,Hu}=u,g=cupGeom(Wu,Hu),C=D3.C,T3=D3.T3,rnd=Math.random;
   if(v.anim)v.anim.stop();
@@ -1958,7 +1984,7 @@ function d3Loop(now){
 }
 // Roll dice idx of board b in view v in 3D. Returns {dur} or null (then the 2D animation is used).
 function d3Roll(v,b,idx){
-  if(!D3.ok||!v.el.isConnected)return null;
+  if(!d3on()||!v.el.isConnected)return null;
   const W=v.tray.clientWidth,H=v.tray.clientHeight;
   if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--td);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
   const d=v.probe.offsetWidth;if(W<60||H<40||d<8)return null;
@@ -2012,7 +2038,7 @@ function d3Roll(v,b,idx){
 const restQ=new Map();
 function d3Rest(v,b){
   const drop=()=>{if(v.restCv){v.restCv.remove();v.restCv=null}v.rest=null;return false};
-  if(!D3.ok||reduced||!v.el.isConnected||v.anim||(b&&b.rolling))return drop();
+  if(!d3on()||!v.el.isConnected||v.anim||(b&&b.rolling))return drop();
   const tray=[];if(b&&b.rolls>0)for(let i=0;i<5;i++)if(!b.held[i])tray.push(i);
   if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--td);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
   const W=v.tray.clientWidth,H=v.tray.clientHeight,d=v.probe.offsetWidth;
@@ -2075,7 +2101,7 @@ function syncTray(v,b,act,away){
   const landed=!!b&&!first&&!rolling&&b.rollId!==v.seen.rollId&&b.rolls>0;
   v.cup.classList.toggle("shaking",rolling);
   if(landed){v.cup.classList.remove("pour");void v.cup.offsetWidth;v.cup.classList.add("pour");setTimeout(()=>v.cup.classList.remove("pour"),850);if(ready())thump(S.ctx.currentTime,isMine(v.cid)?.5:.2)}
-  if(D3.ok&&!reduced)placeCup(v);
+  if(d3on())placeCup(v);else if(v.tray.classList.contains("c3")){v.tray.classList.remove("c3");v.cup.style.cssText=""}
   let sim3=null;
   if(landed&&!reduced){const idx=[];for(let i=0;i<5;i++)if(b.mask[i]&&!b.held[i])idx.push(i);if(idx.length)sim3=d3Roll(v,b,idx)}
   const pos=positions(b?b.rollId:0);
@@ -2115,7 +2141,7 @@ function syncTray(v,b,act,away){
     }else face(el,b.dice[i]);
   }
   if(landed){busy.set(v.cid,true);setTimeout(()=>{busy.set(v.cid,false);render()},maxDur+40)}
-  if(rolling&&D3.ok&&!reduced&&!(v.anim&&v.anim.live)){const idx=[];for(let i=0;i<5;i++)if(!b.held[i])idx.push(i);if(idx.length)d3Shake(v,b,idx)}
+  if(rolling&&d3on()&&!(v.anim&&v.anim.live)){const idx=[];for(let i=0;i<5;i++)if(!b.held[i])idx.push(i);if(idx.length)d3Shake(v,b,idx)}
   if(!rolling&&v.anim&&v.anim.live)v.anim.stop();   // shaking cancelled
   const ghost=d3Rest(v,b);
   for(const el of v.dieEls)el.classList.toggle("ghost",ghost&&el.parentNode===v.tray);
@@ -2708,6 +2734,7 @@ function renderPeople(players,specs){
 $("peopleBtn").onclick=()=>{peopleShown="";$("people").hidden=false;peopleUI()};
 $("peopleClose").onclick=()=>{$("people").hidden=true};
 $("voiceBtn").onclick=openVoices;
+$("d3Btn").onclick=()=>setDice3d(!D3.on);paintDice3d();
 $("voicesClose").onclick=()=>{$("voices").hidden=true};
 $("voices").addEventListener("click",e=>{
   if(e.target.id==="voices"){$("voices").hidden=true;return}
@@ -2907,7 +2934,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-25m";
+const APP_VER="2026-11-25n";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
