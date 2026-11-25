@@ -212,6 +212,7 @@ details.rules-d[open] summary::before{transform:rotate(45deg)}
   box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),inset 0 2px 0 rgba(255,255,255,.8),0 4px 8px rgba(0,0,0,.35);border:0;flex:none;transition:box-shadow .12s,transform .12s}
 .die i{display:block;border-radius:50%;background:var(--pip);box-shadow:inset 0 1px 1px rgba(0,0,0,.4)}
 .die.v1 i{background:var(--pipred);transform:scale(1.35)}
+.tray canvas.d3{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;transition:opacity .18s}
 .tray .die{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg));z-index:2}
 .die[disabled]{cursor:default}
 .die.can{cursor:pointer}
@@ -1410,6 +1411,169 @@ function positions(seed){
   const out=cells.slice(0,5).map(c=>({x:c.x+(r()*6-3),y:c.y+(r()*8-4),r:Math.round(r()*44-22)}));
   posCache.set(seed,out);return out;
 }
+/* ---------- 3D dice ----------
+   A landing is a real physics roll: cannon-es moves the dice (they hit each other and the tray
+   walls) and three.js draws them. The numbers are already decided by the game, so the roll is
+   simulated first; once we know which side of each die ends up on top, that side is painted with
+   the right number. When the dice come to rest, the flat dice take over at exactly the same spots
+   and angles. If the libraries can't load (or reduced motion is on), the old 2D animation is used. */
+const D3={ok:false,anims:new Set(),loop:false,geo:null,tex:null,texKey:""};
+if(!reduced)Promise.all([
+  import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js"),
+  import("https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js")
+]).then(([T3,C])=>{
+  const r=new T3.WebGLRenderer({alpha:true,antialias:true});
+  r.setClearColor(0x000000,0);r.shadowMap.enabled=true;r.shadowMap.type=T3.PCFSoftShadowMap;
+  Object.assign(D3,{ok:true,T3,C,r});
+}).catch(()=>{});
+// local "up" direction of each face's picture, in BoxGeometry face order (+x,-x,+y,-y,+z,-z)
+const TEXUP=[[0,1,0],[0,1,0],[0,0,-1],[0,0,1],[0,1,0],[0,1,0]];
+const D3LIGHT={amb:1.15,dir:1.9};
+function d3Mats(){
+  const cs=getComputedStyle(document.documentElement);
+  const die=cs.getPropertyValue("--die").trim()||"#fbf8f1",pip=cs.getPropertyValue("--pip").trim()||"#1c2422",red=cs.getPropertyValue("--pipred").trim()||"#c33f2b";
+  const key=die+pip+red;if(D3.tex&&D3.texKey===key)return D3.tex;
+  const T3=D3.T3;D3.texKey=key;D3.tex=[null];
+  // same pip layout as the flat dice: 16% padding, 5% gaps, 3x3 grid
+  const N=256,cell=.58/3;
+  for(let v=1;v<=6;v++){
+    const c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d");
+    x.fillStyle=die;x.fillRect(0,0,N,N);
+    for(const [rr,cc] of PIPS[v]){
+      const cx=(.16+(cc-1)*(cell+.05)+cell/2)*N,cy=(.16+(rr-1)*(cell+.05)+cell/2)*N,rad=cell/2*N*(v===1?1.35:1);
+      x.fillStyle=v===1?red:pip;x.beginPath();x.arc(cx,cy,rad,0,Math.PI*2);x.fill();
+    }
+    const t=new T3.CanvasTexture(c);t.colorSpace=T3.SRGBColorSpace;t.anisotropy=4;
+    D3.tex.push(new T3.MeshStandardMaterial({map:t,roughness:.55,metalness:0}));
+  }
+  return D3.tex;
+}
+// a cube with rounded edges (a segmented box whose vertices are pushed onto a rounded shape)
+function d3Geo(){
+  if(D3.geo)return D3.geo;
+  const T3=D3.T3,g=new T3.BoxGeometry(1,1,1,14,14,14),p=g.attributes.position,n=g.attributes.normal,R=.14,h=.5-R;
+  const v=new T3.Vector3(),c=new T3.Vector3(),d=new T3.Vector3(),cl=a=>Math.max(-h,Math.min(h,a));
+  for(let i=0;i<p.count;i++){
+    v.fromBufferAttribute(p,i);c.set(cl(v.x),cl(v.y),cl(v.z));d.subVectors(v,c);
+    if(d.lengthSq()<1e-12)continue;d.normalize();v.copy(c).addScaledVector(d,R);
+    p.setXYZ(i,v.x,v.y,v.z);n.setXYZ(i,d.x,d.y,d.z);
+  }
+  return D3.geo=g;
+}
+// Run the physics for n dice poured from the cup. Units: one die = 1; the tray is Wu x Hu.
+// Retries a few times if a die ends up leaning (on a wall or another die).
+function d3Sim(Wu,Hu,n){
+  const C=D3.C,rnd=Math.random;
+  const cupX=-Wu/2+.14*Wu,xL=Math.min(cupX+1.05,-Wu/2+Wu*.3);
+  let best=null;
+  for(let attempt=0;attempt<8;attempt++){
+    const w=new C.World({gravity:new C.Vec3(0,-70,0),allowSleep:true});
+    w.defaultContactMaterial.friction=.3;w.defaultContactMaterial.restitution=.32;
+    const wall=(x,y,z,ax,ay,az,ang)=>{const b=new C.Body({mass:0,shape:new C.Plane()});b.position.set(x,y,z);if(ang)b.quaternion.setFromAxisAngle(new C.Vec3(ax,ay,az),ang);w.addBody(b)};
+    wall(0,0,0,1,0,0,-Math.PI/2);            // floor
+    wall(xL,0,0,0,1,0,Math.PI/2);            // left (just right of the cup)
+    wall(Wu/2,0,0,0,1,0,-Math.PI/2);         // right
+    wall(0,0,-Hu/2,0,0,0,0);                 // far
+    wall(0,0,Hu/2,0,1,0,Math.PI);            // near
+    wall(0,4.5,0,1,0,0,Math.PI/2);           // lid, keeps dice in view
+    const shape=new C.Box(new C.Vec3(.5,.5,.5)),bodies=[],hits=[];let step=0;
+    const zs=Math.min(1.15,(Hu-1.6)/Math.max(1,n-1));
+    for(let k=0;k<n;k++){
+      const b=new C.Body({mass:1,shape,sleepSpeedLimit:.3,sleepTimeLimit:.2,linearDamping:.04,angularDamping:.06});
+      b.position.set(xL+.75+(k%2)*1.2+rnd()*.15,1.2+rnd()*1.4,(k-(n-1)/2)*zs);
+      b.quaternion.setFromEuler(rnd()*6.28,rnd()*6.28,rnd()*6.28);
+      b.velocity.set(9+rnd()*8,1+rnd()*3,(rnd()-.5)*7);
+      b.angularVelocity.set((rnd()-.5)*36,(rnd()-.5)*36,(rnd()-.5)*36);
+      b.addEventListener("collide",e=>{try{const sp=Math.abs(e.contact.getImpactVelocityAlongNormal());if(sp>1.5)hits.push({t:step/120,s:sp})}catch(_){}});
+      w.addBody(b);bodies.push(b);
+    }
+    const frames=[];let still=0;
+    for(step=0;step<120*5;step++){
+      w.step(1/120);
+      if(step%2===0)frames.push(bodies.map(b=>[b.position.x,b.position.y,b.position.z,b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w]));
+      still=bodies.every(b=>b.velocity.lengthSquared()<.004&&b.angularVelocity.lengthSquared()<.01)?still+1:0;
+      if(still>20&&step>90)break;
+    }
+    frames.push(bodies.map(b=>[b.position.x,b.position.y,b.position.z,b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w]));
+    const ups=[];let flat=true;
+    for(const b of bodies){
+      let bi=0,bv=0;
+      for(let j=0;j<3;j++){const a=[0,0,0];a[j]=1;const wv=b.quaternion.vmult(new C.Vec3(a[0],a[1],a[2]));if(Math.abs(wv.y)>Math.abs(bv)){bv=wv.y;bi=j}}
+      ups.push(bi*2+(bv>0?0:1));
+      if(Math.abs(bv)<.995||Math.abs(b.position.y-.5)>.05)flat=false;
+    }
+    best={frames,ups,hits};
+    if(flat)break;
+  }
+  return best;
+}
+// numbers for the six faces so that face "up" shows target (opposite sides add up to 7)
+function faceVals(up,target){
+  const vals=Array(6);vals[up]=target;vals[up^1]=7-target;
+  const rest=[1,2,3].filter(a=>a!==target&&a!==7-target);if(Math.random()<.5)rest.reverse();
+  [0,1,2].filter(j=>j!==(up>>1)).forEach((j,k)=>{const a=rest[k],f=Math.random()<.5;vals[j*2]=f?a:7-a;vals[j*2+1]=f?7-a:a});
+  return vals;
+}
+function d3Draw(a,now){
+  const k=Math.min(a.frames.length-1,Math.max(0,Math.floor((now-a.start)*60/1000))),f=a.frames[k];
+  a.meshes.forEach((m,i)=>{const p=f[i];m.position.set(p[0],p[1],p[2]);m.quaternion.set(p[3],p[4],p[5],p[6])});
+  const r=D3.r;
+  if(r.getPixelRatio()!==a.pr)r.setPixelRatio(a.pr);
+  const sz=r.getSize(new D3.T3.Vector2());if(sz.x!==a.W||sz.y!==a.H)r.setSize(a.W,a.H,false);
+  r.render(a.scene,a.cam);
+  a.ctx.clearRect(0,0,a.cv.width,a.cv.height);a.ctx.drawImage(r.domElement,0,0,a.cv.width,a.cv.height);
+}
+function d3Loop(now){
+  for(const a of [...D3.anims]){
+    if(!a.v.el.isConnected){a.stop();continue}
+    d3Draw(a,now);
+    if(now-a.start>=a.dur)a.finish();
+  }
+  if(D3.anims.size)requestAnimationFrame(d3Loop);else D3.loop=false;
+}
+// Roll dice idx of board b in view v in 3D. Returns {dur} or null (then the 2D animation is used).
+function d3Roll(v,b,idx){
+  if(!D3.ok||!v.el.isConnected)return null;
+  const W=v.tray.clientWidth,H=v.tray.clientHeight;
+  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--d);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
+  const d=v.probe.offsetWidth;if(W<60||H<40||d<8)return null;
+  const Wu=W/d,Hu=H/d;
+  let sim;try{sim=d3Sim(Wu,Hu,idx.length)}catch(e){return null}
+  const T3=D3.T3,C=D3.C,last=sim.frames[sim.frames.length-1],out=[],taken=[];
+  // where each die ends up, as the flat dice will show it (position in % of the tray, angle)
+  idx.forEach((i,k)=>{
+    const f=last[k],q=new C.Quaternion(f[3],f[4],f[5],f[6]),u=TEXUP[sim.ups[k]],w=q.vmult(new C.Vec3(u[0],u[1],u[2]));
+    out[i]={x:50+f[0]/Wu*100,y:50+f[2]/Hu*100,r:Math.round(Math.atan2(w.x,-w.z)*180/Math.PI)};taken.push([f[0],f[2]]);
+  });
+  // free spots for the dice that are held now, for when they are released
+  for(let i=0;i<5;i++)if(!out[i]){
+    let x=0,z=0;
+    for(let t=0;t<60;t++){x=-Wu/2+Wu*.3+.7+Math.random()*Math.max(.1,Wu*.7-1.4);z=-Hu/2+.7+Math.random()*Math.max(.1,Hu-1.4);if(taken.every(([a,c])=>Math.hypot(a-x,c-z)>1.5))break}
+    taken.push([x,z]);out[i]={x:50+x/Wu*100,y:50+z/Hu*100,r:Math.round(Math.random()*40-20)};
+  }
+  posCache.set(b.rollId,out);
+  const scene=new T3.Scene(),mats=d3Mats(),geo=d3Geo();
+  const meshes=idx.map((i,k)=>{const m=new T3.Mesh(geo,faceVals(sim.ups[k],b.dice[i]).map(x=>mats[x]));m.castShadow=true;scene.add(m);return m});
+  scene.add(new T3.AmbientLight(0xffffff,D3LIGHT.amb));
+  const L=new T3.DirectionalLight(0xffffff,D3LIGHT.dir);L.position.set(-2.5,12,-3.5);L.castShadow=true;L.shadow.mapSize.set(1024,1024);
+  Object.assign(L.shadow.camera,{left:-Wu/2-1,right:Wu/2+1,top:Hu/2+1,bottom:-Hu/2-1,near:1,far:30});L.shadow.camera.updateProjectionMatrix();scene.add(L);
+  const flG=new T3.PlaneGeometry(Wu+2,Hu+2),flM=new T3.ShadowMaterial({opacity:.32}),fl=new T3.Mesh(flG,flM);fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;scene.add(fl);
+  // camera straight above, framed so a die's top face is exactly the size of a flat die
+  const Hc=16,cam=new T3.PerspectiveCamera(2*Math.atan(Hu/2/Hc)*180/Math.PI,W/H,1,60);
+  cam.position.set(0,1+Hc,0);cam.up.set(0,0,-1);cam.lookAt(0,1,0);
+  const pr=Math.min(2,window.devicePixelRatio||1),cv=document.createElement("canvas");
+  cv.className="d3";cv.width=Math.round(W*pr);cv.height=Math.round(H*pr);v.tray.appendChild(cv);
+  if(v.anim)v.anim.stop();
+  const a={v,hide:new Set(idx),scene,cam,meshes,frames:sim.frames,cv,ctx:cv.getContext("2d"),pr,W,H,start:performance.now(),dur:(sim.frames.length-1)*1000/60,done:false};
+  a.stop=()=>{if(a.done)return;a.done=true;D3.anims.delete(a);if(v.anim===a)v.anim=null;flG.dispose();flM.dispose();L.dispose&&L.dispose();cv.style.opacity="0";setTimeout(()=>cv.remove(),220)};
+  a.finish=()=>{if(a.done)return;a.stop();render()};
+  setTimeout(a.finish,a.dur+600);   // in case frames stop (tab in the background)
+  v.anim=a;D3.anims.add(a);d3Draw(a,a.start);
+  if(!D3.loop){D3.loop=true;requestAnimationFrame(d3Loop)}
+  // a clack for every real hit (die on die, floor or wall)
+  if(ready()){const t0=S.ctx.currentTime,vol=isMine(v.cid)?1:.4;let lt=-1;for(const h of sim.hits){if(h.t-lt<.04)continue;lt=h.t;clack(t0+h.t,Math.min(.6,h.s/16)*vol,2200+Math.random()*1300)}}
+  return {dur:a.dur};
+}
 const views=new Map();
 function resetViews(){for(const v of views.values())v.el.remove();views.clear()}
 function makeView(cid){
@@ -1437,6 +1601,8 @@ function syncTray(v,b,act,away){
   const landed=!!b&&!first&&!rolling&&b.rollId!==v.seen.rollId&&b.rolls>0;
   v.cup.classList.toggle("shaking",rolling);
   if(landed){v.cup.classList.remove("pour");void v.cup.offsetWidth;v.cup.classList.add("pour");setTimeout(()=>v.cup.classList.remove("pour"),600);if(ready())thump(S.ctx.currentTime,isMine(v.cid)?.5:.2)}
+  let sim3=null;
+  if(landed&&!reduced){const idx=[];for(let i=0;i<5;i++)if(b.mask[i]&&!b.held[i])idx.push(i);if(idx.length)sim3=d3Roll(v,b,idx)}
   const pos=positions(b?b.rollId:0);
   const trect=v.tray.getBoundingClientRect();
   const can=act&&b&&!rolling&&b.rolls>0&&b.rolls<3;
@@ -1447,14 +1613,16 @@ function syncTray(v,b,act,away){
     const show=!!b&&b.rolls>0&&!(rolling&&!b.held[i]);
     if(!show){el.remove();continue}
     if(b.held[i]){
-      el.style.left=el.style.top="";el.style.removeProperty("--r");el.getAnimations().forEach(a=>a.cancel());
+      el.style.left=el.style.top="";el.style.removeProperty("--r");el.style.visibility="";el.getAnimations().forEach(a=>a.cancel());
       if(el.parentNode!==v.slotEls[i])v.slotEls[i].appendChild(el);
       face(el,b.dice[i]);continue;
     }
     const p=pos[i];
     if(el.parentNode!==v.tray)v.tray.appendChild(el);
     el.style.left=p.x+"%";el.style.top=p.y+"%";el.style.setProperty("--r",p.r+"deg");
-    if(landed&&b.mask[i]){
+    el.style.visibility=v.anim&&v.anim.hide.has(i)?"hidden":"";
+    if(landed&&b.mask[i]&&sim3){el.getAnimations().forEach(a=>a.cancel());face(el,b.dice[i]);maxDur=Math.max(maxDur,sim3.dur)}
+    else if(landed&&b.mask[i]){
       const dur=reduced?220:780+i*70;maxDur=Math.max(maxDur,dur);
       const dx=(0.14-p.x/100)*trect.width,dy=(0.5-p.y/100)*trect.height;
       const r0=p.r-360-Math.round(Math.random()*180);
@@ -1957,7 +2125,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-24j";
+const APP_VER="2026-11-25a";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
