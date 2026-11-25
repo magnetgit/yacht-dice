@@ -253,6 +253,7 @@ details.rules-d[open] summary::before{transform:rotate(45deg)}
   box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),inset 0 2px 0 rgba(255,255,255,.8),0 4px 8px rgba(0,0,0,.35);border:0;flex:none;transition:box-shadow .12s,transform .12s}
 .die i{display:block;border-radius:50%;background:var(--pip);box-shadow:inset 0 1px 1px rgba(0,0,0,.4)}
 .die.v1 i{background:var(--pipred);transform:scale(1.35)}
+.tray.c3 .cup{display:none}
 .tray canvas.d3{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;transition:opacity .18s}
 .tray .die{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg));z-index:2}
 /* resting 3D dice are drawn on a canvas; the flat die stays on top as an invisible click target */
@@ -987,7 +988,7 @@ const Dir={cpeer:null,hpeer:null,hubSlot:-1,hubConns:new Map(),reg:null,rooms:nu
   slots:HUBS.map((id,i)=>({i,id,conn:null,heard:0,retryAt:0,free:0,deadUntil:0,rooms:[],lastReg:0,regSent:""}))};
 // release our ids right away when the page goes, so others can take over quickly
 window.addEventListener("pagehide",()=>{try{if(Dir.cpeer)Dir.cpeer.destroy()}catch(e){}try{if(Dir.hpeer)Dir.hpeer.destroy()}catch(e){}});
-if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},setBoard:(c,b)=>setBoard(c,b)};
+if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok}},setBoard:(c,b)=>setBoard(c,b)};
 // A private room is listed by name only: its code never leaves the table.
 function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)&&(r.sc===undefined||isInt(r.sc,0,30))&&(r.ts===undefined||(typeof r.ts==="number"&&isFinite(r.ts)))}
 function liveHubs(){return Dir.slots.filter(s=>s.conn&&s.conn.open).length+(Dir.hubSlot>=0?1:0)}
@@ -1556,7 +1557,14 @@ function doRoll(cid){
   if(b0.rolling){doStop(cid);return}
   if(b0.rolls>=3||b0.held.every(Boolean))return;
   const b=clone(b0);b.rolling=true;setBoard(cid,b);
-  clearTimeout(stopT.get(cid));stopT.set(cid,setTimeout(()=>{const x=boardOf(cid);if(x&&x.rolling)doStop(cid)},3500));
+  // 흔들기 → 던지기 (or 취소). If nobody presses anything, the dice are thrown after 10 seconds.
+  clearTimeout(stopT.get(cid));stopT.set(cid,setTimeout(()=>{const x=boardOf(cid);if(x&&x.rolling)doStop(cid)},10000));
+}
+// stop shaking without throwing: no roll is used, and the dice can be held or released again
+function cancelShake(cid){
+  const b0=boardOf(cid);if(!canAct(cid)||!b0.rolling)return;
+  clearTimeout(stopT.get(cid));
+  const b=clone(b0);b.rolling=false;setBoard(cid,b);
 }
 function doStop(cid){
   const b0=boardOf(cid);if(!canAct(cid)||!b0.rolling)return;
@@ -1589,7 +1597,7 @@ function positions(seed){
   if(posCache.has(seed))return posCache.get(seed);
   // 3x2 grid of cells to the right of the cup; each die gets its own cell, so dice never overlap
   const r=mulberry(seed||7),cells=[];
-  for(const y of[33,67])for(const x of[42,62,82])cells.push({x,y});
+  for(const y of[33,67])for(const x of[54,70,86])cells.push({x,y});
   for(let i=cells.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[cells[i],cells[j]]=[cells[j],cells[i]]}
   const out=cells.slice(0,5).map(c=>({x:c.x+(r()*6-3),y:c.y+(r()*8-4),r:Math.round(r()*44-22)}));
   posCache.set(seed,out);return out;
@@ -1608,6 +1616,7 @@ if(!reduced)Promise.all([
   const r=new T3.WebGLRenderer({alpha:true,antialias:true});
   r.setClearColor(0x000000,0);r.shadowMap.enabled=true;r.shadowMap.type=T3.PCFSoftShadowMap;
   Object.assign(D3,{ok:true,T3,C,r});
+  try{render()}catch(e){}
 }).catch(()=>{});
 // local "up" direction of each face's picture, in BoxGeometry face order (+x,-x,+y,-y,+z,-z)
 const TEXUP=[[0,1,0],[0,1,0],[0,0,-1],[0,0,1],[0,1,0],[0,1,0]];
@@ -1643,11 +1652,189 @@ function d3Geo(){
   }
   return D3.geo=g;
 }
+// Tray size in die units; the round cup sits at the left and the dice land to its right.
+const CUP={R:1.7,rim:.3};
+function trayUnits(v){
+  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--d);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
+  const W=v.tray.clientWidth,H=v.tray.clientHeight,d=v.probe.offsetWidth;
+  if(W<60||H<40||d<8)return null;
+  return{W,H,d,Wu:W/d,Hu:H/d};
+}
+// (the rim is nearer the camera than the felt, so it looks a little bigger: keep a margin)
+function cupGeom(Wu,Hu){const R=Math.max(1.1,Math.min(CUP.R,(Hu-1.3)/2-CUP.rim)),cx=-Wu/2+R+CUP.rim+.6;return{R,cx,xL:cx+R+CUP.rim+.15}}
+function placeCup(v){
+  const u=trayUnits(v);if(!u)return;
+  const g=cupGeom(u.Wu,u.Hu),size=2*(g.R+CUP.rim)*u.d;
+  v.tray.classList.add("c3");
+  v.cup.style.left=((g.cx/u.Wu+.5)*100).toFixed(2)+"%";v.cup.style.width=v.cup.style.height=size.toFixed(1)+"px";
+  v.cup.style.setProperty("--ci",(g.R/(g.R+CUP.rim)).toFixed(3));
+}
+// The dice cup: a wooden tumbler (open top, slightly narrower at the bottom, two brass bands,
+// dark leather inside). Built around a pivot at the bottom edge on the felt side, so it can tip
+// over toward the felt when the dice are thrown. Geometry is cached per size.
+const CUPH=2.5,CUPTH=.18;
+function d3Cup(g){
+  const T3=D3.T3;
+  if(!D3.cupMat)D3.cupMat={
+    wood:new T3.MeshStandardMaterial({color:0x7a4626,roughness:.55,metalness:.05}),
+    inside:new T3.MeshStandardMaterial({color:0x2b1a10,roughness:.9,side:T3.BackSide}),
+    floor:new T3.MeshStandardMaterial({color:0x24150c,roughness:.95}),
+    rim:new T3.MeshStandardMaterial({color:0x9a6234,roughness:.45,metalness:.1}),
+    brass:new T3.MeshStandardMaterial({color:0xd9ae4a,roughness:.3,metalness:.75})};
+  D3.cupGeo=D3.cupGeo||{};
+  const key=g.R.toFixed(2);
+  if(!D3.cupGeo[key]){
+    const Rt=g.R+CUPTH,Rb=Rt*.86,H=CUPH,at=y=>Rb+(Rt-Rb)*y/H;
+    D3.cupGeo[key]={Rb,parts:[
+      ["wood",new T3.CylinderGeometry(Rt,Rb,H,56,1,true),[0,H/2,0],[0,0,0]],
+      ["inside",new T3.CylinderGeometry(Rt-CUPTH,Rb-CUPTH,H,56,1,true),[0,H/2,0],[0,0,0]],
+      ["rim",new T3.RingGeometry(Rt-CUPTH,Rt,56),[0,H,0],[-Math.PI/2,0,0]],
+      ["floor",new T3.CircleGeometry(Rb-CUPTH,48),[0,.02,0],[-Math.PI/2,0,0]],
+      ["wood",new T3.CircleGeometry(Rb,48),[0,0,0],[Math.PI/2,0,0]],
+      ["brass",new T3.TorusGeometry(at(H*.84)+.015,.07,8,56),[0,H*.84,0],[Math.PI/2,0,0]],
+      ["brass",new T3.TorusGeometry(at(H*.14)+.015,.07,8,56),[0,H*.14,0],[Math.PI/2,0,0]]]};
+  }
+  const cg=D3.cupGeo[key],body=new T3.Group(),pivot=new T3.Group();
+  for(const [m,geo,pos,rot] of cg.parts){const x=new T3.Mesh(geo,D3.cupMat[m]);x.position.set(pos[0],pos[1],pos[2]);x.rotation.set(rot[0],rot[1],rot[2]);x.castShadow=m!=="inside"&&m!=="floor";x.receiveShadow=true;body.add(x)}
+  body.position.set(0,-CUPH/2,0);pivot.add(body);
+  pivot.userData={g,Rt:g.R+CUPTH};
+  cupPose(pivot,0,0,0,0);
+  return pivot;
+}
+// The cup turns about its middle. ox/oz: slide on the felt, tilt: radians with the mouth turning
+// toward the felt (right), lift: raise it so the turned cup clears the felt, wob: small sideways rock
+function cupPose(pv,ox,oz,tilt,lift,wob){const u=pv.userData;pv.position.set(u.g.cx+ox,CUPH/2+lift,oz);pv.rotation.set(wob||0,0,-tilt)}
+// the throw: lift and tip the cup so its mouth faces the felt, hold while the dice spill, set it down.
+// The same motion drives the cup's collision body in the throw physics (d3SimFrom), so what you
+// see is what the dice hit: they can only leave through the mouth.
+const CUPTIP=2.25;   // radians: past horizontal, so the mouth points down toward the felt
+function cupThrowAt(t,Rt){
+  const e=x=>1-Math.pow(1-Math.min(1,Math.max(0,x)),3);
+  const k=t<.24?e(t/.24):t<.8?1:t<1.25?1-e((t-.8)/.45):0,tilt=CUPTIP*k;
+  // raise it just enough that the turned cup never touches the felt
+  const low=CUPH/2*Math.abs(Math.cos(tilt))+Rt*Math.abs(Math.sin(tilt))+.12;
+  return{ox:.25*k,tilt,lift:Math.max(0,low-CUPH/2)};
+}
+function cupThrow(pv,t){const c=cupThrowAt(t,pv.userData.Rt);cupPose(pv,c.ox,0,c.tilt,c.lift)}
+// scene, lights, shadow floor and the top-down camera shared by every 3D view of a tray
+function d3Stage(Wu,Hu,W,H){
+  const T3=D3.T3,scene=new T3.Scene();
+  scene.add(new T3.AmbientLight(0xffffff,D3LIGHT.amb));
+  const L=new T3.DirectionalLight(0xffffff,D3LIGHT.dir);L.position.set(-2.5,12,-3.5);L.castShadow=true;L.shadow.mapSize.set(1024,1024);
+  Object.assign(L.shadow.camera,{left:-Wu/2-1,right:Wu/2+1,top:Hu/2+1,bottom:-Hu/2-1,near:1,far:30});L.shadow.camera.updateProjectionMatrix();scene.add(L);
+  const flG=new T3.PlaneGeometry(Wu+2,Hu+2),flM=new T3.ShadowMaterial({opacity:.32}),fl=new T3.Mesh(flG,flM);fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;scene.add(fl);
+  const Hc=16,cam=new T3.PerspectiveCamera(2*Math.atan(Hu/2/Hc)*180/Math.PI,W/H,1,60);
+  cam.position.set(0,1+Hc,0);cam.up.set(0,0,-1);cam.lookAt(0,1,0);
+  return{scene,cam,dispose:()=>{flG.dispose();flM.dispose();L.dispose&&L.dispose()}};
+}
+// While the cup is shaken, the dice really tumble inside it (live physics): the cup wall moves,
+// every ~0.13 s the dice get tossed, and each hit makes a clack. The throw then continues from
+// exactly these positions and speeds (d3SimFrom).
+function d3Shake(v,b,idx){
+  if(!D3.ok||reduced||!v.el.isConnected)return;
+  const u=trayUnits(v);if(!u)return;
+  const {W,H,d,Wu,Hu}=u,g=cupGeom(Wu,Hu),C=D3.C,T3=D3.T3,rnd=Math.random;
+  if(v.anim)v.anim.stop();
+  const w=new C.World({gravity:new C.Vec3(0,-70,0)});
+  w.defaultContactMaterial.friction=.25;w.defaultContactMaterial.restitution=.38;
+  const fl=new C.Body({mass:0,shape:new C.Plane()});fl.quaternion.setFromAxisAngle(new C.Vec3(1,0,0),-Math.PI/2);w.addBody(fl);
+  const lid=new C.Body({mass:0,shape:new C.Plane()});lid.position.set(0,CUPH+.6,0);lid.quaternion.setFromAxisAngle(new C.Vec3(1,0,0),Math.PI/2);w.addBody(lid);
+  const cup=new C.Body({mass:0,type:C.Body.KINEMATIC}),N=18,rw=g.R+.2;
+  for(let k=0;k<N;k++){const a=k/N*Math.PI*2,q=new C.Quaternion();q.setFromAxisAngle(new C.Vec3(0,1,0),-a);cup.addShape(new C.Box(new C.Vec3(.2,1.8,rw*Math.tan(Math.PI/N)+.06)),new C.Vec3(Math.cos(a)*rw,1.8,Math.sin(a)*rw),q)}
+  cup.position.set(g.cx,0,0);w.addBody(cup);
+  const shape=new C.Box(new C.Vec3(.5,.5,.5)),spots=[[0,0],[.95,.55],[-.95,.55],[.95,-.6],[-.95,-.6]],bodies=[];
+  const vol=isMine(v.cid)?1:.4;let lastClack=0;
+  idx.forEach((i,k)=>{
+    const bd=new C.Body({mass:1,shape,linearDamping:.05,angularDamping:.08}),s=spots[k%5],f=Math.min(1,(g.R-.6)/1.1);
+    bd.position.set(g.cx+s[0]*f,.6+k*.35,s[1]*f);bd.quaternion.setFromEuler(rnd()*6.28,rnd()*6.28,rnd()*6.28);
+    bd.addEventListener("collide",e=>{try{const sp=Math.abs(e.contact.getImpactVelocityAlongNormal()),t=performance.now();if(sp>2.2&&t-lastClack>35&&ready()){lastClack=t;clack(S.ctx.currentTime,Math.min(.45,sp/22)*vol,2300+rnd()*1500)}}catch(_){}});
+    w.addBody(bd);bodies.push(bd);
+  });
+  const st=d3Stage(Wu,Hu,W,H),mats=d3Mats(),geo=d3Geo(),cupM=d3Cup(g);st.scene.add(cupM);
+  const meshes=bodies.map(()=>{const m=new T3.Mesh(geo,faceVals(Math.floor(rnd()*6),1+Math.floor(rnd()*6)).map(x=>mats[x]));m.castShadow=true;st.scene.add(m);return m});
+  const pr=Math.min(2,window.devicePixelRatio||1),cv=document.createElement("canvas");
+  cv.className="d3";cv.width=Math.round(W*pr);cv.height=Math.round(H*pr);v.tray.appendChild(cv);
+  const t0=performance.now();
+  const a={v,live:true,hide:new Set(idx),scene:st.scene,cam:st.cam,meshes,bodies,cv,ctx:cv.getContext("2d"),pr,W,H,Wu,Hu,start:t0,last:t0,kick:-1,dur:Infinity,done:false};
+  a.tick=now=>{
+    const dt=Math.min(.05,Math.max(0,(now-a.last)/1000)),t=(now-t0)/1000;a.last=now;
+    const f1=3.1*Math.PI*2,f2=2.3*Math.PI*2,ox=.2*Math.sin(t*f1),oz=.16*Math.sin(t*f2+1);
+    cup.position.set(g.cx+ox,0,oz);cup.velocity.set(.2*f1*Math.cos(t*f1),0,.16*f2*Math.cos(t*f2+1));
+    if(t-a.kick>.13){a.kick=t;for(const bd of bodies)if(bd.position.y<1.05){bd.velocity.y+=7+rnd()*5;bd.velocity.x+=(rnd()-.5)*4;bd.velocity.z+=(rnd()-.5)*4;bd.angularVelocity.set((rnd()-.5)*30,(rnd()-.5)*30,(rnd()-.5)*30)}}
+    if(dt>0)w.step(1/120,dt,8);
+    bodies.forEach((bd,k)=>{meshes[k].position.set(bd.position.x,bd.position.y,bd.position.z);meshes[k].quaternion.set(bd.quaternion.x,bd.quaternion.y,bd.quaternion.z,bd.quaternion.w)});
+    cupPose(cupM,ox,oz,.05*Math.sin(t*f2*1.3),0,.05*Math.sin(t*f1*.9));
+  };
+  a.states=()=>bodies.map(bd=>({p:[bd.position.x,bd.position.y,bd.position.z],q:[bd.quaternion.x,bd.quaternion.y,bd.quaternion.z,bd.quaternion.w],v:[bd.velocity.x,bd.velocity.y,bd.velocity.z],w:[bd.angularVelocity.x,bd.angularVelocity.y,bd.angularVelocity.z]}));
+  a.stop=()=>{if(a.done)return;a.done=true;D3.anims.delete(a);if(v.anim===a)v.anim=null;st.dispose();cv.style.opacity="0";setTimeout(()=>cv.remove(),220)};
+  a.finish=()=>{};
+  v.anim=a;D3.anims.add(a);d3Draw(a,t0);
+  if(!D3.loop){D3.loop=true;requestAnimationFrame(d3Loop)}
+}
+// The throw, continuing from the shaking dice: they leave the cup to the right with a push, a
+// gate closes behind them once all are out, and they settle on the felt. Same output as d3Sim.
+function d3SimFrom(Wu,Hu,start){
+  const C=D3.C,rnd=Math.random,g=cupGeom(Wu,Hu);
+  let best=null;
+  for(let attempt=0;attempt<8;attempt++){
+    const w=new C.World({gravity:new C.Vec3(0,-70,0),allowSleep:true});
+    w.defaultContactMaterial.friction=.3;w.defaultContactMaterial.restitution=.32;
+    const wall=(x,y,z,ax,ay,az,ang)=>{const b=new C.Body({mass:0,shape:new C.Plane()});b.position.set(x,y,z);if(ang)b.quaternion.setFromAxisAngle(new C.Vec3(ax,ay,az),ang);w.addBody(b);return b};
+    wall(0,0,0,1,0,0,-Math.PI/2);wall(-Wu/2,0,0,0,1,0,Math.PI/2);wall(Wu/2,0,0,0,1,0,-Math.PI/2);
+    wall(0,0,-Hu/2,0,0,0,0);wall(0,0,Hu/2,0,1,0,Math.PI);wall(0,6,0,1,0,0,Math.PI/2);
+    // the cup: ring of wall boxes + a bottom, origin at its middle (like the drawn cup's pivot)
+    const Rt=g.R+CUPTH,rw=g.R+.2,N=18,cup=new C.Body({mass:0,type:C.Body.KINEMATIC});
+    for(let k=0;k<N;k++){const a=k/N*Math.PI*2,q=new C.Quaternion();q.setFromAxisAngle(new C.Vec3(0,1,0),-a);cup.addShape(new C.Box(new C.Vec3(.2,CUPH/2,rw*Math.tan(Math.PI/N)+.06)),new C.Vec3(Math.cos(a)*rw,0,Math.sin(a)*rw),q)}
+    cup.addShape(new C.Box(new C.Vec3(rw,.15,rw)),new C.Vec3(0,-CUPH/2-.13,0));
+    w.addBody(cup);
+    const cupAt=t=>{const c=cupThrowAt(t,Rt);return{x:g.cx+c.ox,y:CUPH/2+c.lift,a:-c.tilt}};
+    const moveCup=t=>{const p0=cupAt(t),p1=cupAt(t+1/120);cup.position.set(p0.x,p0.y,0);cup.quaternion.setFromAxisAngle(new C.Vec3(0,0,1),p0.a);
+      cup.velocity.set((p1.x-p0.x)*120,(p1.y-p0.y)*120,0);cup.angularVelocity.set(0,0,(p1.a-p0.a)*120)};
+    moveCup(0);
+    const shape=new C.Box(new C.Vec3(.5,.5,.5)),bodies=[],hits=[],out=[],freed=[];let step=0;
+    for(const s0 of start){
+      const b=new C.Body({mass:1,shape,sleepSpeedLimit:.3,sleepTimeLimit:.2,linearDamping:.04,angularDamping:.06});
+      b.position.set(s0.p[0],Math.max(.5,s0.p[1]),s0.p[2]);b.quaternion.set(s0.q[0],s0.q[1],s0.q[2],s0.q[3]);
+      b.velocity.set(s0.v[0]*.4+rnd()*2,s0.v[1]*.3+rnd()*2,s0.v[2]*.4+(rnd()-.5)*2);
+      b.angularVelocity.set(s0.w[0]*.5+(rnd()-.5)*12,s0.w[1]*.5+(rnd()-.5)*12,s0.w[2]*.5+(rnd()-.5)*12);
+      b.addEventListener("collide",e=>{try{const sp=Math.abs(e.contact.getImpactVelocityAlongNormal());if(sp>1.5)hits.push({t:step/120,s:sp})}catch(_){}});
+      w.addBody(b);bodies.push(b);
+    }
+    const snap=()=>bodies.map(b=>[b.position.x,b.position.y,b.position.z,b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w]);
+    const frames=[snap()];let still=0;
+    for(step=0;step<120*5;step++){
+      moveCup(step/120);
+      w.step(1/120);
+      // a die poured out gets a little extra roll across the felt, and cannot roll back under the cup
+      const cp=cupAt(step/120),ca=Math.cos(-cp.a),sa=Math.sin(-cp.a);
+      bodies.forEach((b,k)=>{
+        // leaving through the mouth: thrown out across the felt
+        if(!freed[k]){const dx=b.position.x-cp.x,dy=b.position.y-cp.y,ly=dx*sa+dy*ca;if(ly>CUPH/2-.2){freed[k]=true;b.velocity.x+=7+rnd()*5;b.velocity.y+=1+rnd()*2}}
+        if(!out[k]&&b.position.x>g.xL+.6){out[k]=true;b.velocity.x+=rnd()*2}
+        if(out[k]&&b.position.x<g.xL+.55){b.position.x=g.xL+.55;if(b.velocity.x<0)b.velocity.x*=-.45}
+      });
+      if(step%2===1)frames.push(snap());
+      still=bodies.every(b=>b.velocity.lengthSquared()<.004&&b.angularVelocity.lengthSquared()<.01)?still+1:0;
+      if(still>20&&step>165)break;   // also wait for the cup to be set down
+    }
+    frames.push(snap());
+    const ups=[],allOut=bodies.every((b,k)=>out[k]);let flat=allOut;
+    for(const b of bodies){
+      let bi=0,bv=0;
+      for(let j=0;j<3;j++){const a=[0,0,0];a[j]=1;const wv=b.quaternion.vmult(new C.Vec3(a[0],a[1],a[2]));if(Math.abs(wv.y)>Math.abs(bv)){bv=wv.y;bi=j}}
+      ups.push(bi*2+(bv>0?0:1));
+      if(Math.abs(bv)<.995||Math.abs(b.position.y-.5)>.05||b.position.x<g.xL)flat=false;
+    }
+    if(!best||flat||(allOut&&!best.allOut))best={frames,ups,hits,allOut};
+    if(flat)break;
+  }
+  return best;
+}
 // Run the physics for n dice poured from the cup. Units: one die = 1; the tray is Wu x Hu.
 // Retries a few times if a die ends up leaning (on a wall or another die).
 function d3Sim(Wu,Hu,n){
   const C=D3.C,rnd=Math.random;
-  const cupX=-Wu/2+.14*Wu,xL=Math.min(cupX+1.05,-Wu/2+Wu*.3);
+  const xL=cupGeom(Wu,Hu).xL;
   let best=null;
   for(let attempt=0;attempt<8;attempt++){
     const w=new C.World({gravity:new C.Vec3(0,-70,0),allowSleep:true});
@@ -1698,8 +1885,13 @@ function faceVals(up,target){
   return vals;
 }
 function d3Draw(a,now){
+  if(a.tick){a.tick(now);d3Blit(a);return}
   const k=Math.min(a.frames.length-1,Math.max(0,Math.floor((now-a.start)*60/1000))),f=a.frames[k];
   a.meshes.forEach((m,i)=>{const p=f[i];m.position.set(p[0],p[1],p[2]);m.quaternion.set(p[3],p[4],p[5],p[6])});
+  if(a.cupM)cupThrow(a.cupM,(now-a.start)/1000);
+  d3Blit(a);
+}
+function d3Blit(a){
   const r=D3.r;
   if(r.getPixelRatio()!==a.pr)r.setPixelRatio(a.pr);
   const sz=r.getSize(new D3.T3.Vector2());if(sz.x!==a.W||sz.y!==a.H)r.setSize(a.W,a.H,false);
@@ -1721,7 +1913,8 @@ function d3Roll(v,b,idx){
   if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--d);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
   const d=v.probe.offsetWidth;if(W<60||H<40||d<8)return null;
   const Wu=W/d,Hu=H/d;
-  let sim;try{sim=d3Sim(Wu,Hu,idx.length)}catch(e){return null}
+  const live=v.anim&&v.anim.live&&v.anim.bodies.length===idx.length?v.anim:null;
+  let sim;try{sim=live?d3SimFrom(Wu,Hu,live.states()):d3Sim(Wu,Hu,idx.length)}catch(e){return null}
   const T3=D3.T3,C=D3.C,last=sim.frames[sim.frames.length-1],out=[],taken=[];
   // where each die ends up, as the flat dice will show it (position in % of the tray, angle)
   idx.forEach((i,k)=>{
@@ -1731,11 +1924,12 @@ function d3Roll(v,b,idx){
   // free spots for the dice that are held now, for when they are released
   for(let i=0;i<5;i++)if(!out[i]){
     let x=0,z=0;
-    for(let t=0;t<60;t++){x=-Wu/2+Wu*.3+.7+Math.random()*Math.max(.1,Wu*.7-1.4);z=-Hu/2+.7+Math.random()*Math.max(.1,Hu-1.4);if(taken.every(([a,c])=>Math.hypot(a-x,c-z)>1.5))break}
+    const gx=cupGeom(Wu,Hu).xL+.7;
+    for(let t=0;t<60;t++){x=gx+Math.random()*Math.max(.1,Wu/2-gx-.7);z=-Hu/2+.7+Math.random()*Math.max(.1,Hu-1.4);if(taken.every(([a,c])=>Math.hypot(a-x,c-z)>1.5))break}
     taken.push([x,z]);out[i]={x:50+x/Wu*100,y:50+z/Hu*100,r:Math.round(Math.random()*40-20)};
   }
   posCache.set(b.rollId,out);
-  const scene=new T3.Scene(),mats=d3Mats(),geo=d3Geo(),keep={};
+  const scene=new T3.Scene(),mats=d3Mats(),geo=d3Geo(),keep={},cupM=d3Cup(cupGeom(Wu,Hu));scene.add(cupM);
   const meshes=idx.map((i,k)=>{const fv=faceVals(sim.ups[k],b.dice[i]),f=last[k];keep[i]={fv,v:b.dice[i],y:f[1],q:[f[3],f[4],f[5],f[6]]};const m=new T3.Mesh(geo,fv.map(x=>mats[x]));m.castShadow=true;scene.add(m);return m});
   restQ.set(b.rollId,keep);if(restQ.size>60)restQ.delete(restQ.keys().next().value);
   // the moment the dice have (nearly) stopped: the combo is announced then, not after the last wobble
@@ -1752,7 +1946,7 @@ function d3Roll(v,b,idx){
   const pr=Math.min(2,window.devicePixelRatio||1),cv=document.createElement("canvas");
   cv.className="d3";cv.width=Math.round(W*pr);cv.height=Math.round(H*pr);v.tray.appendChild(cv);
   if(v.anim)v.anim.stop();
-  const a={v,hide:new Set(idx),scene,cam,meshes,frames:sim.frames,cv,ctx:cv.getContext("2d"),pr,W,H,start:performance.now(),dur:(sim.frames.length-1)*1000/60,done:false};
+  const a={v,hide:new Set(idx),scene,cam,meshes,cupM,frames:sim.frames,cv,ctx:cv.getContext("2d"),pr,W,H,start:performance.now(),dur:(sim.frames.length-1)*1000/60,done:false};
   a.stop=()=>{if(a.done)return;a.done=true;D3.anims.delete(a);if(v.anim===a)v.anim=null;flG.dispose();flM.dispose();L.dispose&&L.dispose();cv.style.opacity="0";setTimeout(()=>cv.remove(),220)};
   a.finish=()=>{if(a.done)return;a.stop();render()};
   setTimeout(a.finish,a.dur+600);   // in case frames stop (tab in the background)
@@ -1768,16 +1962,16 @@ function d3Roll(v,b,idx){
 const restQ=new Map();
 function d3Rest(v,b){
   const drop=()=>{if(v.restCv){v.restCv.remove();v.restCv=null}v.rest=null;return false};
-  if(!D3.ok||reduced||!b||b.rolling||!(b.rolls>0)||!v.el.isConnected||v.anim)return drop();
-  const tray=[];for(let i=0;i<5;i++)if(!b.held[i])tray.push(i);
-  if(!tray.length)return drop();
+  if(!D3.ok||reduced||!v.el.isConnected||v.anim||(b&&b.rolling))return drop();
+  const tray=[];if(b&&b.rolls>0)for(let i=0;i<5;i++)if(!b.held[i])tray.push(i);
   if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--d);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
   const W=v.tray.clientWidth,H=v.tray.clientHeight,d=v.probe.offsetWidth;
   if(W<60||H<40||d<8)return drop();
-  const mats=d3Mats(),sig=[b.rollId,tray.join(""),tray.map(i=>b.dice[i]).join(""),W,H,d,D3.texKey].join("|");
-  if(v.rest&&v.rest.sig===sig&&v.restCv&&v.restCv.isConnected)return true;
+  const mats=d3Mats(),sig=[b?b.rollId:0,tray.join(""),tray.map(i=>b.dice[i]).join(""),W,H,d,D3.texKey].join("|");
+  if(v.rest&&v.rest.sig===sig&&v.restCv&&v.restCv.isConnected)return tray.length>0;
   try{
-    const T3=D3.T3,Wu=W/d,Hu=H/d,pos=positions(b.rollId),keep=restQ.get(b.rollId)||{},geo=d3Geo(),scene=new T3.Scene();
+    const T3=D3.T3,Wu=W/d,Hu=H/d,pos=positions(b?b.rollId:0),keep=(b&&restQ.get(b.rollId))||{},geo=d3Geo(),scene=new T3.Scene();
+    scene.add(d3Cup(cupGeom(Wu,Hu)));
     for(const i of tray){
       const p=pos[i],k=keep[i]&&keep[i].v===b.dice[i]?keep[i]:null;
       const fv=k?k.fv:faceVals(2,b.dice[i]),m=new T3.Mesh(geo,fv.map(x=>mats[x]));m.castShadow=true;
@@ -1800,7 +1994,7 @@ function d3Rest(v,b){
     r.render(scene,cam);
     const c2=cv.getContext("2d");c2.clearRect(0,0,cv.width,cv.height);c2.drawImage(r.domElement,0,0,cv.width,cv.height);
     flG.dispose();flM.dispose();L.dispose&&L.dispose();
-    v.rest={sig};return true;
+    v.rest={sig};return tray.length>0;
   }catch(e){return drop()}
 }
 const views=new Map();
@@ -1810,16 +2004,17 @@ function makeView(cid){
   el.innerHTML=`<div class="phead"><span class="pips3" aria-label="굴린 횟수"><span></span><span></span><span></span></span><span class="pround"></span><span class="ptot"></span></div>
 <div class="tray"><div class="cup"><div class="top"></div><div class="body"></div><div class="band b1"></div><div class="band b2"></div></div><div class="hint"></div></div>
 <div class="slots"></div>
-<div class="controls"><button class="btn rollb" type="button">굴리기</button><span class="note rnote"></span></div>
+<div class="controls"><button class="btn rollb" type="button">흔들기</button><button class="btn ghost small cancelb" type="button" hidden>취소</button><span class="note rnote"></span></div>
 <div class="pfoot"><span class="pname"></span><span class="ptags"></span><button class="btn ghost small kickb" type="button" hidden>내보내기</button></div>`;
   const q=s=>el.querySelector(s);
-  const v={cid,el,tray:q(".tray"),cup:q(".cup"),hint:q(".hint"),slots:q(".slots"),rollBtn:q(".rollb"),rnote:q(".rnote"),ctrl:q(".controls"),
+  const v={cid,el,tray:q(".tray"),cup:q(".cup"),hint:q(".hint"),slots:q(".slots"),rollBtn:q(".rollb"),cancelBtn:q(".cancelb"),rnote:q(".rnote"),ctrl:q(".controls"),
     pips:q(".pips3"),name:q(".pname"),tags:q(".ptags"),tot:q(".ptot"),round:q(".pround"),dieEls:[],slotEls:[],seen:{init:false,rolling:false,rollId:null}};
   for(let i=0;i<5;i++){
     const d=document.createElement("button");d.type="button";d.className="die";d.onclick=()=>toggleHold(cid,i);face(d,i+1);v.dieEls.push(d);
     const s=document.createElement("div");s.className="slot";v.slotEls.push(s);v.slots.appendChild(s);
   }
   v.rollBtn.onclick=()=>doRoll(cid);
+  v.cancelBtn.onclick=()=>cancelShake(cid);
   v.kickBtn=el.querySelector(".kickb");v.kickBtn.onclick=()=>kick(cid);
   return v;
 }
@@ -1829,7 +2024,8 @@ function syncTray(v,b,act,away){
   const first=!v.seen.init;
   const landed=!!b&&!first&&!rolling&&b.rollId!==v.seen.rollId&&b.rolls>0;
   v.cup.classList.toggle("shaking",rolling);
-  if(landed){v.cup.classList.remove("pour");void v.cup.offsetWidth;v.cup.classList.add("pour");setTimeout(()=>v.cup.classList.remove("pour"),600);if(ready())thump(S.ctx.currentTime,isMine(v.cid)?.5:.2)}
+  if(landed){v.cup.classList.remove("pour");void v.cup.offsetWidth;v.cup.classList.add("pour");setTimeout(()=>v.cup.classList.remove("pour"),850);if(ready())thump(S.ctx.currentTime,isMine(v.cid)?.5:.2)}
+  if(D3.ok&&!reduced)placeCup(v);
   let sim3=null;
   if(landed&&!reduced){const idx=[];for(let i=0;i<5;i++)if(b.mask[i]&&!b.held[i])idx.push(i);if(idx.length)sim3=d3Roll(v,b,idx)}
   const pos=positions(b?b.rollId:0);
@@ -1869,6 +2065,8 @@ function syncTray(v,b,act,away){
     }else face(el,b.dice[i]);
   }
   if(landed){busy.set(v.cid,true);setTimeout(()=>{busy.set(v.cid,false);render()},maxDur+40)}
+  if(rolling&&D3.ok&&!reduced&&!(v.anim&&v.anim.live)){const idx=[];for(let i=0;i<5;i++)if(!b.held[i])idx.push(i);if(idx.length)d3Shake(v,b,idx)}
+  if(!rolling&&v.anim&&v.anim.live)v.anim.stop();   // shaking cancelled
   const ghost=d3Rest(v,b);
   for(const el of v.dieEls)el.classList.toggle("ghost",ghost&&el.parentNode===v.tray);
   // fresh landing that makes a scoring combo: show it on that board (and say it) for everyone watching.
@@ -2027,22 +2225,23 @@ function paintView(v,p){
   if(away)hint=fin?"":"연결이 끊겼어요 · 다시 들어오면 이어서 해요";
   else if(!b)hint="준비 중…";
   else if(fin)hint="12칸 완료!";
-  else if(rolling)hint=act?"흔드는 중… 멈추기를 눌러 주세요":"흔드는 중…";
-  else if(b.rolls===0)hint=mine?"굴리기를 눌러 시작하세요":"";
+  else if(rolling)hint=act?"흔드는 중… 던지기를 눌러 주세요":"흔드는 중…";
+  else if(b.rolls===0)hint=mine?"흔들기를 눌러 시작하세요":"";
   v.hint.textContent=hint;
   v.ctrl.hidden=!mine||fin;
   v.kickBtn.hidden=!(mode==="online"&&G.phase==="play"&&isOwner()&&p.cid!==myCid);
   if(mine&&b){
-    v.rollBtn.textContent=b.rolling?"멈추기":(b.rolls===0?"굴리기":"다시 굴리기");
+    v.rollBtn.textContent=b.rolling?"던지기":(b.rolls===0?"흔들기":"다시 흔들기");
+    v.cancelBtn.hidden=!(b.rolling&&act);
     v.rollBtn.disabled=!act||(!b.rolling&&(b.rolls>=3||busy.get(p.cid)||b.held.every(Boolean)));
-    v.rnote.textContent=b.rolling?"":b.rolls>=3?"점수판에서 칸을 골라 주세요":b.rolls>0?"주사위를 눌러 고정하거나 점수판에서 칸을 고르세요":"";
+    v.rnote.textContent=b.rolling?(act?(b.rolls>0?"취소하면 고정할 주사위를 다시 고를 수 있어요":"취소하면 흔들기 전으로 돌아가요"):""):b.rolls>=3?"점수판에서 칸을 골라 주세요":b.rolls>0?"주사위를 눌러 고정하거나 점수판에서 칸을 고르세요":"";
   }
   // toast other players' scoring
   if(b&&b.last&&!isMine(p.cid)){
     if(lastK.has(p.cid)&&lastK.get(p.cid)!==b.last.k)toast(`${p.name} · ${CATS[b.last.c][0]} ${b.last.pts}점`);
     lastK.set(p.cid,b.last.k);
   }else if(!lastK.has(p.cid))lastK.set(p.cid,b&&b.last?b.last.k:null);
-  return rolling&&(mode==="local"||p.cid===myCid);
+  return rolling&&!(v.anim&&v.anim.live)&&(mode==="local"||p.cid===myCid);
 }
 
 /* ---------- render ---------- */
@@ -2648,6 +2847,7 @@ function startLocal(names){
 document.addEventListener("keydown",e=>{
   if(!meMode()||!G||G.phase!=="play"||e.target.tagName==="INPUT")return;
   if(e.code==="Space"){e.preventDefault();doRoll(myCid)}
+  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
   else if(/^Digit[1-5]$/.test(e.code))toggleHold(myCid,+e.code.slice(5)-1);
 });
 
@@ -2657,7 +2857,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-25f";
+const APP_VER="2026-11-25i";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
