@@ -255,7 +255,9 @@ details.rules-d[open] summary::before{transform:rotate(45deg)}
 .die.v1 i{background:var(--pipred);transform:scale(1.35)}
 .tray.c3 .cup{display:none}
 .tray canvas.d3{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;transition:opacity .18s}
-.tray .die{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg));z-index:2}
+.tray .die{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg));z-index:2;--d:var(--td)}
+/* dice on the table are a bit smaller than the held ones, so the cup has room to mix them */
+.tray{--td:calc(var(--d)*.8)}
 /* resting 3D dice are drawn on a canvas; the flat die stays on top as an invisible click target */
 .tray .die.ghost{background:transparent;box-shadow:none;z-index:3}
 .tray .die.ghost i{visibility:hidden}
@@ -1232,6 +1234,7 @@ function validG(g){
     if(g.lock!==undefined&&typeof g.lock!=="boolean")return false;
     if(g.pub!==undefined&&typeof g.pub!=="boolean")return false;
     if(g.owner!==undefined&&(typeof g.owner!=="string"||g.owner.length>40))return false;
+    if(g.closed!==undefined&&typeof g.closed!=="boolean")return false;
     if(g.lid!==undefined&&(typeof g.lid!=="string"||!/^[a-z0-9]{6,20}$/.test(g.lid)))return false;
     if(g.banned!==undefined&&(!Array.isArray(g.banned)||g.banned.length>50||!g.banned.every(c=>typeof c==="string"&&c.length<=40)))return false;
     if(g.phase==="over"){
@@ -1497,12 +1500,26 @@ function giveOwner(cid){
 }
 // Leaving on purpose: pass 방장 to someone still here first, then go (give the message a moment to send).
 function leaveTable(){
-  if(mode==="online"&&G&&T&&isOwner()){
+  if(mode==="online"&&G&&T&&seated()){
     const pr=presentCids();const next=G.players.find(p=>p.cid!==myCid&&pr.has(p.cid));
-    if(next){commitG(Object.assign(clone(G),{owner:next.cid}));setTimeout(leave,400);return}
+    if(next&&isOwner()){commitG(Object.assign(clone(G),{owner:next.cid}));setTimeout(leave,400);return}
+    // I am the last player here: close the room so the spectators aren't left in an empty one
+    if(!next&&roomPeople().specs.length){commitG(Object.assign(clone(G),{closed:true}));setTimeout(leave,400);return}
   }
   leave();
 }
+// A room with only spectators left is closed: at once when the last player leaves on purpose
+// (G.closed), or after a minute with no player connected (they may be refreshing until then).
+let noPlayersSince=0;
+function closeCheck(){
+  if(mode!=="online"||!G||seated()){noPlayersSince=0;return}
+  const pr=presentCids(),anyPlayer=G.players.some(p=>pr.has(p.cid));
+  if(anyPlayer&&!G.closed){noPlayersSince=0;return}
+  if(!G.closed){if(!noPlayersSince){noPlayersSince=Date.now();return}if(Date.now()-noPlayersSince<60000)return}
+  noPlayersSince=0;leave();
+  $("homeMsg").textContent="플레이어가 모두 나가서 방이 해산됐어요.";toast("플레이어가 모두 나가서 방이 해산됐어요.");
+}
+setInterval(closeCheck,5000);
 // Mid-game arrivals get a seat and a fresh board; they play their own 12 rounds from round 1.
 // Seats of players who dropped are kept so they can come back.
 function seatLateJoiners(){
@@ -1670,15 +1687,15 @@ function d3Geo(){
   return D3.geo=g;
 }
 // Tray size in die units; the round cup sits at the left and the dice land to its right.
-const CUP={R:1.7,rim:.3};
+const CUP={R:2.15,rim:.3};
 function trayUnits(v){
-  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--d);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
+  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--td);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
   const W=v.tray.clientWidth,H=v.tray.clientHeight,d=v.probe.offsetWidth;
   if(W<60||H<40||d<8)return null;
   return{W,H,d,Wu:W/d,Hu:H/d};
 }
 // (the rim is nearer the camera than the felt, so it looks a little bigger: keep a margin)
-function cupGeom(Wu,Hu){const R=Math.max(1.1,Math.min(CUP.R,(Hu-1.3)/2-CUP.rim)),cx=-Wu/2+R+CUP.rim+.6;return{R,cx,xL:cx+R+CUP.rim+.15}}
+function cupGeom(Wu,Hu){const R=Math.max(1.1,Math.min(CUP.R,(Hu-1.3)/2-CUP.rim)),cx=-Wu/2+R+CUP.rim+1;return{R,cx,xL:cx+R+CUP.rim+.15}}
 function placeCup(v){
   const u=trayUnits(v);if(!u)return;
   const g=cupGeom(u.Wu,u.Hu),size=2*(g.R+CUP.rim)*u.d;
@@ -1725,12 +1742,19 @@ function cupPose(pv,ox,oz,tilt,lift,wob){const u=pv.userData;pv.position.set(u.g
 // The same motion drives the cup's collision body in the throw physics (d3SimFrom), so what you
 // see is what the dice hit: they can only leave through the mouth.
 const CUPTIP=2.25;   // radians: past horizontal, so the mouth points down toward the felt
+// After pouring, the cup does not swing back through the spilled dice: it rises, turns upright
+// up there, then comes straight down (the dice have rolled clear by then).
 function cupThrowAt(t,Rt){
-  const e=x=>1-Math.pow(1-Math.min(1,Math.max(0,x)),3);
-  const k=t<.24?e(t/.24):t<.8?1:t<1.25?1-e((t-.8)/.45):0,tilt=CUPTIP*k;
+  const e=x=>1-Math.pow(1-Math.min(1,Math.max(0,x)),3),UP=1.1;
+  let tilt,up;
+  if(t<.24){tilt=CUPTIP*e(t/.24);up=0}
+  else if(t<.6){tilt=CUPTIP;up=0}
+  else if(t<.8){tilt=CUPTIP;up=UP*e((t-.6)/.2)}
+  else if(t<1.1){tilt=CUPTIP*(1-e((t-.8)/.3));up=UP}
+  else{tilt=0;up=UP*(1-e((t-1.1)/.3))}
   // raise it just enough that the turned cup never touches the felt
   const low=CUPH/2*Math.abs(Math.cos(tilt))+Rt*Math.abs(Math.sin(tilt))+.12;
-  return{ox:.25*k,tilt,lift:Math.max(0,low-CUPH/2)};
+  return{ox:.25*tilt/CUPTIP,tilt,lift:Math.max(0,low-CUPH/2)+up};
 }
 function cupThrow(pv,t){const c=cupThrowAt(t,pv.userData.Rt);cupPose(pv,c.ox,0,c.tilt,c.lift)}
 // scene, lights, shadow floor and the top-down camera shared by every 3D view of a tray
@@ -1826,13 +1850,13 @@ function d3SimFrom(Wu,Hu,start){
       const cp=cupAt(step/120),ca=Math.cos(-cp.a),sa=Math.sin(-cp.a);
       bodies.forEach((b,k)=>{
         // leaving through the mouth: thrown out across the felt
-        if(!freed[k]){const dx=b.position.x-cp.x,dy=b.position.y-cp.y,ly=dx*sa+dy*ca;if(ly>CUPH/2-.2){freed[k]=true;b.velocity.x+=7+rnd()*5;b.velocity.y+=1+rnd()*2}}
+        if(!freed[k]){const dx=b.position.x-cp.x,dy=b.position.y-cp.y,ly=dx*sa+dy*ca;if(ly>CUPH/2+.1){freed[k]=true;b.velocity.x+=7+rnd()*5;b.velocity.y+=1+rnd()*2}}
         if(!out[k]&&b.position.x>g.xL+.6){out[k]=true;b.velocity.x+=rnd()*2}
         if(out[k]&&b.position.x<g.xL+.55){b.position.x=g.xL+.55;if(b.velocity.x<0)b.velocity.x*=-.45}
       });
       if(step%2===1)frames.push(snap());
       still=bodies.every(b=>b.velocity.lengthSquared()<.004&&b.angularVelocity.lengthSquared()<.01)?still+1:0;
-      if(still>20&&step>165)break;   // also wait for the cup to be set down
+      if(still>20&&step>170)break;   // also wait for the cup to be set down
     }
     frames.push(snap());
     const ups=[],allOut=bodies.every((b,k)=>out[k]);let flat=allOut;
@@ -1927,7 +1951,7 @@ function d3Loop(now){
 function d3Roll(v,b,idx){
   if(!D3.ok||!v.el.isConnected)return null;
   const W=v.tray.clientWidth,H=v.tray.clientHeight;
-  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--d);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
+  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--td);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
   const d=v.probe.offsetWidth;if(W<60||H<40||d<8)return null;
   const Wu=W/d,Hu=H/d;
   const live=v.anim&&v.anim.live&&v.anim.bodies.length===idx.length?v.anim:null;
@@ -1981,7 +2005,7 @@ function d3Rest(v,b){
   const drop=()=>{if(v.restCv){v.restCv.remove();v.restCv=null}v.rest=null;return false};
   if(!D3.ok||reduced||!v.el.isConnected||v.anim||(b&&b.rolling))return drop();
   const tray=[];if(b&&b.rolls>0)for(let i=0;i<5;i++)if(!b.held[i])tray.push(i);
-  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--d);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
+  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--td);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
   const W=v.tray.clientWidth,H=v.tray.clientHeight,d=v.probe.offsetWidth;
   if(W<60||H<40||d<8)return drop();
   const mats=d3Mats(),sig=[b?b.rollId:0,tray.join(""),tray.map(i=>b.dice[i]).join(""),W,H,d,D3.texKey].join("|");
@@ -2643,7 +2667,7 @@ let prevPhase=null;const _render=render;render=function(){
       if(!isOwner())setTimeout(()=>toast("대기실로 돌아왔어요. 준비를 눌러 주세요!"),0);
     }
   }
-  _render();updateReg();saveTable();chatUI();peopleUI();acctUI();
+  _render();updateReg();saveTable();chatUI();peopleUI();acctUI();if(G&&G.closed)setTimeout(closeCheck,0);
 };
 // 접속자: a chip in the header with the head count; it opens the list of players and spectators
 let peopleShown="";
@@ -2874,7 +2898,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-25j";
+const APP_VER="2026-11-25k";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
