@@ -103,6 +103,20 @@ input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
 /* home */
 #home{width:100%;max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 .hero{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:4px 2px 2px}
+.newsline{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:7px 12px 7px 10px;border-radius:999px;border:1px solid var(--line2);background:var(--panel);color:var(--ink);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;box-shadow:var(--shadow);max-width:100%;text-align:left}
+.newsline:hover{border-color:var(--accent)}
+.newsline svg{width:16px;height:16px;flex:none;color:var(--accent)}
+.newsline .nt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.newsline .nb{flex:none;font-size:10.5px;font-weight:800;letter-spacing:.04em;color:#fff;background:var(--accent);border-radius:999px;padding:1px 7px}
+.newsline .ar{flex:none;color:var(--muted)}
+.cl{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.cl li{position:relative;padding-left:16px;font-size:14px;line-height:1.5}
+.cl li::before{content:"";position:absolute;left:4px;top:.6em;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.clv{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:10px 14px}
+.clv summary{cursor:pointer;font-weight:700;font-size:14px}
+.clv[open] summary{margin-bottom:8px}
+.clv .d,.clhead .d{color:var(--muted);font-weight:600;font-size:12.5px;margin-left:6px}
+.clhead{font-weight:800;font-size:16px;margin:0}
 .hero .lead{margin:4px 0 0;font-size:15px;color:var(--ink2);max-width:62ch}
 /* desktop: my cards stacked on the left, the room list as one tall card on the right */
 .home-grid{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);
@@ -353,10 +367,10 @@ body.chat-on #app{padding-bottom:96px}
 button.chip{cursor:pointer;font:inherit;font-size:13px;color:var(--ink)}
 button.chip:hover{border-color:var(--accent)}
 .chip svg{width:16px;height:16px;flex:none}
-#people,#voices,#acct,#ranks{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-#people .panel,#voices .panel,#acct .panel,#ranks .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
-#people h2,#voices h2,#acct h2,#ranks h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
-#people h3,#voices h3,#acct h3,#ranks h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
+#people,#voices,#acct,#ranks,#news{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#people .panel,#voices .panel,#acct .panel,#ranks .panel,#news .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
+#people h2,#voices h2,#acct h2,#ranks h2,#news h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
+#people h3,#voices h3,#acct h3,#ranks h3,#news h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
 .pplist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .pplist li{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);flex-wrap:wrap}
 .pplist li.away{opacity:.6}
@@ -465,6 +479,7 @@ button.chip:hover{border-color:var(--accent)}
       <div>
         <p class="eyebrow">가입 없이 · 2~8명 · 모두 동시에</p>
         <p class="lead">방을 만들고 코드나 링크를 보내면 끝이에요. 중간에 튕겨도 같은 코드로 들어오면 하던 데서 이어서 해요.</p>
+        <button id="newsBtn" class="newsline" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12"/></svg><span class="nt" id="newsText"></span><span class="nb" id="newsNew" hidden>NEW</span><span class="ar" aria-hidden="true">›</span></button>
       </div>
     </div>
     <p id="netErr" class="warn" hidden>온라인 연결 모듈을 불러오지 못했어요. 인터넷에 연결된 상태로 페이지를 새로고침해 주세요.</p>
@@ -613,6 +628,12 @@ button.chip:hover{border-color:var(--accent)}
     <div class="panel" role="dialog" aria-labelledby="chatHistTitle">
       <div class="row" style="align-items:center"><h2 id="chatHistTitle" style="flex:1">채팅 내역</h2><button id="chatHistClose" class="btn ghost small" type="button">닫기</button></div>
       <ul id="chatHistList"></ul>
+    </div>
+  </div>
+  <div id="news" hidden>
+    <div class="panel" role="dialog" aria-labelledby="newsTitle">
+      <div class="row" style="align-items:center"><h2 id="newsTitle" style="flex:1">업데이트 공지</h2><button id="newsClose" class="btn ghost small" type="button">닫기</button></div>
+      <div id="newsBody" class="stack" style="gap:12px"></div>
     </div>
   </div>
   <div id="acct" hidden>
@@ -2655,6 +2676,60 @@ $("ranksClose").onclick=()=>{$("ranks").hidden=true};
 $("ranks").addEventListener("click",e=>{if(e.target.id==="ranks")$("ranks").hidden=true});
 $("overRanks").onclick=openRanks;
 
+/* ---------- update notes ----------
+   One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
+   clicking it lists what changed, newest first. Add an entry at the top for every release. */
+const CHANGELOG=[
+  {ver:"1.6",date:"2026.11.25",items:[
+    "주사위를 3D와 2D 중에서 고를 수 있어요. 위쪽 소리 조절 옆 3D/2D 버튼으로 바꾸고, 고른 모드는 이 기기에 저장돼요. 2D는 화면이 더 가벼워요.",
+    "업데이트 공지를 첫 화면에서 볼 수 있어요.",
+    "로그인 창에서 아이디 칸과 비밀번호 칸이 멀리 떨어져 보이던 문제를 고쳤어요."]},
+  {ver:"1.5",date:"2026.11.25",items:[
+    "흔들기 → 던지기로 나눴어요. 흔드는 중에 취소하면 굴린 횟수를 쓰지 않고 고정할 주사위를 다시 고를 수 있어요.",
+    "3D 나무 컵이 생겼어요. 흔드는 동안 컵 안에서 주사위가 섞이고, 던지면 컵을 기울여 쏟아요.",
+    "판 위 주사위를 조금 작게, 컵은 넓게 바꿨어요.",
+    "플레이어가 모두 나가고 관전자만 남은 방은 해산돼요.",
+    "온라인 방의 데이터 전송량을 크게 줄였어요(모바일 데이터에서 더 안정적이에요)."]},
+  {ver:"1.4",date:"2026.11.25",items:[
+    "로그인(선택)이 생겼어요. 로그인하면 온라인 대전 기록이 남아요.",
+    "이번 주·이번 달·올해·전체 순위를 볼 수 있어요.",
+    "통산 1등 횟수에 따라 닉네임 옆에 메달이 붙어요(1승 동, 10승 은, 30승 금, 100승 다이아).",
+    "입장에 실패하면 방장 화면이 꺼진 건지, 네트워크가 막힌 건지 나눠서 알려 줘요."]},
+  {ver:"1.3",date:"2026.11.25",items:[
+    "관전 입장이 생겼어요. 방이 가득 차도 관전할 수 있고, 관전자도 채팅할 수 있어요.",
+    "위쪽 접속자 버튼으로 방에 누가 있는지 볼 수 있어요.",
+    "족보를 읽어 주는 목소리와 말투를 고를 수 있어요.",
+    "상단 합계가 63점을 넘으면 \"보너스! +35점\"이 떠요.",
+    "주사위가 멈춘 뒤에도 3D 모습 그대로 남아요."]},
+  {ver:"1.2",date:"2026.11.25",items:[
+    "주사위가 3D 물리로 굴러가요.",
+    "PC에서는 내 판을 점수판 옆에 크게 보여 주고, 실시간 순위를 표시해요."]},
+  {ver:"1.1",date:"2026.11.24",items:[
+    "AI 요트봇과 1대1 대결(쉬움·보통·어려움)",
+    "방 안 채팅",
+    "아이폰과 모바일 데이터에서도 입장할 수 있게 고쳤어요.",
+    "새로고침하거나 방장 폰이 잠들어도 더 빨리 다시 이어져요."]},
+  {ver:"1.0",date:"2026.11.24",items:[
+    "요트 다이스 라운지 첫 공개: 가입 없이 코드나 링크로 입장, 최대 8명이 동시에 플레이",
+    "게임 중간 입장, 새로고침해도 하던 자리로 복귀",
+    "요트 불꽃놀이, 콤보 팝업과 음성, 효과음과 볼륨 조절"]}
+];
+function renderNews(){
+  const top=CHANGELOG[0];
+  $("newsText").textContent=`${top.date} ver ${top.ver} 업데이트 공지`;
+  $("newsNew").hidden=store.get("yd-news-seen")===top.ver;
+}
+function openNews(){
+  const li=it=>`<ul class="cl">${it.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`,[top,...rest]=CHANGELOG;
+  $("newsBody").innerHTML=`<p class="clhead">ver ${esc(top.ver)}<span class="d">${esc(top.date)}</span></p>${li(top.items)}`
+    +(rest.length?`<h3>지난 업데이트</h3>`+rest.map(c=>`<details class="clv"><summary>ver ${esc(c.ver)}<span class="d">${esc(c.date)}</span></summary>${li(c.items)}</details>`).join(""):"");
+  $("news").hidden=false;store.set("yd-news-seen",top.ver);$("newsNew").hidden=true;
+}
+$("newsBtn").onclick=openNews;
+$("newsClose").onclick=()=>{$("news").hidden=true};
+$("news").addEventListener("click",e=>{if(e.target.id==="news")$("news").hidden=true});
+renderNews();
+
 /* ---------- wiring ---------- */
 $("nick").value=myName;
 $("createBtn").onclick=()=>enterTable(newCode(),true);
@@ -2746,7 +2821,7 @@ $("voices").addEventListener("click",e=>{
 });
 $("vStyles").addEventListener("change",e=>{if(VSTYLES[e.target.value]){V.style=e.target.value;store.set("yd-vstyle",V.style);speakNow("풀하우스!",Math.max(.3,S.vol),curVoice())}});
 $("people").addEventListener("click",e=>{if(e.target.id==="people")$("people").hidden=true});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")for(const id of ["people","voices","acct","ranks"])if(!$(id).hidden)$(id).hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")for(const id of ["people","voices","acct","ranks","news"])if(!$(id).hidden)$(id).hidden=true});
 $("watchBtn").onclick=()=>enterTable($("joinCode").value,false,undefined,undefined,false,true);
 $("specBtn").onclick=()=>setSpec(seated());
 $("joinPlayBtn").onclick=()=>setSpec(false);
@@ -2924,7 +2999,7 @@ function startLocal(names){
 document.addEventListener("keydown",e=>{
   if(!meMode()||!G||G.phase!=="play"||e.target.tagName==="INPUT")return;
   if(e.code==="Space"){e.preventDefault();doRoll(myCid)}
-  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
+  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks,#news")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
   else if(/^Digit[1-5]$/.test(e.code))toggleHold(myCid,+e.code.slice(5)-1);
 });
 
@@ -2934,7 +3009,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-25n";
+const APP_VER="2026-11-25o";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
