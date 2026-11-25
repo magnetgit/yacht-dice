@@ -884,14 +884,22 @@ function openTable(c,asHost,pw,hostWait){
       if(emitQueued)return;emitQueued=true;
       queueMicrotask(()=>{emitQueued=false;if(onPeersFn&&!closed)onPeersFn({peers:Object.keys(pres).map(id=>({peer:id,presence:pres[id],sameTab:id===myId}))})});
     }
-    function broadcast(){const msg={t:"peers",pres};for(const k of conns.values())if(k.open)try{k.send(msg)}catch(e){}emitPeers()}
+    // What the relay sends. It used to send everyone's whole presence to everyone on every change
+    // (that was most of the TURN relay traffic); now a guest gets the full map once when it joins,
+    // then only what changed: {t:"d",id,p} merges a patch into one peer, {t:"x",id} removes one.
+    // Guests from older pages (no "v" in their auth) still get the full map every time.
+    const v2=new Set();
+    const sendTo=(k,msg)=>{if(k.open)try{k.send(msg)}catch(e){}};
+    function fullTo(k){sendTo(k,{t:"peers",pres})}
+    function pushPatch(id,patch){for(const [gid,k] of conns){if(!v2.has(gid))fullTo(k);else if(gid!==id)sendTo(k,{t:"d",id,p:patch})}emitPeers()}
+    function pushGone(id){for(const [gid,k] of conns){if(!v2.has(gid))fullTo(k);else sendTo(k,{t:"x",id})}emitPeers()}
     const api={
       isHost:asHost,
       onPeers(fn,err){onPeersFn=fn;onErrFn=err;emitPeers()},
       presence(patch){
         if(closed||!myId)return Promise.resolve();
         pres[myId]=Object.assign({},pres[myId],patch);
-        if(asHost)broadcast();else{if(hostConn&&hostConn.open)try{hostConn.send({t:"p",patch})}catch(e){}emitPeers()}
+        if(asHost)pushPatch(myId,patch);else{if(hostConn&&hostConn.open)try{hostConn.send({t:"p",patch})}catch(e){}emitPeers()}
         return Promise.resolve();
       },
       leave(){shut();return Promise.resolve()},
@@ -899,9 +907,9 @@ function openTable(c,asHost,pw,hostWait){
       // relay only: cut one guest off and tell them they were removed
       drop(id){
         const k=conns.get(id);if(!k)return;
-        conns.delete(id);heard.delete(id);delete pres[id];
+        conns.delete(id);heard.delete(id);delete pres[id];v2.delete(id);
         try{k.send({t:"kick"})}catch(e){}
-        setTimeout(()=>{try{k.close()}catch(e){}},300);broadcast();
+        setTimeout(()=>{try{k.close()}catch(e){}},300);pushGone(id);
       }
     };
     to=setTimeout(()=>fail({code:"net"}),12000);   // step 1: reach the signalling server
@@ -923,9 +931,9 @@ function openTable(c,asHost,pw,hostWait){
         // about once a minute while message events still arrive at once: as long as either
         // side's timer runs, both keep hearing each other.
         hb=setInterval(()=>{
-          const now=Date.now();let changed=false;
-          for(const [id,k] of conns){if(now-(heard.get(id)||0)>20000){conns.delete(id);heard.delete(id);delete pres[id];changed=true;try{k.close()}catch(e){}}else if(k.open){lastTo.set(id,now);try{k.send({t:"hb"})}catch(e){}}}
-          if(changed)broadcast();
+          const now=Date.now(),gone=[];
+          for(const [id,k] of conns){if(now-(heard.get(id)||0)>20000){conns.delete(id);heard.delete(id);delete pres[id];v2.delete(id);gone.push(id);try{k.close()}catch(e){}}else if(k.open){lastTo.set(id,now);try{k.send({t:"hb"})}catch(e){}}}
+          for(const id of gone)pushGone(id);
         },2000);
         peer.on("connection",k=>{
           // a guest is let in only after its first message carries the right password
@@ -936,15 +944,16 @@ function openTable(c,asHost,pw,hostWait){
               if(!m||m.t!=="auth")return;
               if(pw&&m.pw!==pw){try{k.send({t:"deny"})}catch(e){}setTimeout(()=>{try{k.close()}catch(e){}},400);return}
               if(conns.size>=MAXP+12){try{k.close()}catch(e){}return}
-              ok=true;conns.set(k.peer,k);heard.set(k.peer,Date.now());pres[k.peer]=pres[k.peer]||{};broadcast();return;
+              ok=true;conns.set(k.peer,k);heard.set(k.peer,Date.now());if(m.v===2)v2.add(k.peer);else v2.delete(k.peer);
+              pres[k.peer]=pres[k.peer]||{};fullTo(k);pushPatch(k.peer,pres[k.peer]);return;
             }
             heard.set(k.peer,Date.now());
             if(m&&m.t==="hb"){const n=Date.now();if(n-(lastTo.get(k.peer)||0)>1500){lastTo.set(k.peer,n);try{k.send({t:"hb"})}catch(e){}}return}
             if(!m||m.t!=="p"||!m.patch||typeof m.patch!=="object"||Array.isArray(m.patch))return;
             try{if(JSON.stringify(m.patch).length>80000)return}catch(e){return}
-            pres[k.peer]=Object.assign({},pres[k.peer],m.patch);broadcast();
+            pres[k.peer]=Object.assign({},pres[k.peer],m.patch);pushPatch(k.peer,m.patch);
           });
-          const gone=()=>{if(conns.get(k.peer)===k){conns.delete(k.peer);heard.delete(k.peer);delete pres[k.peer];broadcast()}};
+          const gone=()=>{if(conns.get(k.peer)===k){conns.delete(k.peer);heard.delete(k.peer);delete pres[k.peer];v2.delete(k.peer);pushGone(k.peer)}};
           k.on("close",gone);k.on("error",gone);
         });
       }else{
@@ -953,12 +962,20 @@ function openTable(c,asHost,pw,hostWait){
         // asleep (screen off / another app); an answer but no connection means the network blocks it.
         const hostWhy=()=>{try{const pc=hostConn&&hostConn.peerConnection;if(!pc||!pc.remoteDescription)return"asleep";return["checking","failed","disconnected","new"].includes(pc.iceConnectionState)?"blocked":"slow"}catch(e){return""}};
         clearTimeout(to);to=setTimeout(()=>fail({code:"unreachable",why:hostWhy()}),hostWait||9000);   // step 2: reach the host
-        hostConn.on("open",()=>{try{hostConn.send({t:"auth",pw})}catch(e){}});
+        hostConn.on("open",()=>{try{hostConn.send({t:"auth",pw,v:2})}catch(e){}});
         hostConn.on("data",m=>{
           hostHeard=Date.now();
           if(m&&m.t==="deny"){fail({code:"badpw"});return}
           if(m&&m.t==="kick"){if(settled)lost({code:"kicked"});else fail({code:"kicked"});return}
           if(m&&m.t==="hb"){const n=Date.now();if(settled&&n-lastSent>1500&&hostConn.open){lastSent=n;try{hostConn.send({t:"hb"})}catch(e){}}return}
+          // changes since the full map: merge one peer's patch, or drop a peer
+          if(m&&(m.t==="d"||m.t==="x")){
+            if(!settled||typeof m.id!=="string"||m.id===myId||m.id==="__proto__")return;
+            if(m.t==="x")delete pres[m.id];
+            else if(m.p&&typeof m.p==="object"&&!Array.isArray(m.p))pres[m.id]=Object.assign({},pres[m.id],m.p);
+            else return;
+            emitPeers();return;
+          }
           if(!m||m.t!=="peers"||!m.pres||typeof m.pres!=="object")return;
           if(!settled){
             settled=true;clearTimeout(to);resolve(api);
@@ -2857,7 +2874,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-25i";
+const APP_VER="2026-11-25j";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
