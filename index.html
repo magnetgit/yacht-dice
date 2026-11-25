@@ -168,13 +168,48 @@ details.rules-d[open] summary::before{transform:rotate(45deg)}
 .banner{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;padding:12px 16px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow)}
 .banner .who{font-family:var(--f-display);font-size:21px;font-weight:400}
 .banner .rd{font-size:13px;color:var(--muted)}
-/* score table in the middle, my board right under it, everyone else down the sides */
-.arena{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,480px) minmax(0,1fr);grid-template-areas:"L S R" "L M R";gap:16px;align-items:start;margin-top:14px}
+/* PC: my board in the middle with the score table right beside it, so rolling and picking a box
+   need no scrolling; both stay in view while scrolling. Everyone else sits in two narrow columns
+   on the left (one column, two rows on smaller laptops). Tablets and phones stack.
+   data-k on .arena = how many other players (set in renderGame). Every board fills its own grid
+   cell and its dice are sized from the board's width, so boards never overlap at any count. */
+/* --mw: my board's widest size, so that on short laptop screens the whole board, roll button
+   included, still fits above the chat bar without scrolling */
+.arena{--mw:max(380px,min(560px,calc((100vh - 524px) * 1.6)));display:grid;grid-template-columns:repeat(2,minmax(160px,210px)) minmax(380px,var(--mw)) minmax(340px,440px);grid-template-areas:"L R M S";
+  justify-content:center;gap:16px;align-items:start;margin-top:14px}
+.arena[data-k="1"]{grid-template-columns:minmax(170px,240px) minmax(380px,var(--mw)) minmax(340px,440px);grid-template-areas:"L M S"}
+.arena[data-k="0"]{grid-template-columns:minmax(380px,var(--mw)) minmax(340px,440px);grid-template-areas:"M S"}
+.arena[data-k="0"] #colL,.arena[data-k="0"] #colR,.arena[data-k="1"] #colR{display:none}
 #colL{grid-area:L}#colR{grid-area:R}#colM{grid-area:M;min-width:0}.center{grid-area:S}
-@media (max-width:1040px){.arena{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"S S" "M M" "L R"}}
+#colM,.arena>.center{position:sticky;top:12px}
+.arena>.center{max-height:calc(100vh - 24px);overflow:auto}
+.arena>.center>h3{display:none}
 .bcol{display:flex;flex-direction:column;gap:12px;min-width:0}
-#colL{align-items:flex-end}#colR{align-items:flex-start}
-.bcol .pboard{width:100%;max-width:280px}
+.bcol .pboard{width:100%}
+/* six or more players: the score table needs more width, the side boards give a little */
+.arena[data-k="2"][data-n="many"]{grid-template-columns:repeat(2,minmax(150px,190px)) minmax(380px,min(520px,var(--mw))) minmax(440px,600px)}
+@media (max-width:1279px){
+  .arena{grid-template-columns:minmax(160px,220px) minmax(360px,1fr) minmax(320px,420px);grid-template-areas:"L M S" "R M S"}
+  .arena[data-k="2"][data-n="many"]{grid-template-columns:minmax(150px,200px) minmax(340px,1fr) minmax(400px,520px)}
+}
+@media (max-width:1040px){
+  .arena,.arena[data-k]{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"S S" "M M" "L R";justify-content:stretch}
+  #colM,.arena>.center{position:static;max-height:none;overflow:visible}
+  .arena>.center>h3{display:block}
+  #colL{align-items:flex-end}#colR{align-items:flex-start}
+  .bcol .pboard{max-width:280px}
+}
+/* live standings under the score table */
+.standings{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px}
+.standings .lbl{font-size:12px;letter-spacing:.04em;color:var(--muted);margin-right:2px}
+.standings .rk{display:inline-flex;align-items:baseline;gap:5px;padding:3px 9px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);white-space:nowrap}
+.standings .rk .n{font-family:var(--f-num);font-size:11px;color:var(--muted)}
+.standings .rk .t{font-family:var(--f-num);font-weight:600}
+.standings .rk.top{background:color-mix(in srgb,var(--brass) 22%,var(--panel));border-color:var(--brass);font-weight:700}
+.standings .rk.top .n{color:var(--ink)}
+.standings .rk.me{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}
+.standings .rk.away{opacity:.55}
+.standings .wait{color:var(--muted)}
 .pboard{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px;display:flex;flex-direction:column;align-items:stretch;gap:8px;min-width:0;box-shadow:var(--shadow);--d:clamp(18px,2.2vw,26px)}
 .pboard .tray{border-width:6px;border-radius:12px}
 .pboard .tray .hint{font-size:11px}
@@ -185,6 +220,11 @@ details.rules-d[open] summary::before{transform:rotate(45deg)}
 .pboard.me .tray .hint{font-size:14px}
 .pboard.me .controls .btn{min-width:170px;font-size:16px;padding:13px 24px}
 .pboard.away .tray{filter:grayscale(.7) brightness(.8)}
+/* dice size follows the board's own width: five held dice must fit in the slot row */
+@supports (container-type:inline-size){
+  .pboard{container-type:inline-size;--d:clamp(12px,min(11.5cqi,20cqi - 16px),26px)}
+  .pboard.me{--d:clamp(28px,9.5cqi,50px)}
+}
 .phead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 2px}
 .pfoot{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;text-align:center;padding-top:8px;border-top:1px solid var(--line)}
 .pname{font-family:var(--f-display);font-size:17px;line-height:1.2;overflow-wrap:anywhere}
@@ -476,7 +516,7 @@ body.chat-on #app{padding-bottom:96px}
     </div>
     <div class="arena">
       <div class="bcol" id="colL"></div>
-      <div class="panel sheetwrap center"><h3>점수판</h3><table class="sheet" id="sheet"></table></div>
+      <div class="panel sheetwrap center"><h3>점수판</h3><table class="sheet" id="sheet"></table><div class="standings" id="standings" aria-live="polite"></div></div>
       <div id="colM"></div>
       <div class="bcol" id="colR"></div>
     </div>
@@ -1823,9 +1863,11 @@ function renderLobby(){
 function renderGame(){
   const ps=G.players;
   for(const [c,v] of views)if(!ps.some(p=>p.cid===c)){v.el.remove();views.delete(c)}
-  // my board big under the central score table; everyone else alternates left/right
+  // my board big next to the score table; everyone else alternates between the two side columns
   const meP=meMode()?ps.find(p=>p.cid===myCid):null;
   const cols=[[],[]];ps.filter(p=>p!==meP).forEach((p,i)=>cols[i%2].push(p));
+  const k=String(Math.min(2,cols[0].length+cols[1].length)),n=ps.length>=6?"many":"",ar=document.querySelector(".arena");
+  if(ar.dataset.k!==k)ar.dataset.k=k;if(ar.dataset.n!==n)ar.dataset.n=n;
   let rattle=false;
   [[$("colM"),meP?[meP]:[]],[$("colL"),cols[0]],[$("colR"),cols[1]]].forEach(([col,list])=>{
     list.forEach((p,i)=>{
@@ -1879,6 +1921,23 @@ function renderSheet(){
   $("sheet").innerHTML=h;
   ps.forEach((p,i)=>{if(bs[i]&&bs[i].last)flashed.set(p.cid,bs[i].last.k)});
   $("sheet").querySelectorAll("button.pot").forEach(b=>b.onclick=()=>pick(b.dataset.cid,+b.dataset.c));
+  renderStandings();
+}
+// Who is ahead right now, by current total (ties share a place). Shown under the score table.
+let standKey="";
+function renderStandings(){
+  const el=$("standings");
+  const rows=G.players.map(p=>{const b=boardOf(p.cid);return{cid:p.cid,name:p.name,t:totals(b&&b.scores).total,away:isAway(p.cid)}});
+  const key=JSON.stringify(rows)+myCid;if(key===standKey)return;standKey=key;
+  if(!rows.some(r=>r.t>0)){el.innerHTML='<span class="lbl">현재 순위</span><span class="wait">첫 점수를 기다리는 중…</span>';return}
+  rows.sort((a,b)=>b.t-a.t);
+  let h='<span class="lbl">현재 순위</span>';
+  for(const r of rows){
+    const place=rows.findIndex(x=>x.t===r.t)+1;
+    const cls="rk"+(place===1?" top":"")+(meMode()&&r.cid===myCid?" me":"")+(r.away?" away":"");
+    h+=`<span class="${cls}"><span class="n">${place}위</span>${esc(r.name)}<span class="t">${r.t}</span></span>`;
+  }
+  el.innerHTML=h;
 }
 // Finishers are ranked (ties share a place); disconnected players follow, unranked.
 function standings(){
@@ -2099,7 +2158,18 @@ function chatUI(){
   const on=mode==="online"&&!!G;
   $("chatBar").hidden=!on;$("chatFeed").hidden=!on;document.body.classList.toggle("chat-on",on);
   if(!on)$("chatHist").hidden=true;
+  chatPlace();
 }
+// On the PC game screen, line the chat up under my board so it never covers the score table
+// or the standings beside it; elsewhere it stays centred at the bottom.
+function chatPlace(){
+  const m=$("colM"),r=!$("game").hidden&&innerWidth>1040&&m?m.getBoundingClientRect():null;
+  for(const el of [$("chatBar"),$("chatFeed")]){
+    if(r&&r.width>200){el.style.left=Math.round(r.left+r.width/2)+"px";el.style.width=Math.round(Math.min(560,r.width))+"px"}
+    else{el.style.left="";el.style.width=""}
+  }
+}
+addEventListener("resize",chatPlace);
 $("chatBar").addEventListener("submit",e=>{e.preventDefault();chatSend()});
 $("chatHistBtn").onclick=()=>{chat.unread=false;chatBadge();chatRenderHist();$("chatHist").hidden=false};
 $("chatHistClose").onclick=()=>{$("chatHist").hidden=true};
@@ -2125,7 +2195,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-25a";
+const APP_VER="2026-11-25b";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
