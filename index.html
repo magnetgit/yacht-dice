@@ -214,23 +214,24 @@ details.rules-d[open] summary::before{transform:rotate(45deg)}
 .pboard .tray{border-width:6px;border-radius:12px}
 .pboard .tray .hint{font-size:11px}
 .pboard .controls .btn{min-width:110px;font-size:14px;padding:9px 14px}
-.pboard.me{padding:16px;gap:12px;--d:clamp(34px,4vw,50px);border-color:color-mix(in srgb,var(--accent) 55%,var(--line));
+.pboard.me,.pboard.big{padding:16px;gap:12px;--d:clamp(34px,4vw,50px)}
+.pboard.me{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));
   box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent),var(--shadow-lg)}
-.pboard.me .tray{border-width:10px}
-.pboard.me .tray .hint{font-size:14px}
+.pboard.me .tray,.pboard.big .tray{border-width:10px}
+.pboard.me .tray .hint,.pboard.big .tray .hint{font-size:14px}
 .pboard.me .controls .btn{min-width:170px;font-size:16px;padding:13px 24px}
 .pboard.away .tray{filter:grayscale(.7) brightness(.8)}
 /* dice size follows the board's own width: five held dice must fit in the slot row */
 @supports (container-type:inline-size){
   .pboard{container-type:inline-size;--d:clamp(12px,min(11.5cqi,20cqi - 16px),26px)}
-  .pboard.me{--d:clamp(28px,9.5cqi,50px)}
+  .pboard.me,.pboard.big{--d:clamp(28px,9.5cqi,50px)}
 }
 .phead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 2px}
 .pfoot{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;text-align:center;padding-top:8px;border-top:1px solid var(--line)}
 .pname{font-family:var(--f-display);font-size:17px;line-height:1.2;overflow-wrap:anywhere}
-.pboard.me .pname{font-size:24px}
+.pboard.me .pname,.pboard.big .pname{font-size:24px}
 .ptot{margin-left:auto;font-family:var(--f-num);font-weight:600;font-size:15px;padding:1px 9px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
-.pboard.me .ptot{font-size:17px}
+.pboard.me .ptot,.pboard.big .ptot{font-size:17px}
 .pround{font-family:var(--f-num);font-size:12px;color:var(--muted)}
 .tray{position:relative;width:100%;aspect-ratio:16/10;border-radius:14px;overflow:hidden;
   border:9px solid var(--rim);box-shadow:inset 0 0 0 2px var(--rim2),inset 0 10px 30px rgba(0,0,0,.45),0 6px 18px rgba(0,0,0,.16);
@@ -259,7 +260,7 @@ details.rules-d[open] summary::before{transform:rotate(45deg)}
 .die.can:hover{box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),0 0 0 3px var(--brass2),0 6px 12px rgba(0,0,0,.35)}
 /* held dice: five slots, centred under the table */
 .slots{display:flex;gap:6px;flex-wrap:nowrap;justify-content:center;padding:6px;border-radius:14px;background:var(--panel2);border:1px solid var(--line)}
-.pboard.me .slots{gap:10px;padding:10px}
+.pboard.me .slots,.pboard.big .slots{gap:10px;padding:10px}
 .slot{width:calc(var(--d) + 8px);height:calc(var(--d) + 8px);border:2px dashed var(--line2);border-radius:12px;display:grid;place-items:center;background:var(--slot);flex:none}
 .slot:has(.die){border-style:solid;border-color:color-mix(in srgb,var(--brass) 55%,transparent);background:color-mix(in srgb,var(--brass) 10%,var(--slot))}
 .slot .die{box-shadow:0 0 0 2px var(--brass2),0 3px 6px rgba(0,0,0,.25)}
@@ -341,6 +342,22 @@ body.chat-on #app{padding-bottom:96px}
 #chatHistList .meta b{color:var(--ink);font-size:13px}
 #chatHistList .txt{margin-top:2px;overflow-wrap:anywhere}
 #chatHistList li.empty{color:var(--muted);text-align:center;border-style:dashed;background:transparent}
+/* who is in the room: players and spectators */
+button.chip{cursor:pointer;font:inherit;font-size:13px;color:var(--ink)}
+button.chip:hover{border-color:var(--accent)}
+.chip svg{width:16px;height:16px;flex:none}
+#people{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#people .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
+#people h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
+#people h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
+.pplist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.pplist li{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);flex-wrap:wrap}
+.pplist li.away{opacity:.6}
+.pplist li.empty{color:var(--muted);justify-content:center;border-style:dashed;background:transparent;font-size:13px}
+.pplist .av{width:28px;height:28px;font-size:13px}
+.rbtns{display:flex;gap:6px;flex:none}
+.speclist{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.speclist .tag{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){.cbub{animation:none}}
 .updbar{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:12px;
   padding:8px 8px 8px 16px;border-radius:999px;background:var(--ink);color:var(--bg);font-size:14px;font-weight:600;box-shadow:var(--shadow-lg);max-width:calc(100% - 32px)}
@@ -378,6 +395,7 @@ body.chat-on #app{padding-bottom:96px}
   .soundbar{padding-right:10px;gap:4px}
   .vol{width:52px}
   .sound{padding:8px 10px}
+  #peopleBtn{padding:6px 10px;flex:none}#peopleBtn .pl{display:none}
   .panel{padding:16px}
   .lobby-card{padding:18px}
   .codebox{width:100%}
@@ -394,6 +412,7 @@ body.chat-on #app{padding-bottom:96px}
     </div>
     <span class="sp"></span>
     <span id="codeChip" class="chip" hidden>테이블 <b id="codeChipVal"></b></span>
+    <button id="peopleBtn" class="chip" type="button" hidden aria-haspopup="dialog" title="접속자 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 5.5 5"/></svg><span class="pl">접속자</span> <b id="peopleN"></b></button>
     <div class="soundbar">
       <button id="soundBtn" class="btn ghost small sound" type="button" aria-pressed="true"></button>
       <input id="volume" class="vol" type="range" min="0" max="100" step="5" aria-label="소리 크기" title="소리 크기">
@@ -443,6 +462,7 @@ body.chat-on #app{padding-bottom:96px}
           <div class="join-row">
             <input id="joinCode" type="text" maxlength="6" placeholder="ABCD" autocomplete="off" aria-label="테이블 코드">
             <button id="joinBtn" class="btn" type="button">입장</button>
+            <button id="watchBtn" class="btn ghost" type="button" title="게임에는 참가하지 않고 보기만 해요. 채팅은 할 수 있어요.">관전</button>
           </div>
         </div>
       </div>
@@ -498,8 +518,10 @@ body.chat-on #app{padding-bottom:96px}
       </div>
       <p id="lobbyMsg" class="note status" role="status"></p>
       <ul class="plist" id="plist"></ul>
+      <div class="speclist" id="specList" hidden></div>
       <div class="actions">
         <button id="readyBtn" class="btn" type="button" hidden>준비</button>
+        <button id="specBtn" class="btn ghost" type="button" hidden>관전으로 바꾸기</button>
         <button id="startBtn" class="btn" type="button" hidden>게임 시작</button>
         <span class="sp"></span>
         <button id="leaveBtn" class="btn ghost" type="button">나가기</button>
@@ -512,6 +534,7 @@ body.chat-on #app{padding-bottom:96px}
       <span class="who" id="statusMain"></span>
       <span class="rd" id="statusSub"></span>
       <span class="sp"></span>
+      <button id="joinPlayBtn" class="btn small" type="button" hidden>게임 참가</button>
       <button id="quitBtn" class="btn ghost small" type="button">나가기</button>
     </div>
     <div class="arena">
@@ -547,6 +570,12 @@ body.chat-on #app{padding-bottom:96px}
     <div class="panel" role="dialog" aria-labelledby="chatHistTitle">
       <div class="row" style="align-items:center"><h2 id="chatHistTitle" style="flex:1">채팅 내역</h2><button id="chatHistClose" class="btn ghost small" type="button">닫기</button></div>
       <ul id="chatHistList"></ul>
+    </div>
+  </div>
+  <div id="people" hidden>
+    <div class="panel" role="dialog" aria-labelledby="peopleTitle">
+      <div class="row" style="align-items:center"><h2 id="peopleTitle" style="flex:1">접속자</h2><button id="peopleClose" class="btn ghost small" type="button">닫기</button></div>
+      <div id="peopleBody"></div>
     </div>
   </div>
   <div id="toast" role="status" aria-live="polite"></div>
@@ -826,7 +855,7 @@ function openTable(c,asHost,pw,hostWait){
             if(!ok){
               if(!m||m.t!=="auth")return;
               if(pw&&m.pw!==pw){try{k.send({t:"deny"})}catch(e){}setTimeout(()=>{try{k.close()}catch(e){}},400);return}
-              if(conns.size>=MAXP+6){try{k.close()}catch(e){}return}
+              if(conns.size>=MAXP+12){try{k.close()}catch(e){}return}
               ok=true;conns.set(k.peer,k);heard.set(k.peer,Date.now());pres[k.peer]=pres[k.peer]||{};broadcast();return;
             }
             heard.set(k.peer,Date.now());
@@ -878,7 +907,7 @@ const Dir={cpeer:null,hpeer:null,hubSlot:-1,hubConns:new Map(),reg:null,rooms:nu
 window.addEventListener("pagehide",()=>{try{if(Dir.cpeer)Dir.cpeer.destroy()}catch(e){}try{if(Dir.hpeer)Dir.hpeer.destroy()}catch(e){}});
 if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code}};
 // A private room is listed by name only: its code never leaves the table.
-function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)&&(r.ts===undefined||(typeof r.ts==="number"&&isFinite(r.ts)))}
+function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)&&(r.sc===undefined||isInt(r.sc,0,30))&&(r.ts===undefined||(typeof r.ts==="number"&&isFinite(r.ts)))}
 function liveHubs(){return Dir.slots.filter(s=>s.conn&&s.conn.open).length+(Dir.hubSlot>=0?1:0)}
 function dirStop(){
   Dir.gen++;clearInterval(Dir.timer);Dir.timer=null;
@@ -1021,7 +1050,8 @@ function updateReg(){
     const pr=presentCids();
     const count=G.phase==="over"?G.players.filter(p=>pr.has(p.cid)).length:G.players.length;
     const pub=G.pub!==false;
-    r={id:listId(),pub,title:String(G.title||"").slice(0,20)||"요트 테이블",lock:!!G.lock,count:Math.min(count,MAXP),phase:G.phase};
+    const inG=new Set(G.players.map(p=>p.cid));let sc=0;for(const c of pr)if(!inG.has(c))sc++;
+    r={id:listId(),pub,title:String(G.title||"").slice(0,20)||"요트 테이블",lock:!!G.lock,count:Math.min(count,MAXP),phase:G.phase,sc:Math.min(sc,30)};
     if(pub)r.code=code;
   }
   if(JSON.stringify(r)!==JSON.stringify(Dir.reg))dirSetReg(r);
@@ -1045,22 +1075,23 @@ function renderRooms(){
       const full=r.phase!=="over"&&r.count>=MAXP;
       const st=r.phase==="lobby"?"대기 중":r.phase==="play"?"게임 중":"게임 끝";
       const tags=(r.pub?"":' <span class="tag">비공개</span>')+(r.lock?` <span class="lock">${LOCK}</span>`:"");
+      const attrs=`type="button" data-code="${esc(r.code)}" data-lock="${r.lock?1:""}" data-title="${esc(r.title)}"`;
       const btn=!r.pub?'<span class="note" style="white-space:nowrap">코드로만 입장</span>'
-        :`<button class="btn small${r.phase==="lobby"?"":" ghost"}" type="button" data-code="${esc(r.code)}" data-lock="${r.lock?1:""}" data-title="${esc(r.title)}"${full?" disabled":""}>${full?"가득 참":r.phase==="lobby"?"입장":"들어가기"}</button>`;
-      return `<li class="ph-${r.phase}"><div class="rinfo"><span><b>${esc(r.title)}</b>${tags}</span><span class="note">${r.count}/${MAXP} · ${st}${r.pub?" · "+esc(r.code):""}</span></div>${btn}</li>`;
+        :`<span class="rbtns"><button class="btn small${r.phase==="lobby"?"":" ghost"}" ${attrs}${full?" disabled":""}>${full?"가득 참":r.phase==="lobby"?"입장":"들어가기"}</button><button class="btn small ghost" ${attrs} data-spec="1" title="게임에는 참가하지 않고 보기만 해요. 채팅은 할 수 있어요.">관전</button></span>`;
+      return `<li class="ph-${r.phase}"><div class="rinfo"><span><b>${esc(r.title)}</b>${tags}</span><span class="note">${r.count}/${MAXP} · ${st}${r.sc?" · 관전 "+r.sc:""}${r.pub?" · "+esc(r.code):""}</span></div>${btn}</li>`;
     }).join(""):'<li class="empty">지금 열린 방이 없어요. 방을 만들어 보세요.</li>';
   }
   if(html===Dir.shown)return;   // the hub re-sends the list every few seconds; skip no-op redraws
   Dir.shown=html;box.innerHTML=html;
   box.querySelectorAll("button[data-code]").forEach(b=>b.onclick=()=>{
-    const c=b.dataset.code;
-    if(b.dataset.lock&&!store.get("yd-pw-"+c))showPwBox(c,b.dataset.title,"비밀번호가 필요한 방이에요.");
-    else enterTable(c,false);
+    const c=b.dataset.code,spec=!!b.dataset.spec;
+    if(b.dataset.lock&&!store.get("yd-pw-"+c))showPwBox(c,b.dataset.title,"비밀번호가 필요한 방이에요.",spec);
+    else enterTable(c,false,undefined,undefined,false,spec);
   });
 }
-let pwFor=null;
-function showPwBox(c,title,msg){
-  pwFor=c;$("pwBox").hidden=false;
+let pwFor=null,pwSpec=false;
+function showPwBox(c,title,msg,spec){
+  pwFor=c;pwSpec=!!spec;$("pwBox").hidden=false;
   $("pwMsg").innerHTML=`<b>${esc(title||c)}</b> · ${esc(msg)}`;
   $("pwInput").value="";setTimeout(()=>$("pwInput").focus(),0);
 }
@@ -1074,6 +1105,7 @@ let mode=null;               // "online" | "local"
 let T=null,code=null,G=null,peers=[],mePeer=null,creating=false,joinTimer=null,rejoining=false;
 let myName=(store.get("yd-nick")||"").slice(0,12);
 let myReady=false,myBoard=null,overDismissed=null;
+let mySpec=false;            // watching only: never given a seat, can still chat
 const boards=new Map();      // cid -> last known board (others online; everyone locally)
 const lastK=new Map();       // cid -> last score key already toasted
 const busy=new Map();        // cid -> landing animation running
@@ -1114,6 +1146,16 @@ function peerName(p){const n=p&&p.presence&&typeof p.presence.name==="string"?p.
 function peerByCid(c){return peers.find(p=>peerCid(p)===c)}
 function presentCids(){const s=new Set();for(const p of peers){const c=peerCid(p);if(c)s.add(c)}return s}
 function isAway(cid){return mode==="online"&&!presentCids().has(cid)}
+// a spectator asked to watch only; the 방장 always plays
+function isSpec(cid){if(cid===myCid)return mySpec;const p=peerByCid(cid);return !!(p&&p.presence&&p.presence.spec===true)}
+// everyone connected to the room: seated players (here or dropped) and spectators
+function roomPeople(){
+  const pr=presentCids(),inG=new Set(G?G.players.map(p=>p.cid):[]),banned=new Set(G&&G.banned||[]);
+  const players=(G?G.players:[]).map(p=>({cid:p.cid,name:p.cid===myCid?myName:p.name,away:!pr.has(p.cid)}));
+  const specs=[],seen=new Set();
+  for(const p of peers){const c=peerCid(p);if(!c||inG.has(c)||banned.has(c)||seen.has(c))continue;seen.add(c);specs.push({cid:c,name:c===myCid?myName:peerName(p)})}
+  return{players,specs};
+}
 function boardOf(cid){if(!G||G.phase==="lobby")return null;const b=mode==="online"&&cid===myCid?myBoard:boards.get(cid);return b&&b.gid===G.gid?b:null}
 function isMine(cid){return mode==="local"||cid===myCid}
 function seated(){return !!(G&&G.players.some(p=>p.cid===myCid))}
@@ -1192,11 +1234,11 @@ function publishKeep(){
 function attach(t){
   T=t;
   T.onPeers(onPeers,onLost);
-  T.presence({name:myName,ready:myReady,game:G,cid:myCid,board:myBoard,chat:chat.mine}).catch(()=>{});
+  T.presence({name:myName,ready:myReady,game:G,cid:myCid,board:myBoard,chat:chat.mine,spec:mySpec}).catch(()=>{});
 }
 let tablePw="",newRoom=null,joining=false;
 // Returns "ok" or an error code. restoreG: reopen this code myself with my saved copy of the game.
-async function enterTable(c,isCreate,pwIn,restoreG,quick){
+async function enterTable(c,isCreate,pwIn,restoreG,quick,spec){
   if(joining)return "busy";
   const nick=$("nick").value.trim().slice(0,12);
   if(!nick){$("homeMsg").textContent="닉네임을 먼저 적어 주세요.";$("nick").focus();return "nonick"}
@@ -1211,7 +1253,7 @@ async function enterTable(c,isCreate,pwIn,restoreG,quick){
     newRoom={title:($("roomTitle").value.trim()||nick+"의 방").slice(0,20),lock:!!pw,pub,lid:randId(),owner:myCid};
   }
   $("homeMsg").textContent=restoreG?"테이블을 다시 여는 중…":isCreate?"테이블 만드는 중…":"테이블 찾는 중…";
-  joining=true;$("createBtn").disabled=$("joinBtn").disabled=$("pwGo").disabled=true;
+  joining=true;$("createBtn").disabled=$("joinBtn").disabled=$("watchBtn").disabled=$("pwGo").disabled=true;
   let t=null;
   try{
     for(let tries=0;;tries++){
@@ -1224,15 +1266,16 @@ async function enterTable(c,isCreate,pwIn,restoreG,quick){
         }
         if(e&&e.code==="badpw"){
           store.set("yd-pw-"+c,"");$("homeMsg").textContent="";
-          showPwBox(c,(Dir.rooms||[]).find(r=>r.code===c)?.title||c,pw?"비밀번호가 틀렸어요. 다시 입력해 주세요.":"비밀번호가 필요한 방이에요.");
+          showPwBox(c,(Dir.rooms||[]).find(r=>r.code===c)?.title||c,pw?"비밀번호가 틀렸어요. 다시 입력해 주세요.":"비밀번호가 필요한 방이에요.",spec);
         }else $("homeMsg").textContent=e&&e.code==="kicked"?"이 방에서 내보내져서 들어갈 수 없어요.":netMsg(e);
         return (e&&e.code)||"net";
       }
     }
-  }finally{joining=false;$("createBtn").disabled=$("joinBtn").disabled=$("pwGo").disabled=false}
+  }finally{joining=false;$("createBtn").disabled=$("joinBtn").disabled=$("watchBtn").disabled=$("pwGo").disabled=false}
   hidePwBox();
   tablePw=pw;if(pw)store.set("yd-pw-"+c,pw);
   store.set("yd-last-"+myCid,JSON.stringify({code:c,at:Date.now()}));
+  mySpec=!fresh&&!!spec;store.set("yd-spec-"+c,mySpec?"1":"");
   mode="online";code=c;creating=fresh;G=restoreG||null;mePeer=null;peers=[];myReady=false;myBoard=null;
   boards.clear();lastK.clear();resetViews();chatReset(c);
   try{history.replaceState(null,"",location.pathname+location.search+"#"+c)}catch(e){}
@@ -1248,15 +1291,15 @@ async function enterTable(c,isCreate,pwIn,restoreG,quick){
 async function autoRejoin(c){
   const lbl=t=>{$("homeMsg").textContent=t};
   let g=null;try{g=JSON.parse(store.get("yd-g-"+c)||"null")}catch(e){}
-  const canReopen=validG(g),until=Date.now()+60000;
+  const canReopen=validG(g),until=Date.now()+60000,spec=store.get("yd-spec-"+c)==="1";
   try{history.replaceState(null,"",location.pathname+location.search+"#"+c)}catch(e){}
   $("joinCode").value=c;
   for(let n=1;Date.now()<until&&!mode;n++){
     lbl(n===1?"하던 테이블에 다시 들어가는 중…":"테이블에 다시 연결하는 중이에요. 잠시만 기다려 주세요… ("+n+")");
-    const r=await enterTable(c,false,undefined,undefined,true);
+    const r=await enterTable(c,false,undefined,undefined,true,spec);
     if(mode||!["notfound","net","unreachable","busy"].includes(r))return;   // in, or wrong password / kicked
     if(canReopen){
-      const r2=await enterTable(c,true,undefined,g,true);
+      const r2=await enterTable(c,true,undefined,g,true,spec);
       if(mode||r2==="ok")return;
     }
     await new Promise(res=>setTimeout(res,700+Math.random()*900));
@@ -1316,13 +1359,14 @@ function hostDuties(){
   if(G.phase!=="lobby")return;
   const pr=presentCids(),own=ownerCid();const list=[];
   const readyOf=c=>c===own?true:c===myCid?myReady:!!(peerByCid(c)?.presence?.ready===true);
+  const watching=c=>c!==own&&isSpec(c);
   for(const p of G.players){
-    if(pr.has(p.cid))list.push({cid:p.cid,name:p.cid===myCid?myName:peerName(peerByCid(p.cid)),ready:readyOf(p.cid)});
+    if(pr.has(p.cid)){if(!watching(p.cid))list.push({cid:p.cid,name:p.cid===myCid?myName:peerName(peerByCid(p.cid)),ready:readyOf(p.cid)})}
     else if(p.cid===own)list.push({cid:p.cid,name:p.name,ready:true});   // keep the 방장's seat while they're briefly away
   }
   for(const p of peers){
     if(list.length>=MAXP)break;
-    const c=peerCid(p);if(!c||list.some(x=>x.cid===c)||(G.banned||[]).includes(c))continue;
+    const c=peerCid(p);if(!c||list.some(x=>x.cid===c)||(G.banned||[]).includes(c)||watching(c))continue;
     if(!p.presence||typeof p.presence.name!=="string")continue;
     list.push({cid:c,name:peerName(p),ready:p.presence.ready===true});
   }
@@ -1364,7 +1408,7 @@ function seatLateJoiners(){
   for(const p of peers){
     if(G.players.length+add.length>=MAXP)break;
     const c=peerCid(p);
-    if(!c||G.players.some(x=>x.cid===c)||add.some(x=>x.cid===c)||banned.includes(c))continue;
+    if(!c||G.players.some(x=>x.cid===c)||add.some(x=>x.cid===c)||banned.includes(c)||isSpec(c))continue;
     if(!p.presence||typeof p.presence.name!=="string")continue;
     add.push({cid:c,name:peerName(p)});
   }
@@ -1372,14 +1416,28 @@ function seatLateJoiners(){
   const ng=clone(G);ng.players=ng.players.concat(add);commitG(ng);
   toast(add.map(x=>x.name).join(", ")+"님이 중간에 들어왔어요.");
 }
-// 방장 only: remove a player and keep them out of this room
+// 방장 only: remove a player or spectator and keep them out of this room
 function kick(cid){
   if(mode!=="online"||!G||G.phase==="over"||!isOwner()||cid===myCid)return;
-  const p=G.players.find(x=>x.cid===cid);if(!p)return;
-  if(!confirm(`"${p.name}"님을 이 방에서 내보낼까요? 다시 들어올 수 없어요.`))return;
+  const p=G.players.find(x=>x.cid===cid),sp=!p&&peerByCid(cid);if(!p&&!sp)return;
+  const name=p?p.name:peerName(sp);
+  if(!confirm(`"${name}"님을 이 방에서 내보낼까요? 다시 들어올 수 없어요.`))return;
   const ng=clone(G);ng.players=ng.players.filter(x=>x.cid!==cid);ng.banned=[...(G.banned||[]),cid].slice(-50);
   if(!ng.players.length)return;
-  commitG(ng);toast(`${p.name}님을 내보냈어요.`);
+  commitG(ng);toast(`${name}님을 내보냈어요.`);
+}
+// switch between watching and playing (watching only from the waiting room; the 방장 always plays)
+function setSpec(on){
+  if(mode!=="online"||!G||on===mySpec)return;
+  if(on&&(isOwner()||G.phase!=="lobby"))return;
+  if(!on){
+    if(!seated()&&G.players.length>=MAXP){toast("자리가 가득 찼어요.");return}
+    if(G.phase==="play"&&!confirm("지금 참가하면 내 판으로 1라운드부터 시작해요. 참가할까요?"))return;
+  }
+  mySpec=on;myReady=false;store.set("yd-spec-"+code,on?"1":"");
+  if(T)T.presence({spec:on,ready:false}).catch(()=>{});
+  toast(on?"관전으로 바꿨어요. 채팅은 계속 할 수 있어요.":"참가할게요. 자리에 앉는 중…");
+  render();
 }
 function kickedOut(){
   const title=G&&G.title;
@@ -1396,7 +1454,8 @@ function leave(){
   for(const t of stopT.values())clearTimeout(t);stopT.clear();stopRattle();rejoining=false;tablePw="";
   store.set("yd-last-"+myCid,"");   // I left on purpose: a refresh shouldn't pull me back in
   if(T){T.leave().catch(()=>{});T=null}
-  mode=null;G=null;code=null;mePeer=null;peers=[];myBoard=null;boards.clear();lastK.clear();busy.clear();resetViews();
+  if(code)store.set("yd-spec-"+code,"");$("people").hidden=true;
+  mode=null;G=null;code=null;mePeer=null;peers=[];myBoard=null;mySpec=false;boards.clear();lastK.clear();busy.clear();resetViews();
   try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
   render();
 }
@@ -1823,7 +1882,7 @@ function render(){
 function renderLobby(){
   show("lobby");$("lobbyCode").textContent=code;$("copyLink").hidden=!shareLink();
   const ul=$("plist");ul.innerHTML="";
-  if(!G){$("readyBtn").hidden=true;$("startBtn").hidden=true;if(!$("lobbyMsg").textContent)$("lobbyMsg").textContent="테이블을 찾는 중…";return}
+  if(!G){$("readyBtn").hidden=true;$("startBtn").hidden=true;$("specBtn").hidden=true;$("specList").hidden=true;if(!$("lobbyMsg").textContent)$("lobbyMsg").textContent="테이블을 찾는 중…";return}
   clearTimeout(joinTimer);
   const host=ownerCid(),amHost=isOwner(),pub=G.pub!==false;
   $("lobbyTitle").textContent=G.title||"요트 테이블";
@@ -1845,6 +1904,14 @@ function renderLobby(){
     }
     ul.appendChild(li);
   });
+  const {specs}=roomPeople();
+  $("specList").hidden=!specs.length;
+  $("specList").innerHTML=specs.length?`<span>관전 중 ${specs.length}명</span>`+specs.map(s=>`<span class="tag">${esc(s.name)}${s.cid===myCid?" (나)":""}</span>`).join(""):"";
+  const full=G.players.length>=MAXP;
+  $("specBtn").hidden=myCid===host||(!seated()&&!mySpec);
+  $("specBtn").textContent=seated()?"관전으로 바꾸기":"게임 참가";
+  $("specBtn").className=seated()?"btn ghost":"btn";
+  $("specBtn").disabled=!seated()&&full;
   const ownerAway=!!host&&!pr.has(host);
   const allReady=G.players.filter(p=>p.cid!==host).every(p=>p.ready);
   if(myCid===host){
@@ -1857,14 +1924,15 @@ function renderLobby(){
     $("startBtn").hidden=true;$("readyBtn").hidden=!seated();
     $("readyBtn").textContent=myReady?"준비 취소":"준비";
     $("readyBtn").className=myReady?"btn ghost":"btn";
-    $("lobbyMsg").textContent=ownerAway?"방장이 잠시 자리를 비웠어요. 1분 안에 돌아오지 않으면 다른 사람이 방장이 돼요.":seated()?"준비를 누르면 방장이 게임을 시작할 수 있어요.":(G.players.length>=MAXP?"자리가 가득 찼어요. 다음 판을 기다려 주세요.":"자리에 앉는 중…");
+    $("lobbyMsg").textContent=ownerAway?"방장이 잠시 자리를 비웠어요. 1분 안에 돌아오지 않으면 다른 사람이 방장이 돼요.":seated()?"준비를 누르면 방장이 게임을 시작할 수 있어요.":mySpec?(full?"관전 중이에요. 자리가 가득 차서 지금은 참가할 수 없어요. 채팅은 함께 할 수 있어요.":"관전 중이에요. 채팅은 함께 할 수 있고, 같이 하려면 '게임 참가'를 눌러 주세요."):(full?"자리가 가득 찼어요. 다음 판을 기다려 주세요.":"자리에 앉는 중…");
   }
 }
 function renderGame(){
   const ps=G.players;
   for(const [c,v] of views)if(!ps.some(p=>p.cid===c)){v.el.remove();views.delete(c)}
   // my board big next to the score table; everyone else alternates between the two side columns
-  const meP=meMode()?ps.find(p=>p.cid===myCid):null;
+  // a spectator sees the 방장's board (or the first player's) in the big spot
+  const meP=meMode()?(ps.find(p=>p.cid===myCid)||(mode==="online"?ps.find(p=>p.cid===ownerCid())||ps[0]:null)):null;
   const cols=[[],[]];ps.filter(p=>p!==meP).forEach((p,i)=>cols[i%2].push(p));
   const k=String(Math.min(2,cols[0].length+cols[1].length)),n=ps.length>=6?"many":"",ar=document.querySelector(".arena");
   if(ar.dataset.k!==k)ar.dataset.k=k;if(ar.dataset.n!==n)ar.dataset.n=n;
@@ -1873,6 +1941,7 @@ function renderGame(){
     list.forEach((p,i)=>{
       let v=views.get(p.cid);if(!v){v=makeView(p.cid);views.set(p.cid,v)}
       if(col.children[i]!==v.el)col.insertBefore(v.el,col.children[i]||null);
+      v.el.classList.toggle("big",col.id==="colM");
       if(paintView(v,p))rattle=true;
     });
   });
@@ -1883,9 +1952,10 @@ function renderGame(){
   if(fin)$("statusMain").textContent="게임 종료";
   else if(mode==="local")$("statusMain").textContent="각자 자기 판에서 굴려요";
   else if(mode==="ai"&&done(boardOf(myCid)))$("statusMain").textContent="내 12칸 완료 · 요트봇을 기다려요";
-  else if(!seated())$("statusMain").textContent=G.players.length>=MAXP?"관전 중 · 자리가 가득 찼어요":"자리에 앉는 중…";
+  else if(!seated())$("statusMain").textContent=G.players.length>=MAXP?"관전 중 · 자리가 가득 찼어요":mySpec?"관전 중":"자리에 앉는 중…";
   else if(done(boardOf(myCid)))$("statusMain").textContent="내 12칸 완료 · 다른 사람을 기다려요";
   else{const mb=boardOf(myCid),f=mb?mb.scores.filter(x=>x!==null).length:0;$("statusMain").textContent=`내 라운드 ${Math.min(f+1,12)} / 12`}
+  $("joinPlayBtn").hidden=!(mode==="online"&&mySpec&&!seated()&&G.phase==="play"&&G.players.length<MAXP);
   $("statusSub").textContent=fin?"":away.length?`연결 끊김: ${away.join(", ")} · 돌아오면 이어서 해요 (나머지가 다 끝내면 마지막 점수로 기록돼요)`:(rejoining?"다시 연결하는 중…":"");
   renderSheet();
   renderOver();
@@ -2012,8 +2082,42 @@ let prevPhase=null;const _render=render;render=function(){
       if(!isOwner())setTimeout(()=>toast("대기실로 돌아왔어요. 준비를 눌러 주세요!"),0);
     }
   }
-  _render();updateReg();saveTable();chatUI();
+  _render();updateReg();saveTable();chatUI();peopleUI();
 };
+// 접속자: a chip in the header with the head count; it opens the list of players and spectators
+let peopleShown="";
+function peopleUI(){
+  const on=mode==="online"&&!!G;
+  $("peopleBtn").hidden=!on;
+  if(!on){$("people").hidden=true;peopleShown="";return}
+  const {players,specs}=roomPeople();
+  const here=players.filter(p=>!p.away).length+specs.length;
+  $("peopleN").textContent=here;
+  $("peopleBtn").setAttribute("aria-label",`접속자 ${here}명 보기`);
+  if(!$("people").hidden)renderPeople(players,specs);
+}
+function renderPeople(players,specs){
+  const own=ownerCid(),canKick=isOwner()&&G.phase!=="over",lobby=G.phase==="lobby";
+  const item=(p,isPlayer)=>{
+    let tags=(p.cid===myCid?'<span class="tag">나</span>':"")+(p.cid===own?'<span class="tag host">방장</span>':"");
+    if(isPlayer&&p.away)tags+='<span class="tag bad">연결 끊김</span>';
+    else if(isPlayer&&lobby&&p.cid!==own){const gp=G.players.find(x=>x.cid===p.cid);tags+=gp&&gp.ready?'<span class="tag ok">준비 완료</span>':'<span class="tag">대기 중</span>'}
+    const kb=canKick&&p.cid!==myCid?`<button class="btn ghost small" type="button" data-kick="${esc(p.cid)}">내보내기</button>`:"";
+    return `<li class="${isPlayer&&p.away?"away":""}"><span class="av" aria-hidden="true">${esc([...p.name][0]||"?")}</span><b>${esc(p.name)}</b>${tags}<span class="sp" style="flex:1"></span>${kb}</li>`;
+  };
+  const html=`<h3>플레이어 ${players.length}명</h3><ul class="pplist">${players.map(p=>item(p,true)).join("")}</ul>`
+    +`<h3>관전 ${specs.length}명</h3><ul class="pplist">${specs.length?specs.map(p=>item(p,false)).join(""):'<li class="empty">관전하는 사람이 없어요.</li>'}</ul>`;
+  if(html===peopleShown)return;peopleShown=html;
+  const body=$("peopleBody");body.innerHTML=html;
+  body.querySelectorAll("button[data-kick]").forEach(b=>b.onclick=()=>kick(b.dataset.kick));
+}
+$("peopleBtn").onclick=()=>{peopleShown="";$("people").hidden=false;peopleUI()};
+$("peopleClose").onclick=()=>{$("people").hidden=true};
+$("people").addEventListener("click",e=>{if(e.target.id==="people")$("people").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("people").hidden)$("people").hidden=true});
+$("watchBtn").onclick=()=>enterTable($("joinCode").value,false,undefined,undefined,false,true);
+$("specBtn").onclick=()=>setSpec(seated());
+$("joinPlayBtn").onclick=()=>setSpec(false);
 // keep a copy of the table state on this device so a refresh can reopen it if nobody else holds it
 let savedG="";
 function saveTable(){
@@ -2022,7 +2126,7 @@ function saveTable(){
   store.set("yd-g-"+code,s);store.set("yd-last-"+myCid,JSON.stringify({code,at:Date.now()}));
 }
 // room list: password prompt + create-form hints
-$("pwGo").onclick=()=>{if(pwFor)enterTable(pwFor,false,$("pwInput").value)};
+$("pwGo").onclick=()=>{if(pwFor)enterTable(pwFor,false,$("pwInput").value,undefined,false,pwSpec)};
 $("pwInput").addEventListener("keydown",e=>{if(e.key==="Enter")$("pwGo").click()});
 $("pwCancel").onclick=hidePwBox;
 $("roomRefresh").onclick=refreshRooms;
@@ -2195,7 +2299,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-25b";
+const APP_VER="2026-11-25c";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
