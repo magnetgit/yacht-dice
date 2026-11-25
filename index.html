@@ -255,6 +255,10 @@ details.rules-d[open] summary::before{transform:rotate(45deg)}
 .die.v1 i{background:var(--pipred);transform:scale(1.35)}
 .tray canvas.d3{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;transition:opacity .18s}
 .tray .die{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg));z-index:2}
+/* resting 3D dice are drawn on a canvas; the flat die stays on top as an invisible click target */
+.tray .die.ghost{background:transparent;box-shadow:none;z-index:3}
+.tray .die.ghost i{visibility:hidden}
+.tray .die.ghost.can:hover{box-shadow:0 0 0 3px var(--brass2)}
 .die[disabled]{cursor:default}
 .die.can{cursor:pointer}
 .die.can:hover{box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),0 0 0 3px var(--brass2),0 6px 12px rgba(0,0,0,.35)}
@@ -346,10 +350,10 @@ body.chat-on #app{padding-bottom:96px}
 button.chip{cursor:pointer;font:inherit;font-size:13px;color:var(--ink)}
 button.chip:hover{border-color:var(--accent)}
 .chip svg{width:16px;height:16px;flex:none}
-#people{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-#people .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
-#people h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
-#people h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
+#people,#voices{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#people .panel,#voices .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
+#people h2,#voices h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
+#people h3,#voices h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
 .pplist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .pplist li{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);flex-wrap:wrap}
 .pplist li.away{opacity:.6}
@@ -373,11 +377,23 @@ button.chip:hover{border-color:var(--accent)}
 .vol:focus-visible{outline:3px solid color-mix(in srgb,var(--brass) 70%,transparent);outline-offset:4px}
 .sound svg{width:18px;height:18px}
 .sound.nudge{border-color:var(--accent);color:var(--accent)}
+.soundbar .vbtn{border:0;box-shadow:none;background:transparent;border-radius:999px;padding:6px 8px;display:inline-flex;align-items:center}
+.vbtn svg{width:18px;height:18px}
+.vstyles{display:flex;gap:6px;flex-wrap:wrap}
+.vstyles label{flex:1;min-width:90px}
+.vstyles input{position:absolute;opacity:0}
+.vstyles span{display:block;text-align:center;padding:8px 10px;border-radius:12px;border:1px solid var(--line2);background:var(--panel2);cursor:pointer;font-weight:600;font-size:14px}
+.vstyles input:checked+span{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--panel2));color:var(--accent)}
+.vstyles input:focus-visible+span{outline:3px solid color-mix(in srgb,var(--brass) 70%,transparent)}
+#voiceList li .vn{flex:1;min-width:0;font-weight:600}
+#voiceList li.on{border-color:var(--accent)}
+.vsamples{display:flex;gap:6px;flex-wrap:wrap}
 /* combo / Yacht celebration over the board that rolled it */
 .celebrate{position:absolute;inset:0;pointer-events:none;z-index:6;display:grid;place-items:center;overflow:hidden;border-radius:inherit}
 .celebrate canvas{position:absolute;inset:0;width:100%;height:100%}
 .yachtTxt{position:relative;font-family:var(--f-display);line-height:1;color:#ffd54a;paint-order:stroke fill;-webkit-text-stroke:.07em #7a1d10;
   text-shadow:0 .06em 0 #7a1d10,0 .12em .3em rgba(0,0,0,.45);animation:yachtPop 2.4s cubic-bezier(.2,1.6,.4,1) forwards;white-space:nowrap}
+.yachtTxt .ysub{display:block;font-size:.55em;margin-top:.12em;color:#fff}
 @keyframes yachtPop{0%{transform:scale(.2) rotate(-14deg);opacity:0}14%{transform:scale(1.18) rotate(5deg);opacity:1}24%{transform:scale(1) rotate(-3deg)}34%{transform:scale(1.04) rotate(1deg)}82%{transform:scale(1);opacity:1}100%{transform:scale(1.12) translateY(-.15em);opacity:0}}
 @media (prefers-reduced-motion:reduce){.yachtTxt{animation:yachtFade 2.2s forwards}}
 @keyframes yachtFade{0%,85%{opacity:1}100%{opacity:0}}
@@ -416,6 +432,7 @@ button.chip:hover{border-color:var(--accent)}
     <div class="soundbar">
       <button id="soundBtn" class="btn ghost small sound" type="button" aria-pressed="true"></button>
       <input id="volume" class="vol" type="range" min="0" max="100" step="5" aria-label="소리 크기" title="소리 크기">
+      <button id="voiceBtn" class="btn ghost small vbtn" type="button" aria-haspopup="dialog" aria-label="목소리 고르기" title="목소리 고르기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M18 6.5a4 4 0 0 1 0 5M20.5 4a7.5 7.5 0 0 1 0 10"/></svg></button>
     </div>
   </header>
 
@@ -570,6 +587,22 @@ button.chip:hover{border-color:var(--accent)}
     <div class="panel" role="dialog" aria-labelledby="chatHistTitle">
       <div class="row" style="align-items:center"><h2 id="chatHistTitle" style="flex:1">채팅 내역</h2><button id="chatHistClose" class="btn ghost small" type="button">닫기</button></div>
       <ul id="chatHistList"></ul>
+    </div>
+  </div>
+  <div id="voices" hidden>
+    <div class="panel" role="dialog" aria-labelledby="voicesTitle">
+      <div class="row" style="align-items:center"><h2 id="voicesTitle" style="flex:1">족보 읽어 주는 목소리</h2><button id="voicesClose" class="btn ghost small" type="button">닫기</button></div>
+      <p class="note" style="margin:0">이 기기에 있는 한국어 목소리예요. 휴대폰, PC, 브라우저마다 목록이 달라요. 고른 목소리는 이 기기에만 저장돼요.</p>
+      <h3>말투</h3>
+      <div class="vstyles" id="vStyles">
+        <label><input type="radio" name="vstyle" value="hype"><span>신나게</span></label>
+        <label><input type="radio" name="vstyle" value="plain"><span>보통</span></label>
+        <label><input type="radio" name="vstyle" value="calm"><span>차분하게</span></label>
+      </div>
+      <h3>들어 보기</h3>
+      <div class="vsamples" id="vSamples"></div>
+      <h3>목소리</h3>
+      <ul class="pplist" id="voiceList"></ul>
     </div>
   </div>
   <div id="people" hidden>
@@ -905,7 +938,7 @@ const Dir={cpeer:null,hpeer:null,hubSlot:-1,hubConns:new Map(),reg:null,rooms:nu
   slots:HUBS.map((id,i)=>({i,id,conn:null,heard:0,retryAt:0,free:0,deadUntil:0,rooms:[],lastReg:0,regSent:""}))};
 // release our ids right away when the page goes, so others can take over quickly
 window.addEventListener("pagehide",()=>{try{if(Dir.cpeer)Dir.cpeer.destroy()}catch(e){}try{if(Dir.hpeer)Dir.hpeer.destroy()}catch(e){}});
-if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code}};
+if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},setBoard:(c,b)=>setBoard(c,b)};
 // A private room is listed by name only: its code never leaves the table.
 function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)&&(r.sc===undefined||isInt(r.sc,0,30))&&(r.ts===undefined||(typeof r.ts==="number"&&isFinite(r.ts)))}
 function liveHubs(){return Dir.slots.filter(s=>s.conn&&s.conn.open).length+(Dir.hubSlot>=0?1:0)}
@@ -1651,8 +1684,13 @@ function d3Roll(v,b,idx){
     taken.push([x,z]);out[i]={x:50+x/Wu*100,y:50+z/Hu*100,r:Math.round(Math.random()*40-20)};
   }
   posCache.set(b.rollId,out);
-  const scene=new T3.Scene(),mats=d3Mats(),geo=d3Geo();
-  const meshes=idx.map((i,k)=>{const m=new T3.Mesh(geo,faceVals(sim.ups[k],b.dice[i]).map(x=>mats[x]));m.castShadow=true;scene.add(m);return m});
+  const scene=new T3.Scene(),mats=d3Mats(),geo=d3Geo(),keep={};
+  const meshes=idx.map((i,k)=>{const fv=faceVals(sim.ups[k],b.dice[i]),f=last[k];keep[i]={fv,v:b.dice[i],y:f[1],q:[f[3],f[4],f[5],f[6]]};const m=new T3.Mesh(geo,fv.map(x=>mats[x]));m.castShadow=true;scene.add(m);return m});
+  restQ.set(b.rollId,keep);if(restQ.size>60)restQ.delete(restQ.keys().next().value);
+  // the moment the dice have (nearly) stopped: the combo is announced then, not after the last wobble
+  let rk=sim.frames.length-1;
+  const near=(fa,fb)=>fa.every((p,j)=>{const q=fb[j];return Math.hypot(p[0]-q[0],p[1]-q[1],p[2]-q[2])<.06&&Math.abs(p[3]*q[3]+p[4]*q[4]+p[5]*q[5]+p[6]*q[6])>.999});
+  while(rk>0&&near(sim.frames[rk-1],last))rk--;
   scene.add(new T3.AmbientLight(0xffffff,D3LIGHT.amb));
   const L=new T3.DirectionalLight(0xffffff,D3LIGHT.dir);L.position.set(-2.5,12,-3.5);L.castShadow=true;L.shadow.mapSize.set(1024,1024);
   Object.assign(L.shadow.camera,{left:-Wu/2-1,right:Wu/2+1,top:Hu/2+1,bottom:-Hu/2-1,near:1,far:30});L.shadow.camera.updateProjectionMatrix();scene.add(L);
@@ -1671,7 +1709,48 @@ function d3Roll(v,b,idx){
   if(!D3.loop){D3.loop=true;requestAnimationFrame(d3Loop)}
   // a clack for every real hit (die on die, floor or wall)
   if(ready()){const t0=S.ctx.currentTime,vol=isMine(v.cid)?1:.4;let lt=-1;for(const h of sim.hits){if(h.t-lt<.04)continue;lt=h.t;clack(t0+h.t,Math.min(.6,h.s/16)*vol,2200+Math.random()*1300)}}
-  return {dur:a.dur};
+  return {dur:a.dur,rest:rk*1000/60};
+}
+// Resting dice stay 3D: the last physics frame (or, for dice that did not just roll, a flat pose)
+// is drawn once onto a canvas that stays in the tray. The flat dice sit on top, invisible, so
+// clicking a die to hold it works as before. Redrawn only when something visible changes.
+const restQ=new Map();
+function d3Rest(v,b){
+  const drop=()=>{if(v.restCv){v.restCv.remove();v.restCv=null}v.rest=null;return false};
+  if(!D3.ok||reduced||!b||b.rolling||!(b.rolls>0)||!v.el.isConnected||v.anim)return drop();
+  const tray=[];for(let i=0;i<5;i++)if(!b.held[i])tray.push(i);
+  if(!tray.length)return drop();
+  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--d);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
+  const W=v.tray.clientWidth,H=v.tray.clientHeight,d=v.probe.offsetWidth;
+  if(W<60||H<40||d<8)return drop();
+  const mats=d3Mats(),sig=[b.rollId,tray.join(""),tray.map(i=>b.dice[i]).join(""),W,H,d,D3.texKey].join("|");
+  if(v.rest&&v.rest.sig===sig&&v.restCv&&v.restCv.isConnected)return true;
+  try{
+    const T3=D3.T3,Wu=W/d,Hu=H/d,pos=positions(b.rollId),keep=restQ.get(b.rollId)||{},geo=d3Geo(),scene=new T3.Scene();
+    for(const i of tray){
+      const p=pos[i],k=keep[i]&&keep[i].v===b.dice[i]?keep[i]:null;
+      const fv=k?k.fv:faceVals(2,b.dice[i]),m=new T3.Mesh(geo,fv.map(x=>mats[x]));m.castShadow=true;
+      m.position.set((p.x/100-.5)*Wu,k?k.y:.5,(p.y/100-.5)*Hu);
+      if(k)m.quaternion.set(k.q[0],k.q[1],k.q[2],k.q[3]);else m.rotation.set(0,-p.r*Math.PI/180,0);
+      scene.add(m);
+    }
+    scene.add(new T3.AmbientLight(0xffffff,D3LIGHT.amb));
+    const L=new T3.DirectionalLight(0xffffff,D3LIGHT.dir);L.position.set(-2.5,12,-3.5);L.castShadow=true;L.shadow.mapSize.set(1024,1024);
+    Object.assign(L.shadow.camera,{left:-Wu/2-1,right:Wu/2+1,top:Hu/2+1,bottom:-Hu/2-1,near:1,far:30});L.shadow.camera.updateProjectionMatrix();scene.add(L);
+    const flG=new T3.PlaneGeometry(Wu+2,Hu+2),flM=new T3.ShadowMaterial({opacity:.32}),fl=new T3.Mesh(flG,flM);fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;scene.add(fl);
+    const Hc=16,cam=new T3.PerspectiveCamera(2*Math.atan(Hu/2/Hc)*180/Math.PI,W/H,1,60);
+    cam.position.set(0,1+Hc,0);cam.up.set(0,0,-1);cam.lookAt(0,1,0);
+    const pr=Math.min(2,window.devicePixelRatio||1),r=D3.r;
+    if(!v.restCv){v.restCv=document.createElement("canvas");v.restCv.className="d3 rest"}
+    const cv=v.restCv;if(cv.parentNode!==v.tray)v.tray.appendChild(cv);
+    cv.width=Math.round(W*pr);cv.height=Math.round(H*pr);
+    if(r.getPixelRatio()!==pr)r.setPixelRatio(pr);
+    const sz=r.getSize(new T3.Vector2());if(sz.x!==W||sz.y!==H)r.setSize(W,H,false);
+    r.render(scene,cam);
+    const c2=cv.getContext("2d");c2.clearRect(0,0,cv.width,cv.height);c2.drawImage(r.domElement,0,0,cv.width,cv.height);
+    flG.dispose();flM.dispose();L.dispose&&L.dispose();
+    v.rest={sig};return true;
+  }catch(e){return drop()}
 }
 const views=new Map();
 function resetViews(){for(const v of views.values())v.el.remove();views.clear()}
@@ -1739,9 +1818,19 @@ function syncTray(v,b,act,away){
     }else face(el,b.dice[i]);
   }
   if(landed){busy.set(v.cid,true);setTimeout(()=>{busy.set(v.cid,false);render()},maxDur+40)}
-  // fresh landing with all five the same: celebrate on that board for everyone watching
-  // fresh landing that makes a scoring combo: show it on that board (and say it) for everyone watching
-  if(landed){const cb=comboOf(b.dice);if(cb&&firstShow(v.cid,b,cb))setTimeout(()=>celebrate(v,cb),Math.max(0,maxDur-120))}
+  const ghost=d3Rest(v,b);
+  for(const el of v.dieEls)el.classList.toggle("ghost",ghost&&el.parentNode===v.tray);
+  // fresh landing that makes a scoring combo: show it on that board (and say it) for everyone watching.
+  // It is announced as the dice settle; speech starts a little early because voices take a moment to start.
+  if(landed){const cb=comboOf(b.dice);if(cb&&firstShow(v.cid,b,cb)){
+    const at=sim3?sim3.rest:maxDur*.72,mine=isMine(v.cid);
+    setTimeout(()=>{if(v.el.isConnected)sayCombo(cb.say,mine)},Math.max(0,at-sayLead()));
+    setTimeout(()=>celebrate(v,cb,true),Math.max(0,at-60));
+  }}
+  // upper section reaches 63: "보너스! +35점" once, when the box that does it is scored
+  const bon=!!b&&totals(b.scores).bonus>0,gid=b?b.gid:null;
+  if(v.seen.init&&bon&&!v.seen.bonus&&gid===v.seen.gid)celebrate(v,COMBOS.bonus);
+  v.seen.bonus=bon;v.seen.gid=gid;
   v.seen.init=true;v.seen.rolling=rolling;v.seen.rollId=b?b.rollId:null;
   return rolling;
 }
@@ -1752,7 +1841,8 @@ const COMBOS={
   large:{id:"large",cat:10,text:"라지 스트레이트!",say:"라지 스트레이트!",color:"#6ec6ff",edge:"#0d3a5c",size:.1},
   small:{id:"small",cat:9,text:"스몰 스트레이트!",say:"스몰 스트레이트!",color:"#8be3b0",edge:"#0f4a2b",size:.1},
   four:{id:"four",cat:7,text:"포카인드!",say:"포카인드!",color:"#ff8fd8",edge:"#5c1048",size:.17},
-  full:{id:"full",cat:8,text:"풀하우스!",say:"풀하우스!",color:"#ffb36b",edge:"#5c2c08",size:.17}
+  full:{id:"full",cat:8,text:"풀하우스!",say:"풀하우스!",color:"#ffb36b",edge:"#5c2c08",size:.17},
+  bonus:{id:"bonus",text:"보너스!",sub:"+35점",say:"보너스! 35점",color:"#ffe08a",edge:"#6b4a00",size:.17}
 };
 // Each combo is shown (and spoken) only the first time it comes up for a player in a game,
 // and never once that player has already filled its box.
@@ -1773,27 +1863,60 @@ function comboOf(d){
   return null;
 }
 // Read the combo out loud in Korean (only when sound is on); a newer call replaces the last.
-function sayCombo(text,mine){
-  if(!S.on||!("speechSynthesis" in window))return;
+// The voice and speaking style are picked per device (the 목소리 button); by default the most
+// natural Korean voice the device has is used (Edge's "Natural" voices, Apple's enhanced ones...).
+const VSTYLES={hype:{rate:1.12,pitch:1.18},plain:{rate:1,pitch:1},calm:{rate:.92,pitch:.95}};
+const V={pick:store.get("yd-voice")||"",style:VSTYLES[store.get("yd-vstyle")]?store.get("yd-vstyle"):"hype",warm:false};
+const hasTTS="speechSynthesis" in window;
+function koVoices(){if(!hasTTS)return[];try{return speechSynthesis.getVoices().filter(x=>/^ko/i.test(x.lang))}catch(e){return[]}}
+function voiceScore(x){const n=x.name;return(/natural|neural/i.test(n)?8:0)+(/premium|enhanced|향상|고품질/i.test(n)?6:0)+(/online/i.test(n)?3:0)+(/google/i.test(n)?2:0)+(/siri/i.test(n)?2:0)+(x.localService?0:1)}
+function bestVoice(){const vs=koVoices();if(!vs.length)return null;return vs.slice().sort((a,b)=>voiceScore(b)-voiceScore(a))[0]}
+function curVoice(){if(V.pick==="off")return null;const vs=koVoices();return vs.find(x=>x.voiceURI===V.pick)||bestVoice()}
+function voiceNice(x){return x?voiceScore(x)>=3:false}
+// online voices start speaking a little later than local ones, so they are started earlier
+function sayLead(){const v=curVoice();return v&&!v.localService?380:180}
+function speakNow(text,vol,voice){
+  if(!hasTTS)return;
   try{
-    const u=new SpeechSynthesisUtterance(text);u.lang="ko-KR";u.rate=1.05;u.pitch=1.1;u.volume=(mine?1:.6)*S.vol;if(u.volume<=0)return;
-    const ko=speechSynthesis.getVoices().find(x=>/^ko/i.test(x.lang));if(ko)u.voice=ko;
+    const st=VSTYLES[V.style],u=new SpeechSynthesisUtterance(text);u.lang="ko-KR";u.rate=st.rate;u.pitch=st.pitch;u.volume=Math.min(1,vol);
+    if(voice)u.voice=voice;
     speechSynthesis.cancel();speechSynthesis.speak(u);
   }catch(e){}
 }
-function celebrate(v,cb){
+function sayCombo(text,mine){
+  if(!S.on||V.pick==="off")return;
+  const vol=(mine?1:.6)*S.vol;if(vol<=0)return;
+  speakNow(text,vol,curVoice());
+}
+// the first utterance is slow to start on some browsers; say nothing once on the first tap
+function warmVoice(){if(V.warm||!hasTTS)return;V.warm=true;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;u.lang="ko-KR";const v=curVoice();if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}}
+document.addEventListener("pointerdown",warmVoice,true);
+if(hasTTS)try{speechSynthesis.addEventListener("voiceschanged",()=>{if(!$("voices").hidden)renderVoices()})}catch(e){}
+function renderVoices(){
+  document.querySelectorAll('#vStyles input').forEach(i=>i.checked=i.value===V.style);
+  $("vSamples").innerHTML=Object.values(COMBOS).map(c=>`<button class="btn ghost small" type="button" data-say="${esc(c.say)}">${esc(c.say)}</button>`).join("");
+  const vs=koVoices(),cur=curVoice(),best=bestVoice(),off=V.pick==="off";
+  const row=(id,name,tag,on)=>`<li class="${on?"on":""}"><span class="vn">${esc(name)}</span>${tag?`<span class="tag">${tag}</span>`:""}${id!=="off"?`<button class="btn ghost small" type="button" data-try="${esc(id)}">들어 보기</button>`:""}<button class="btn small${on?"":" ghost"}" type="button" data-use="${esc(id)}" ${on?"disabled":""}>${on?"사용 중":"고르기"}</button></li>`;
+  let h=vs.map(x=>row(x.voiceURI,x.name.replace(/^Microsoft\s+/,"").replace(/\s*-\s*Korean.*$/i,""),(x===best?"추천 · ":"")+(voiceNice(x)?"자연스러움":"기본")+(x.localService?"":" · 온라인"),!off&&cur===x)).join("");
+  if(!vs.length)h=`<li><span class="vn">이 기기에서 한국어 목소리를 찾지 못했어요.</span></li>`;
+  h+=row("off","목소리 없이 (효과음만)","",off);
+  $("voiceList").innerHTML=h;
+}
+function openVoices(){unlock();renderVoices();$("voices").hidden=false}
+function celebrate(v,cb,quiet){
   cb=cb||COMBOS.yacht;
   const host=v.el;if(!host.isConnected)return;
   const old=host.querySelector(".celebrate");if(old)old.remove();
   const ov=document.createElement("div");ov.className="celebrate";
   const cv=document.createElement("canvas");ov.appendChild(cv);
   const t=document.createElement("div");t.className="yachtTxt";t.textContent=cb.text;t.style.color=cb.color;t.style.webkitTextStrokeColor=cb.edge;t.style.textShadow=`0 .06em 0 ${cb.edge},0 .12em .3em rgba(0,0,0,.45)`;ov.appendChild(t);
+  if(cb.sub){t.style.textAlign="center";const sb=document.createElement("span");sb.className="ysub";sb.textContent=cb.sub;t.appendChild(sb)}
   host.appendChild(ov);
   const W=host.clientWidth,H=host.clientHeight,dpr=Math.min(2,window.devicePixelRatio||1);
   t.style.fontSize=Math.round(Math.max(cb.fireworks?34:22,Math.min(150,W*cb.size)))+"px";
   const mine=isMine(v.cid);
   if(cb.fireworks)fanfare(mine?1:.45);
-  sayCombo(cb.say,mine);
+  if(!quiet)sayCombo(cb.say,mine);
   if(reduced||!cb.fireworks){setTimeout(()=>ov.remove(),2400);return}
   cv.width=W*dpr;cv.height=H*dpr;const ctx=cv.getContext("2d");ctx.scale(dpr,dpr);
   const colors=["#ffd54a","#ff6a50","#5bc386","#6ec6ff","#ff8fd8","#ffffff"],k=Math.max(.6,Math.min(1.8,W/320));
@@ -2113,8 +2236,19 @@ function renderPeople(players,specs){
 }
 $("peopleBtn").onclick=()=>{peopleShown="";$("people").hidden=false;peopleUI()};
 $("peopleClose").onclick=()=>{$("people").hidden=true};
+$("voiceBtn").onclick=openVoices;
+$("voicesClose").onclick=()=>{$("voices").hidden=true};
+$("voices").addEventListener("click",e=>{
+  if(e.target.id==="voices"){$("voices").hidden=true;return}
+  const t=e.target.closest("button");if(!t)return;
+  const sample=()=>{const c=Object.values(COMBOS);return c[Math.floor(Math.random()*c.length)].say};
+  if(t.dataset.say){speakNow(t.dataset.say,Math.max(.3,S.vol),curVoice())}
+  else if(t.dataset.try){speakNow(sample(),Math.max(.3,S.vol),koVoices().find(x=>x.voiceURI===t.dataset.try))}
+  else if(t.dataset.use!==undefined){V.pick=t.dataset.use;store.set("yd-voice",V.pick);renderVoices();if(V.pick!=="off")speakNow("요트!",Math.max(.3,S.vol),curVoice())}
+});
+$("vStyles").addEventListener("change",e=>{if(VSTYLES[e.target.value]){V.style=e.target.value;store.set("yd-vstyle",V.style);speakNow("풀하우스!",Math.max(.3,S.vol),curVoice())}});
 $("people").addEventListener("click",e=>{if(e.target.id==="people")$("people").hidden=true});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("people").hidden)$("people").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("people").hidden)$("people").hidden=true;if(!$("voices").hidden)$("voices").hidden=true}});
 $("watchBtn").onclick=()=>enterTable($("joinCode").value,false,undefined,undefined,false,true);
 $("specBtn").onclick=()=>setSpec(seated());
 $("joinPlayBtn").onclick=()=>setSpec(false);
@@ -2274,6 +2408,8 @@ function chatPlace(){
   }
 }
 addEventListener("resize",chatPlace);
+// resting 3D dice are a picture of the tray, so redraw them once the size settles
+let rzT=0;addEventListener("resize",()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if(views.size)render()},200)});
 $("chatBar").addEventListener("submit",e=>{e.preventDefault();chatSend()});
 $("chatHistBtn").onclick=()=>{chat.unread=false;chatBadge();chatRenderHist();$("chatHist").hidden=false};
 $("chatHistClose").onclick=()=>{$("chatHist").hidden=true};
@@ -2299,7 +2435,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-25c";
+const APP_VER="2026-11-25d";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
