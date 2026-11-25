@@ -117,6 +117,27 @@ input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
 .clv[open] summary{margin-bottom:8px}
 .clv .d,.clhead .d{color:var(--muted);font-weight:600;font-size:12.5px;margin-left:6px}
 .clhead{font-weight:800;font-size:16px;margin:0}
+.homelinks{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.homelinks .newsline{margin-top:0}
+.newsline.sm{padding:7px 12px;font-weight:700}
+#board .panel{width:min(640px,100%)}
+.bform{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line2);border-radius:14px;background:var(--panel2)}
+.bform textarea{font:inherit;width:100%;min-height:120px;resize:vertical;padding:10px 14px;border-radius:var(--r-sm);border:1px solid var(--line2);background:var(--field);color:var(--ink)}
+.bform textarea:focus{outline:none;border-color:var(--brass);background:var(--panel);box-shadow:0 0 0 4px color-mix(in srgb,var(--brass) 18%,transparent)}
+.bform label.chk{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.posts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.post{border:1px solid var(--line);border-radius:14px;background:var(--panel2);padding:10px 14px}
+.post .ptitle{all:unset;display:block;width:100%;cursor:pointer;font-weight:700;font-size:15px;line-height:1.4;word-break:break-word}
+.post .ptitle:focus-visible{outline:3px solid color-mix(in srgb,var(--brass) 70%,transparent);border-radius:6px}
+.post .pmeta{font-size:12.5px;color:var(--muted);margin-top:2px}
+.post .pbody{white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line2)}
+.post .pacts{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.vote{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:13px;padding:5px 10px;border-radius:999px;border:1px solid var(--line2);background:var(--panel);color:var(--ink2);cursor:pointer}
+.vote svg{width:15px;height:15px}
+.vote b{font-variant-numeric:tabular-nums}
+.vote.up.on{border-color:var(--good);color:var(--good);background:color-mix(in srgb,var(--good) 10%,var(--panel))}
+.vote.down.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--panel))}
+@media (max-width:520px){.vote span{display:none}}
 .hero .lead{margin:4px 0 0;font-size:15px;color:var(--ink2);max-width:62ch}
 /* desktop: my cards stacked on the left, the room list as one tall card on the right */
 .home-grid{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);
@@ -367,10 +388,10 @@ body.chat-on #app{padding-bottom:96px}
 button.chip{cursor:pointer;font:inherit;font-size:13px;color:var(--ink)}
 button.chip:hover{border-color:var(--accent)}
 .chip svg{width:16px;height:16px;flex:none}
-#people,#voices,#acct,#ranks,#news{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-#people .panel,#voices .panel,#acct .panel,#ranks .panel,#news .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
-#people h2,#voices h2,#acct h2,#ranks h2,#news h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
-#people h3,#voices h3,#acct h3,#ranks h3,#news h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
+#people,#voices,#acct,#ranks,#news,#board{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#people .panel,#voices .panel,#acct .panel,#ranks .panel,#news,#board .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
+#people h2,#voices h2,#acct h2,#ranks h2,#news,#board h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
+#people h3,#voices h3,#acct h3,#ranks h3,#news,#board h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
 .pplist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .pplist li{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);flex-wrap:wrap}
 .pplist li.away{opacity:.6}
@@ -479,7 +500,11 @@ button.chip:hover{border-color:var(--accent)}
       <div>
         <p class="eyebrow">가입 없이 · 2~8명 · 모두 동시에</p>
         <p class="lead">방을 만들고 코드나 링크를 보내면 끝이에요. 중간에 튕겨도 같은 코드로 들어오면 하던 데서 이어서 해요.</p>
+        <div class="homelinks">
         <button id="newsBtn" class="newsline" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12"/></svg><span class="nt" id="newsText"></span><span class="nb" id="newsNew" hidden>NEW</span><span class="ar" aria-hidden="true">›</span></button>
+        <button id="noticeBtn" class="newsline sm" type="button" aria-haspopup="dialog">공지 게시판</button>
+        <button id="feedbackBtn" class="newsline sm" type="button" aria-haspopup="dialog">피드백 남기기</button>
+        </div>
       </div>
     </div>
     <p id="netErr" class="warn" hidden>온라인 연결 모듈을 불러오지 못했어요. 인터넷에 연결된 상태로 페이지를 새로고침해 주세요.</p>
@@ -628,6 +653,25 @@ button.chip:hover{border-color:var(--accent)}
     <div class="panel" role="dialog" aria-labelledby="chatHistTitle">
       <div class="row" style="align-items:center"><h2 id="chatHistTitle" style="flex:1">채팅 내역</h2><button id="chatHistClose" class="btn ghost small" type="button">닫기</button></div>
       <ul id="chatHistList"></ul>
+    </div>
+  </div>
+  <div id="board" hidden>
+    <div class="panel" role="dialog" aria-labelledby="boardTitle">
+      <div class="row" style="align-items:center"><h2 id="boardTitle" style="flex:1">게시판</h2><button id="boardClose" class="btn ghost small" type="button">닫기</button></div>
+      <div class="vstyles" id="bTabs">
+        <label><input type="radio" name="bboard" value="notice"><span>공지</span></label>
+        <label><input type="radio" name="bboard" value="feedback"><span>피드백</span></label>
+      </div>
+      <div class="row" style="align-items:center"><p class="note" id="bIntro" style="margin:0;flex:1"></p><button id="bWriteBtn" class="btn small" type="button">글쓰기</button></div>
+      <div class="bform" id="bForm" hidden>
+        <input id="bTitle" type="text" maxlength="60" placeholder="제목" aria-label="제목">
+        <textarea id="bBody" maxlength="2000" placeholder="내용" aria-label="내용"></textarea>
+        <label class="chk" id="bAnonRow"><input type="checkbox" id="bAnon"> 익명으로 쓰기</label>
+        <p class="note" id="bAnonNote" style="margin:0">로그인하지 않으면 익명으로 올라가요.</p>
+        <p class="note status" id="bMsg" role="status" style="margin:0"></p>
+        <div class="row"><button id="bSend" class="btn small" type="button">올리기</button><button id="bCancel" class="btn ghost small" type="button">취소</button></div>
+      </div>
+      <div id="boardList"></div>
     </div>
   </div>
   <div id="news" hidden>
@@ -2542,10 +2586,10 @@ async function fetchWins(){
   }catch(e){}
 }
 function setAcct(sess){
-  const u=sess&&sess.user,uid=u?u.id:null;
+  const su=sess&&sess.user,u=su&&!su.is_anonymous?su:null,uid=u?u.id:null;   // an anonymous session is only for voting
   ACC.username=u?((u.user_metadata&&u.user_metadata.username)||(u.email||"").split("@")[0]):null;
   if(uid===ACC.uid)return;
-  ACC.uid=uid;ACC.nickSent=null;
+  ACC.uid=uid;ACC.nickSent=null;setTimeout(checkAdmin,0);
   if(T)T.presence({uid}).catch(()=>{});
   try{render()}catch(e){}
 }
@@ -2676,10 +2720,125 @@ $("ranksClose").onclick=()=>{$("ranks").hidden=true};
 $("ranks").addEventListener("click",e=>{if(e.target.id==="ranks")$("ranks").hidden=true});
 $("overRanks").onclick=openRanks;
 
+/* ---------- boards: 공지 (notice, admins write) and 피드백 (feedback, anyone; can be anonymous) ----------
+   Votes: one per account and post. People who are not logged in vote through an anonymous
+   sign-in (one per device/browser). Pressing the same button again takes the vote back. */
+const BD={board:"notice",posts:[],mine:{},open:new Set(),busy:false,composing:false};
+async function voterId(){
+  if(!ACC.sb)throw new Error("nodb");
+  const {data}=await ACC.sb.auth.getSession();
+  if(data&&data.session)return data.session.user.id;
+  const r=await ACC.sb.auth.signInAnonymously();if(r.error)throw r.error;
+  return r.data.user.id;
+}
+async function checkAdmin(){
+  ACC.admin=false;
+  if(!ACC.sb||!ACC.uid)return;
+  try{const {data}=await ACC.sb.from("admins").select("user_id").eq("user_id",ACC.uid);ACC.admin=!!(data&&data.length)}catch(e){}
+  if(!$("board").hidden)renderBoard();
+}
+function fmtDate(s){const d=new Date(s),p=n=>String(n).padStart(2,"0");return`${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`}
+function openBoard(which){
+  BD.board=which||BD.board;BD.composing=false;BD.open.clear();
+  $("board").hidden=false;loadBoard();
+}
+async function loadBoard(){
+  const body=$("boardList");renderBoardHead();
+  if(!ACC.sb){body.innerHTML=`<p class="note">${ACC.failed?"게시판 서버에 연결하지 못했어요.":"게시판 서버에 연결하는 중…"}</p>`;if(!ACC.failed)setTimeout(()=>{if(!$("board").hidden)loadBoard()},1200);return}
+  body.innerHTML='<p class="note">불러오는 중…</p>';
+  const b=BD.board;
+  try{
+    const {data,error}=await ACC.sb.from("post_list").select("*").eq("board",b).order("created_at",{ascending:false}).limit(50);
+    if(error)throw error;if(BD.board!==b)return;
+    BD.posts=data||[];BD.mine={};
+    const {data:s}=await ACC.sb.auth.getSession(),me=s&&s.session&&s.session.user.id;
+    if(me&&BD.posts.length){const {data:v}=await ACC.sb.from("votes").select("post_id,value").eq("voter",me).in("post_id",BD.posts.map(p=>p.id));for(const x of v||[])BD.mine[x.post_id]=x.value}
+    renderBoard();
+  }catch(e){if(BD.board===b)body.innerHTML='<p class="note">게시판을 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
+}
+function renderBoardHead(){
+  document.querySelectorAll("#bTabs input").forEach(i=>i.checked=i.value===BD.board);
+  const canWrite=BD.board==="feedback"||ACC.admin;
+  $("bWriteBtn").hidden=!canWrite||BD.composing;
+  $("bForm").hidden=!BD.composing;
+  $("bAnonRow").hidden=BD.board!=="feedback"||!ACC.uid;
+  $("bAnonNote").hidden=BD.board!=="feedback"||!!ACC.uid;
+  $("bIntro").textContent=BD.board==="notice"?"운영자가 올리는 공지예요.":"불편한 점이나 바라는 기능을 남겨 주세요. 로그인하지 않아도, 익명으로도 쓸 수 있어요.";
+}
+const THUMB=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${d<0?'style="transform:scaleY(-1)"':""}><path d="M7 10v11H4V10zM7 10l4-7a2 2 0 0 1 3 2l-1 5h6a2 2 0 0 1 2 2.3l-1.3 7A2 2 0 0 1 17.7 21H7"/></svg>`;
+function renderBoard(){
+  renderBoardHead();
+  const list=$("boardList");
+  if(!BD.posts.length){list.innerHTML=`<p class="note">${BD.board==="notice"?"아직 공지가 없어요.":"아직 피드백이 없어요. 첫 글을 남겨 주세요!"}</p>`;return}
+  list.innerHTML=`<ul class="posts">${BD.posts.map(p=>{
+    const my=BD.mine[p.id]||0,open=BD.open.has(p.id),canDel=ACC.admin||(ACC.uid&&p.author===ACC.uid);
+    return`<li class="post${open?" open":""}" data-id="${p.id}">
+      <button class="ptitle" type="button" data-act="toggle" aria-expanded="${open}">${esc(p.title)}</button>
+      <div class="pmeta">${esc(p.author_name)} · ${fmtDate(p.created_at)}</div>
+      ${open?`<div class="pbody">${esc(p.body)}</div>`:""}
+      <div class="pacts">
+        <button class="vote up${my===1?" on":""}" type="button" data-act="vote" data-v="1" aria-pressed="${my===1}" title="추천">${THUMB(1)}<span>추천</span> <b>${p.up}</b></button>
+        <button class="vote down${my===-1?" on":""}" type="button" data-act="vote" data-v="-1" aria-pressed="${my===-1}" title="비추천">${THUMB(-1)}<span>비추천</span> <b>${p.down}</b></button>
+        ${canDel?`<button class="btn ghost small" type="button" data-act="del">삭제</button>`:""}
+      </div></li>`}).join("")}</ul>`;
+}
+$("boardList").addEventListener("click",async e=>{
+  const b=e.target.closest("button[data-act]");if(!b)return;
+  const li=b.closest("li.post"),id=+li.dataset.id,p=BD.posts.find(x=>x.id===id);if(!p)return;
+  if(b.dataset.act==="toggle"){BD.open.has(id)?BD.open.delete(id):BD.open.add(id);renderBoard();return}
+  if(b.dataset.act==="del"){
+    if(!confirm("이 글을 지울까요? 지우면 되돌릴 수 없어요."))return;
+    const {error}=await ACC.sb.from("posts").delete().eq("id",id);
+    if(error){toast("지우지 못했어요.");return}
+    BD.posts=BD.posts.filter(x=>x.id!==id);renderBoard();toast("글을 지웠어요.");return;
+  }
+  if(b.dataset.act==="vote"){
+    if(BD.busy)return;BD.busy=true;
+    const v=+b.dataset.v,cur=BD.mine[id]||0,next=cur===v?0:v,old={up:p.up,down:p.down,cur};
+    // show it right away, then save
+    if(cur===1)p.up--;if(cur===-1)p.down--;if(next===1)p.up++;if(next===-1)p.down++;BD.mine[id]=next;renderBoard();
+    try{
+      const me=await voterId();let r;
+      if(next===0)r=await ACC.sb.from("votes").delete().eq("post_id",id).eq("voter",me);
+      else if(cur===0)r=await ACC.sb.from("votes").insert({post_id:id,value:next});
+      else r=await ACC.sb.from("votes").update({value:next}).eq("post_id",id).eq("voter",me);
+      if(r.error)throw r.error;
+    }catch(err){p.up=old.up;p.down=old.down;BD.mine[id]=old.cur;renderBoard();toast("반영하지 못했어요. 잠시 후 다시 눌러 주세요.")}
+    BD.busy=false;
+  }
+});
+$("bTabs").addEventListener("change",e=>{if(e.target.name==="bboard"){BD.board=e.target.value;BD.composing=false;BD.open.clear();loadBoard()}});
+$("bWriteBtn").onclick=()=>{BD.composing=true;renderBoardHead();$("bMsg").textContent="";setTimeout(()=>$("bTitle").focus(),30)};
+$("bCancel").onclick=()=>{BD.composing=false;renderBoardHead()};
+$("bSend").onclick=async()=>{
+  if(!ACC.sb||BD.busy)return;
+  const title=$("bTitle").value.trim(),body=$("bBody").value.trim();
+  if(!title){$("bMsg").textContent="제목을 적어 주세요.";$("bTitle").focus();return}
+  if(!body){$("bMsg").textContent="내용을 적어 주세요.";$("bBody").focus();return}
+  const anon=BD.board==="feedback"&&(!ACC.uid||$("bAnon").checked);
+  BD.busy=true;$("bMsg").textContent="올리는 중…";
+  try{
+    const row={board:BD.board,title:title.slice(0,60),body:body.slice(0,2000)};if(!anon)row.author=ACC.uid;
+    const {error}=await ACC.sb.from("posts").insert(row);
+    if(error)throw error;
+    $("bTitle").value="";$("bBody").value="";$("bAnon").checked=false;BD.composing=false;$("bMsg").textContent="";
+    toast("글을 올렸어요.");await loadBoard();
+  }catch(err){$("bMsg").textContent=/too many/i.test(String(err&&err.message))?"잠깐만요! 1분 뒤에 다시 올려 주세요.":"올리지 못했어요. 잠시 후 다시 해 주세요."}
+  BD.busy=false;
+};
+$("boardClose").onclick=()=>{$("board").hidden=true};
+$("board").addEventListener("click",e=>{if(e.target.id==="board")$("board").hidden=true});
+$("noticeBtn").onclick=()=>openBoard("notice");
+$("feedbackBtn").onclick=()=>openBoard("feedback");
+
 /* ---------- update notes ----------
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"1.7",date:"2026.11.25",items:[
+    "공지 게시판과 피드백 게시판이 생겼어요. 첫 화면의 버튼으로 들어가요.",
+    "피드백은 로그인하지 않아도, 로그인했어도 익명으로 남길 수 있어요.",
+    "글마다 추천·비추천을 누를 수 있어요. 한 번 더 누르면 취소돼요."]},
   {ver:"1.6",date:"2026.11.25",items:[
     "주사위를 3D와 2D 중에서 고를 수 있어요. 위쪽 소리 조절 옆 3D/2D 버튼으로 바꾸고, 고른 모드는 이 기기에 저장돼요. 2D는 화면이 더 가벼워요.",
     "업데이트 공지를 첫 화면에서 볼 수 있어요.",
@@ -2821,7 +2980,7 @@ $("voices").addEventListener("click",e=>{
 });
 $("vStyles").addEventListener("change",e=>{if(VSTYLES[e.target.value]){V.style=e.target.value;store.set("yd-vstyle",V.style);speakNow("풀하우스!",Math.max(.3,S.vol),curVoice())}});
 $("people").addEventListener("click",e=>{if(e.target.id==="people")$("people").hidden=true});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")for(const id of ["people","voices","acct","ranks","news"])if(!$(id).hidden)$(id).hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")for(const id of ["people","voices","acct","ranks","news","board"])if(!$(id).hidden)$(id).hidden=true});
 $("watchBtn").onclick=()=>enterTable($("joinCode").value,false,undefined,undefined,false,true);
 $("specBtn").onclick=()=>setSpec(seated());
 $("joinPlayBtn").onclick=()=>setSpec(false);
@@ -2999,7 +3158,7 @@ function startLocal(names){
 document.addEventListener("keydown",e=>{
   if(!meMode()||!G||G.phase!=="play"||e.target.tagName==="INPUT")return;
   if(e.code==="Space"){e.preventDefault();doRoll(myCid)}
-  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks,#news")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
+  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks,#news,#board")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
   else if(/^Digit[1-5]$/.test(e.code))toggleHold(myCid,+e.code.slice(5)-1);
 });
 
@@ -3009,7 +3168,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-25o";
+const APP_VER="2026-11-25p";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
