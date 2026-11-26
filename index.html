@@ -297,6 +297,12 @@ details.rules-d[open] summary::before{transform:rotate(45deg)}
 .die i{display:block;border-radius:50%;background:var(--pip);box-shadow:inset 0 1px 1px rgba(0,0,0,.4)}
 .die.v1 i{background:var(--pipred);transform:scale(1.35)}
 .tray.c3 .cup{display:none}
+.tray .felt{display:none}
+.tray.c3{background:radial-gradient(120% 120% at 30% 30%,#6b4a2e 0%,#4a301b 70%,#3b2615 100%)}
+.tray.c3::before{opacity:.35;background-image:repeating-linear-gradient(100deg,rgba(255,255,255,.05) 0 2px,transparent 2px 9px)}
+.tray.c3 .felt{display:block;position:absolute;z-index:0;border-radius:10px;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 40%,var(--felt) 0%,var(--felt2) 100%);
+  box-shadow:0 0 0 4px #2f1d0f,0 0 0 6px #8a6232,inset 0 6px 18px rgba(0,0,0,.45)}
 .tray canvas.d3{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;transition:opacity .18s}
 .tray .die{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg));z-index:2;--d:var(--td)}
 /* dice on the table are a bit smaller than the held ones, so the cup has room to mix them */
@@ -1748,7 +1754,7 @@ function setDice3d(on){
     for(const a of [...D3.anims])a.stop();
     for(const v of views.values()){
       if(v.restCv){v.restCv.remove();v.restCv=null}v.rest=null;
-      v.tray.classList.remove("c3");v.cup.style.cssText="";
+      v.tray.classList.remove("c3");v.cup.style.cssText="";if(v.felt){v.felt.remove();v.felt=null}
       for(const el of v.dieEls){el.classList.remove("ghost");el.style.visibility=""}
     }
   }else d3Load();
@@ -1791,7 +1797,7 @@ function d3Geo(){
   return D3.geo=g;
 }
 // Tray size in die units; the round cup sits at the left and the dice land to its right.
-const CUP={R:2.15,rim:.3};
+const CUP={R:1.85,rim:.3};
 function trayUnits(v){
   if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--td);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
   const W=v.tray.clientWidth,H=v.tray.clientHeight,d=v.probe.offsetWidth;
@@ -1799,11 +1805,19 @@ function trayUnits(v){
   return{W,H,d,Wu:W/d,Hu:H/d};
 }
 // (the rim is nearer the camera than the felt, so it looks a little bigger: keep a margin)
-function cupGeom(Wu,Hu){const R=Math.max(1.1,Math.min(CUP.R,(Hu-1.3)/2-CUP.rim)),cx=-Wu/2+R+CUP.rim+1;return{R,cx,xL:cx+R+CUP.rim+.15}}
+// In 3D the dice land on a square felt board; the cup stands outside it, on the wooden table to
+// its left, so a thrown die can never end up under the cup. xL/xR: felt left/right, zH: half its depth.
+function cupGeom(Wu,Hu){
+  const R=Math.max(1.1,Math.min(CUP.R,(Hu-1.3)/2-CUP.rim)),cx=-Wu/2+R+CUP.rim+.8;
+  const lo=cx+R+CUP.rim+.45,S=Math.max(3,Math.min(Hu-.7,Wu/2-lo-.35)),xL=lo+Math.max(0,(Wu/2-.35-lo-S)/2);
+  return{R,cx,xL,xR:xL+S,zH:S/2,S};
+}
 function placeCup(v){
   const u=trayUnits(v);if(!u)return;
   const g=cupGeom(u.Wu,u.Hu),size=2*(g.R+CUP.rim)*u.d;
   v.tray.classList.add("c3");
+  if(!v.felt){v.felt=document.createElement("div");v.felt.className="felt";v.tray.prepend(v.felt)}
+  Object.assign(v.felt.style,{left:((g.xL/u.Wu+.5)*100).toFixed(2)+"%",width:(g.S/u.Wu*100).toFixed(2)+"%",top:((-g.zH/u.Hu+.5)*100).toFixed(2)+"%",height:(g.S/u.Hu*100).toFixed(2)+"%"});
   v.cup.style.left=((g.cx/u.Wu+.5)*100).toFixed(2)+"%";v.cup.style.width=v.cup.style.height=size.toFixed(1)+"px";
   v.cup.style.setProperty("--ci",(g.R/(g.R+CUP.rim)).toFixed(3));
 }
@@ -1925,8 +1939,8 @@ function d3SimFrom(Wu,Hu,start){
     const w=new C.World({gravity:new C.Vec3(0,-70,0),allowSleep:true});
     w.defaultContactMaterial.friction=.3;w.defaultContactMaterial.restitution=.32;
     const wall=(x,y,z,ax,ay,az,ang)=>{const b=new C.Body({mass:0,shape:new C.Plane()});b.position.set(x,y,z);if(ang)b.quaternion.setFromAxisAngle(new C.Vec3(ax,ay,az),ang);w.addBody(b);return b};
-    wall(0,0,0,1,0,0,-Math.PI/2);wall(-Wu/2,0,0,0,1,0,Math.PI/2);wall(Wu/2,0,0,0,1,0,-Math.PI/2);
-    wall(0,0,-Hu/2,0,0,0,0);wall(0,0,Hu/2,0,1,0,Math.PI);wall(0,6,0,1,0,0,Math.PI/2);
+    wall(0,0,0,1,0,0,-Math.PI/2);wall(-Wu/2,0,0,0,1,0,Math.PI/2);wall(g.xR,0,0,0,1,0,-Math.PI/2);
+    wall(0,0,-g.zH,0,0,0,0);wall(0,0,g.zH,0,1,0,Math.PI);wall(0,6,0,1,0,0,Math.PI/2);
     // the cup: ring of wall boxes + a bottom, origin at its middle (like the drawn cup's pivot)
     const Rt=g.R+CUPTH,rw=g.R+.2,N=18,cup=new C.Body({mass:0,type:C.Body.KINEMATIC});
     for(let k=0;k<N;k++){const a=k/N*Math.PI*2,q=new C.Quaternion();q.setFromAxisAngle(new C.Vec3(0,1,0),-a);cup.addShape(new C.Box(new C.Vec3(.2,CUPH/2,rw*Math.tan(Math.PI/N)+.06)),new C.Vec3(Math.cos(a)*rw,0,Math.sin(a)*rw),q)}
@@ -1980,7 +1994,7 @@ function d3SimFrom(Wu,Hu,start){
 // Retries a few times if a die ends up leaning (on a wall or another die).
 function d3Sim(Wu,Hu,n){
   const C=D3.C,rnd=Math.random;
-  const xL=cupGeom(Wu,Hu).xL;
+  const G=cupGeom(Wu,Hu),xL=G.xL;
   let best=null;
   for(let attempt=0;attempt<8;attempt++){
     const w=new C.World({gravity:new C.Vec3(0,-70,0),allowSleep:true});
@@ -1988,12 +2002,12 @@ function d3Sim(Wu,Hu,n){
     const wall=(x,y,z,ax,ay,az,ang)=>{const b=new C.Body({mass:0,shape:new C.Plane()});b.position.set(x,y,z);if(ang)b.quaternion.setFromAxisAngle(new C.Vec3(ax,ay,az),ang);w.addBody(b)};
     wall(0,0,0,1,0,0,-Math.PI/2);            // floor
     wall(xL,0,0,0,1,0,Math.PI/2);            // left (just right of the cup)
-    wall(Wu/2,0,0,0,1,0,-Math.PI/2);         // right
-    wall(0,0,-Hu/2,0,0,0,0);                 // far
-    wall(0,0,Hu/2,0,1,0,Math.PI);            // near
+    wall(G.xR,0,0,0,1,0,-Math.PI/2);         // right edge of the felt
+    wall(0,0,-G.zH,0,0,0,0);                 // far
+    wall(0,0,G.zH,0,1,0,Math.PI);            // near
     wall(0,4.5,0,1,0,0,Math.PI/2);           // lid, keeps dice in view
     const shape=new C.Box(new C.Vec3(.5,.5,.5)),bodies=[],hits=[];let step=0;
-    const zs=Math.min(1.15,(Hu-1.6)/Math.max(1,n-1));
+    const zs=Math.min(1.15,(2*G.zH-1.6)/Math.max(1,n-1));
     for(let k=0;k<n;k++){
       const b=new C.Body({mass:1,shape,sleepSpeedLimit:.3,sleepTimeLimit:.2,linearDamping:.04,angularDamping:.06});
       b.position.set(xL+.75+(k%2)*1.2+rnd()*.15,1.2+rnd()*1.4,(k-(n-1)/2)*zs);
@@ -2078,8 +2092,8 @@ function d3Roll(v,b,idx){
   // free spots for the dice that are held now, for when they are released
   for(let i=0;i<5;i++)if(!out[i]){
     let x=0,z=0;
-    const gx=cupGeom(Wu,Hu).xL+.7;
-    for(let t=0;t<60;t++){x=gx+Math.random()*Math.max(.1,Wu/2-gx-.7);z=-Hu/2+.7+Math.random()*Math.max(.1,Hu-1.4);if(taken.every(([a,c])=>Math.hypot(a-x,c-z)>1.5))break}
+    const G=cupGeom(Wu,Hu),gx=G.xL+.7;
+    for(let t=0;t<60;t++){x=gx+Math.random()*Math.max(.1,G.xR-gx-.7);z=-G.zH+.7+Math.random()*Math.max(.1,2*G.zH-1.4);if(taken.every(([a,c])=>Math.hypot(a-x,c-z)>1.5))break}
     taken.push([x,z]);out[i]={x:50+x/Wu*100,y:50+z/Hu*100,r:Math.round(Math.random()*40-20)};
   }
   posCache.set(b.rollId,out);
@@ -2179,7 +2193,7 @@ function syncTray(v,b,act,away){
   const landed=!!b&&!first&&!rolling&&b.rollId!==v.seen.rollId&&b.rolls>0;
   v.cup.classList.toggle("shaking",rolling);
   if(landed){v.cup.classList.remove("pour");void v.cup.offsetWidth;v.cup.classList.add("pour");setTimeout(()=>v.cup.classList.remove("pour"),850);if(ready())thump(S.ctx.currentTime,isMine(v.cid)?.5:.2)}
-  if(d3on())placeCup(v);else if(v.tray.classList.contains("c3")){v.tray.classList.remove("c3");v.cup.style.cssText=""}
+  if(d3on())placeCup(v);else if(v.tray.classList.contains("c3")){v.tray.classList.remove("c3");v.cup.style.cssText="";if(v.felt){v.felt.remove();v.felt=null}}
   let sim3=null;
   if(landed&&!reduced){const idx=[];for(let i=0;i<5;i++)if(b.mask[i]&&!b.held[i])idx.push(i);if(idx.length)sim3=d3Roll(v,b,idx)}
   const pos=positions(b?b.rollId:0);
@@ -2848,6 +2862,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.0",time:"11:43",date:"2026.11.26",items:[
+    "3D 모드에서 주사위 판을 정사각형 펠트로 바꾸고, 컵은 판 바깥 나무 테이블 위로 옮겼어요. 던진 주사위가 컵에 가리거나 부딪히지 않아요.",
+    "컵 안에서 흔들 때는 지금처럼 컵과 주사위가 부딪히며 섞여요."]},
   {ver:"1.9",time:"10:22",date:"2026.11.26",items:[
     "공지 게시판을 업데이트 공지와 합쳤어요. 첫 화면의 공지 한 줄을 누르면 업데이트 내역과 운영자 공지가 날짜순으로 함께 보여요.",
     "운영자 공지에도 좋아요·싫어요를 누를 수 있어요.",
@@ -3280,7 +3297,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-26b";
+const APP_VER="2026-11-26c";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
