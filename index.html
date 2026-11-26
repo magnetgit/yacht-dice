@@ -338,6 +338,19 @@ table.sheet{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;
 .sheet tbody tr:hover td:first-child{background:var(--panel)}
 .sheet .cat{display:flex;flex-direction:column;line-height:1.2;font-weight:600}
 .sheet .cat small{color:var(--muted);font-size:11px;font-weight:400}
+/* short screens (laptops, a browser window that is not full height): keep the whole score table in
+   view, so the lower boxes (Choice..Yacht) don't hide below the panel's scroll */
+@media (min-width:1041px) and (max-height:880px){
+  .sheet .cat{flex-direction:row;align-items:baseline;gap:6px}
+  .sheet th,.sheet td{padding-top:3px;padding-bottom:3px}
+  .sheet .pot{padding:1px 7px}
+  .sheetwrap{padding:10px 14px}
+  .standings{margin-top:6px;padding-top:6px}
+}
+@media (min-width:1041px) and (max-height:700px){
+  .sheet .cat small{display:none}
+  .sheet th,.sheet td{padding-top:2px;padding-bottom:2px;font-size:13.5px}
+}
 .sheet .num{font-family:var(--f-num);font-weight:600}
 .sheet tr.sub td{font-size:12px;color:var(--muted);background:var(--panel2)}
 .sheet tr.sub td:first-child{background:var(--panel2)}
@@ -2871,6 +2884,8 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.0.3",time:"13:11",date:"2026.11.26",items:[
+    "노트북처럼 세로가 짧은 화면에서 점수판 아래쪽(초이스~요트)이 잘려 안 보이던 문제를 고쳤어요. 점수판이 한 화면에 다 들어와요."]},
   {ver:"2.0.2",time:"13:02",date:"2026.11.26",items:[
     "내 12칸을 먼저 끝내면 누구를 기다리는지(예: 요트봇 8/12) 위쪽에 보여 줘요. 결과는 모두 끝나야 나와요.",
     "AI 대결에서 내가 먼저 끝나면 요트봇이 빨리 마무리해요."]},
@@ -3313,7 +3328,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-26e";
+const APP_VER="2026-11-26f";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
