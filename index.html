@@ -1359,6 +1359,11 @@ function isOwner(){return mode==="local"||mode==="ai"||(!!G&&ownerCid()===myCid)
 // Who runs the routine upkeep (roster, finishing the game): the owner when here, else the first player here.
 function dutyCid(){if(!G)return null;if(mode==="local"||mode==="ai")return myCid;const pr=presentCids();const o=ownerCid();if(o&&pr.has(o))return o;const h=G.players.find(p=>pr.has(p.cid));return h?h.cid:null}
 function isOver(){return !!G&&G.phase==="over"}
+// "요트봇 8/12, 민지 11/12": players here who have not filled all 12 boxes yet
+function waitingFor(){
+  const left=G.players.filter(p=>p.cid!==myCid&&!isAway(p.cid)&&!done(boardOf(p.cid))).map(p=>{const b=boardOf(p.cid);return`${p.name} ${b?b.scores.filter(x=>x!==null).length:0}/12`});
+  return left.length?left.join(", "):"곧 결과가 나와요";
+}
 // The game ends once everyone still connected has filled all 12 boxes. Anyone who dropped
 // and hasn't come back is recorded as disconnected with their last known score.
 function maybeFinish(){
@@ -2397,7 +2402,7 @@ function paintView(v,p){
   let hint="";
   if(away)hint=fin?"":"연결이 끊겼어요 · 다시 들어오면 이어서 해요";
   else if(!b)hint="준비 중…";
-  else if(fin)hint="12칸 완료!";
+  else if(fin)hint=mine&&G.phase==="play"?"12칸 완료! 다른 사람이 끝나면 결과가 나와요":"12칸 완료!";
   else if(rolling)hint=act?"흔드는 중… 던지기를 눌러 주세요":"흔드는 중…";
   else if(b.rolls===0)hint=mine?"흔들기를 눌러 시작하세요":"";
   v.hint.textContent=hint;
@@ -2497,9 +2502,8 @@ function renderGame(){
   const fin=isOver();
   if(fin)$("statusMain").textContent="게임 종료";
   else if(mode==="local")$("statusMain").textContent="각자 자기 판에서 굴려요";
-  else if(mode==="ai"&&done(boardOf(myCid)))$("statusMain").textContent="내 12칸 완료 · 요트봇을 기다려요";
+  else if((mode==="ai"||seated())&&done(boardOf(myCid)))$("statusMain").textContent="내 12칸 완료 · 기다리는 중: "+waitingFor();
   else if(!seated())$("statusMain").textContent=G.players.length>=MAXP?"관전 중 · 자리가 가득 찼어요":mySpec?"관전 중":"자리에 앉는 중…";
-  else if(done(boardOf(myCid)))$("statusMain").textContent="내 12칸 완료 · 다른 사람을 기다려요";
   else{const mb=boardOf(myCid),f=mb?mb.scores.filter(x=>x!==null).length:0;$("statusMain").textContent=`내 라운드 ${Math.min(f+1,12)} / 12`}
   $("joinPlayBtn").hidden=!(mode==="online"&&mySpec&&!seated()&&G.phase==="play"&&G.players.length<MAXP);
   $("statusSub").textContent=fin?"":away.length?`연결 끊김: ${away.join(", ")} · 돌아오면 이어서 해요 (나머지가 다 끝내면 마지막 점수로 기록돼요)`:(rejoining?"다시 연결하는 중…":"");
@@ -2867,6 +2871,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.0.2",time:"13:02",date:"2026.11.26",items:[
+    "내 12칸을 먼저 끝내면 누구를 기다리는지(예: 요트봇 8/12) 위쪽에 보여 줘요. 결과는 모두 끝나야 나와요.",
+    "AI 대결에서 내가 먼저 끝나면 요트봇이 빨리 마무리해요."]},
   {ver:"2.0.1",time:"12:10",date:"2026.11.26",items:[
     "3D 컵을 90도까지만 눕혀서 쏟아요.",
     "던질 때 주사위가 컵 테두리를 뚫고 나오는 것처럼 보이던 문제를 고쳤어요."]},
@@ -3153,33 +3160,34 @@ async function runBot(gid){
   const my=++botGen;
   const alive=()=>my===botGen&&mode==="ai"&&G&&G.gid===gid&&G.phase==="play";
   const wait=ms=>new Promise(r=>{botTimer=setTimeout(r,ms)});
-  const pace=botLevel==="easy"?1.25:botLevel==="hard"?.85:1;
+  // once you have filled your 12 boxes the bot plays about three times faster, so you don't wait long
+  const base=botLevel==="easy"?1.25:botLevel==="hard"?.85:1,pace=()=>done(boardOf(myCid))?base*.3:base;
   const put=b=>{boards.set(BOT_CID,b);render()};
   await wait(1400);
   while(alive()){
     let b=boards.get(BOT_CID);if(!b||done(b))break;
     // shake the cup, then let the dice land
     b=clone(b);b.rolling=true;put(b);
-    await wait((650+Math.random()*450)*pace);if(!alive())return;
+    await wait((650+Math.random()*450)*pace());if(!alive())return;
     b=clone(boards.get(BOT_CID));
     b.mask=b.held.map(h=>!h);b.dice=b.dice.map((v,i)=>b.held[i]?v:rnd6());b.rolls++;b.rolling=false;b.rollId=rid();put(b);
-    await wait((1250+Math.random()*700)*pace);if(!alive())return;
+    await wait((1250+Math.random()*700)*pace());if(!alive())return;
     const dec=botDecide(boards.get(BOT_CID),botLevel);
     if(!dec.stop){
       // set the holds one die at a time, so you can see what it keeps
       for(let i=0;i<5;i++){
         const cur=boards.get(BOT_CID);if(cur.held[i]===dec.hold[i])continue;
         const nb=clone(cur);nb.held[i]=dec.hold[i];put(nb);
-        await wait((230+Math.random()*170)*pace);if(!alive())return;
+        await wait((230+Math.random()*170)*pace());if(!alive())return;
       }
-      await wait(250*pace);continue;
+      await wait(250*pace());continue;
     }
-    await wait((350+Math.random()*350)*pace);if(!alive())return;
+    await wait((350+Math.random()*350)*pace());if(!alive())return;
     const nb=clone(boards.get(BOT_CID));const pts=calc(nb.dice,dec.cat);
     nb.scores[dec.cat]=pts;nb.last={c:dec.cat,pts,k:rid()};
     nb.rolls=0;nb.rolling=false;nb.held=[false,false,false,false,false];nb.mask=[false,false,false,false,false];
     put(nb);maybeFinish();
-    await wait((900+Math.random()*900)*pace);
+    await wait((900+Math.random()*900)*pace());
   }
 }
 $("aiBtn").onclick=()=>startAI(document.querySelector('input[name=aidiff]:checked').value);
@@ -3305,7 +3313,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-26d";
+const APP_VER="2026-11-26e";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
