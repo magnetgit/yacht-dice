@@ -1884,10 +1884,10 @@ function cupThrowAt(t,Rt){
   const e=x=>1-Math.pow(1-Math.min(1,Math.max(0,x)),3),UP=1.1;
   let tilt,up;
   if(t<.24){tilt=CUPTIP*e(t/.24);up=0}
-  else if(t<.6){tilt=CUPTIP;up=0}
-  else if(t<.8){tilt=CUPTIP;up=UP*e((t-.6)/.2)}
-  else if(t<1.1){tilt=CUPTIP*(1-e((t-.8)/.3));up=UP}
-  else{tilt=0;up=UP*(1-e((t-1.1)/.3))}
+  else if(t<.85){tilt=CUPTIP;up=0}                       // lying on its side while the dice slide out
+  else if(t<1.05){tilt=CUPTIP;up=UP*e((t-.85)/.2)}
+  else if(t<1.35){tilt=CUPTIP*(1-e((t-1.05)/.3));up=UP}
+  else{tilt=0;up=UP*(1-e((t-1.35)/.3))}
   // raise it just enough that the turned cup never touches the felt
   const low=CUPH/2*Math.abs(Math.cos(tilt))+Rt*Math.abs(Math.sin(tilt))+.12;
   return{ox:.25*tilt/CUPTIP,tilt,lift:Math.max(0,low-CUPH/2)+up};
@@ -1989,7 +1989,8 @@ function d3SimFrom(Wu,Hu,start){
         // leaving through the mouth: thrown out across the felt
         const dx=b.position.x-cp.x,dy=b.position.y-cp.y,ly=dx*sa+dy*ca;
         // while the cup lies on its side the dice slide toward the mouth (the cup is being shaken out)
-        if(!freed[k]&&-cp.a>1.2&&ly<CUPH/2){b.velocity.x+=sa*.5;b.velocity.y+=ca*.5}
+        // (every die still inside keeps moving toward the mouth at a steady speed, even when stacked)
+        if(!freed[k]&&-cp.a>1.2&&ly<CUPH/2){const va=b.velocity.x*sa+b.velocity.y*ca;if(va<7){b.velocity.x+=(7-va)*sa;b.velocity.y+=(7-va)*ca}}
         if(!freed[k]&&ly>CUPH/2+.1){freed[k]=true;b.velocity.x+=6+rnd()*4;b.velocity.y+=1+rnd()*2}
         // drawn in front of the cup only once the whole die is clear of the mouth (no "through the rim" look)
         if(!front[k]&&(ly>CUPH/2+.95||out[k]))front[k]=true;
@@ -1998,7 +1999,7 @@ function d3SimFrom(Wu,Hu,start){
       });
       if(step%2===1)frames.push(snap());
       still=bodies.every(b=>b.velocity.lengthSquared()<.004&&b.angularVelocity.lengthSquared()<.01)?still+1:0;
-      if(still>20&&step>170)break;   // also wait for the cup to be set down
+      if(still>20&&step>200)break;   // also wait for the cup to be set down
     }
     frames.push(snap());
     const ups=[],allOut=bodies.every((b,k)=>out[k]);let flat=allOut;
@@ -2105,7 +2106,8 @@ function d3Roll(v,b,idx){
   const d=v.probe.offsetWidth;if(W<60||H<40||d<8)return null;
   const Wu=W/d,Hu=H/d;
   const live=v.anim&&v.anim.live&&v.anim.bodies.length===idx.length?v.anim:null;
-  let sim;try{sim=live?d3SimFrom(Wu,Hu,live.states()):d3Sim(Wu,Hu,idx.length)}catch(e){return null}
+  // (if, against all odds, a die would stay in the cup, pour fresh dice onto the felt instead)
+  let sim;try{sim=live?d3SimFrom(Wu,Hu,live.states()):null;if(!sim||!sim.allOut)sim=d3Sim(Wu,Hu,idx.length)}catch(e){return null}
   const T3=D3.T3,C=D3.C,last=sim.frames[sim.frames.length-1],out=[],taken=[];
   // where each die ends up, as the flat dice will show it (position in % of the tray, angle)
   idx.forEach((i,k)=>{
@@ -2897,6 +2899,8 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.0.6",time:"18:49",date:"2026.11.26",items:[
+    "3D에서 던진 주사위 일부가 컵 안에 남던 문제를 고쳤어요. 컵을 눕혀 두는 동안 주사위가 꼭 빠져나오게 했어요."]},
   {ver:"2.0.5",time:"14:13",date:"2026.11.26",items:[
     "족보 팝업(요트·스트레이트·포카인드·풀하우스)이 한 게임에 한 번만 뜨던 걸 바꿨어요. 칸이 비어 있으면 그 족보가 나올 때마다 떠요.",
     "같은 차례에 이미 만든 족보를 그대로 두고 다시 굴린 경우에는 또 뜨지 않아요."]},
@@ -3346,7 +3350,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-26h";
+const APP_VER="2026-11-26i";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
