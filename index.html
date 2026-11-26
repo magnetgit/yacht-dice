@@ -2262,7 +2262,8 @@ function syncTray(v,b,act,away){
   for(const el of v.dieEls)el.classList.toggle("ghost",ghost&&el.parentNode===v.tray);
   // fresh landing that makes a scoring combo: show it on that board (and say it) for everyone watching.
   // It is announced as the dice settle; speech starts a little early because voices take a moment to start.
-  if(landed){const cb=comboToShow(v.cid,b);if(cb){
+  const prevDice=landed&&b.rolls>1&&v.seen.dice&&v.seen.turn===turnKey(b)?v.seen.dice:null;
+  if(landed){const cb=comboToShow(b,prevDice);if(cb){
     const at=sim3?sim3.rest:maxDur*.72,mine=isMine(v.cid);
     setTimeout(()=>{if(v.el.isConnected)sayCombo(cb.say,mine)},Math.max(0,at-sayLead()));
     setTimeout(()=>celebrate(v,cb,true),Math.max(0,at-60));
@@ -2271,6 +2272,7 @@ function syncTray(v,b,act,away){
   const bon=!!b&&totals(b.scores).bonus>0,gid=b?b.gid:null;
   if(v.seen.init&&bon&&!v.seen.bonus&&gid===v.seen.gid)celebrate(v,COMBOS.bonus);
   v.seen.bonus=bon;v.seen.gid=gid;
+  if(b&&!rolling&&b.rolls>0){v.seen.dice=b.dice.slice();v.seen.turn=turnKey(b)}
   v.seen.init=true;v.seen.rolling=rolling;v.seen.rollId=b?b.rollId:null;
   return rolling;
 }
@@ -2297,9 +2299,12 @@ function firstShow(cid,b,cb){
 // The best combo the dice make that is still worth announcing: its box is open and it hasn't been
 // shown yet this game. (A large straight is also a small one; once the large one has been shown or
 // scored, rolling it again announces the small straight instead of nothing.)
-function comboToShow(cid,b){
+// A combo is announced every time a roll makes it while its box is still open. Only when the dice
+// already made it before this reroll (same turn, e.g. the straight was held) is it not repeated.
+const turnKey=b=>b.gid+":"+b.scores.filter(x=>x!==null).length;
+function comboToShow(b,prev){
   for(const cb of [COMBOS.yacht,COMBOS.large,COMBOS.small,COMBOS.four,COMBOS.full])
-    if(calc(b.dice,cb.cat)&&firstShow(cid,b,cb))return cb;
+    if(calc(b.dice,cb.cat)&&b.scores[cb.cat]===null&&!(prev&&calc(prev,cb.cat)))return cb;
   return null;
 }
 function comboOf(d){
@@ -2892,6 +2897,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.0.5",time:"14:13",date:"2026.11.26",items:[
+    "족보 팝업(요트·스트레이트·포카인드·풀하우스)이 한 게임에 한 번만 뜨던 걸 바꿨어요. 칸이 비어 있으면 그 족보가 나올 때마다 떠요.",
+    "같은 차례에 이미 만든 족보를 그대로 두고 다시 굴린 경우에는 또 뜨지 않아요."]},
   {ver:"2.0.4",time:"13:23",date:"2026.11.26",items:[
     "라지 스트레이트가 이미 나온 뒤에 스트레이트를 다시 굴리면 \"스몰 스트레이트!\"가 뜨지 않던 문제를 고쳤어요. 아직 안 나온 족보 중 가장 좋은 걸 보여 줘요."]},
   {ver:"2.0.3",time:"13:11",date:"2026.11.26",items:[
@@ -3338,7 +3346,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-26g";
+const APP_VER="2026-11-26h";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
