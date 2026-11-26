@@ -113,16 +113,18 @@ input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
 .cl li{position:relative;padding-left:16px;font-size:14px;line-height:1.5}
 .cl li::before{content:"";position:absolute;left:4px;top:.6em;width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .clv{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:10px 14px}
-.clv summary{cursor:pointer;font-weight:700;font-size:14px}
+.clv summary{cursor:pointer;font-weight:500;font-size:14.5px}
 .clv[open] summary{margin-bottom:8px}
 .clv .d,.clhead .d{color:var(--muted);font-weight:600;font-size:12.5px;margin-left:6px}
-.clhead{font-weight:800;font-size:16px;margin:0}
+.clhead{font-weight:700;font-size:16px;margin:0}
+.nacts{margin-top:2px}
+.clv .nacts{margin-top:10px}
 .homelinks{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
 .homelinks .newsline{margin-top:0}
 .newsline.sm{padding:7px 12px;font-weight:700}
 #board .panel{width:min(640px,100%)}
 /* the board is for reading: plain body font and lighter weights instead of the heavy display face */
-#board .panel h2{font-family:var(--f-body,inherit);font-weight:700;font-size:20px;letter-spacing:-.01em}
+#board .panel h2,#news .panel h2{font-family:var(--f-body,inherit);font-weight:700;font-size:20px;letter-spacing:-.01em}
 #board .vstyles span{font-weight:500}
 #board .vstyles input:checked+span{font-weight:700}
 .bform{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line2);border-radius:14px;background:var(--panel2)}
@@ -393,9 +395,9 @@ button.chip{cursor:pointer;font:inherit;font-size:13px;color:var(--ink)}
 button.chip:hover{border-color:var(--accent)}
 .chip svg{width:16px;height:16px;flex:none}
 #people,#voices,#acct,#ranks,#news,#board{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-#people .panel,#voices .panel,#acct .panel,#ranks .panel,#news,#board .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
-#people h2,#voices h2,#acct h2,#ranks h2,#news,#board h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
-#people h3,#voices h3,#acct h3,#ranks h3,#news,#board h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
+#people .panel,#voices .panel,#acct .panel,#ranks .panel,#news .panel,#board .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
+#people h2,#voices h2,#acct h2,#ranks h2,#news h2,#board h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
+#people h3,#voices h3,#acct h3,#ranks h3,#news h3,#board h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
 .pplist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .pplist li{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);flex-wrap:wrap}
 .pplist li.away{opacity:.6}
@@ -2839,6 +2841,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"1.8",date:"2026.11.26",items:[
+    "업데이트 공지마다 좋아요·싫어요를 누를 수 있어요. 한 번 더 누르면 취소돼요.",
+    "업데이트 공지 창의 글씨가 두껍고 흐리게 보이던 문제를 고쳤어요."]},
   {ver:"1.7.1",date:"2026.11.25",items:[
     "게시판 글씨를 더 얇고 읽기 쉽게 바꿨어요."]},
   {ver:"1.7",date:"2026.11.25",items:[
@@ -2884,12 +2889,52 @@ function renderNews(){
   $("newsText").textContent=`${top.date} ver ${top.ver} 업데이트 공지`;
   $("newsNew").hidden=store.get("yd-news-seen")===top.ver;
 }
-function openNews(){
-  const li=it=>`<ul class="cl">${it.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`,[top,...rest]=CHANGELOG;
-  $("newsBody").innerHTML=`<p class="clhead">ver ${esc(top.ver)}<span class="d">${esc(top.date)}</span></p>${li(top.items)}`
-    +(rest.length?`<h3>지난 업데이트</h3>`+rest.map(c=>`<details class="clv"><summary>ver ${esc(c.ver)}<span class="d">${esc(c.date)}</span></summary>${li(c.items)}</details>`).join(""):"");
-  $("news").hidden=false;store.set("yd-news-seen",top.ver);$("newsNew").hidden=true;
+// Each version can be liked or disliked like a board post (table news_votes; one vote per
+// account or per device for people who are not logged in; pressing the same button again cancels).
+const NV={counts:{},mine:{},busy:false,ok:false};
+function newsActs(ver){
+  const c=NV.counts[ver]||{up:0,down:0},my=NV.mine[ver]||0;
+  return`<div class="pacts nacts" data-ver="${esc(ver)}" ${NV.ok?"":"hidden"}>
+    <button class="vote up${my===1?" on":""}" type="button" data-v="1" aria-pressed="${my===1}" title="좋아요">${THUMB(1)}<span>좋아요</span> <b>${c.up}</b></button>
+    <button class="vote down${my===-1?" on":""}" type="button" data-v="-1" aria-pressed="${my===-1}" title="싫어요">${THUMB(-1)}<span>싫어요</span> <b>${c.down}</b></button></div>`;
 }
+function renderNewsBody(){
+  const open=new Set([...document.querySelectorAll("#newsBody details[open]")].map(d=>d.dataset.ver));
+  const li=it=>`<ul class="cl">${it.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`,[top,...rest]=CHANGELOG;
+  $("newsBody").innerHTML=`<p class="clhead">ver ${esc(top.ver)}<span class="d">${esc(top.date)}</span></p>${li(top.items)}${newsActs(top.ver)}`
+    +(rest.length?`<h3>지난 업데이트</h3>`+rest.map(c=>`<details class="clv" data-ver="${esc(c.ver)}" ${open.has(c.ver)?"open":""}><summary>ver ${esc(c.ver)}<span class="d">${esc(c.date)}</span></summary>${li(c.items)}${newsActs(c.ver)}</details>`).join(""):"");
+}
+async function loadNewsVotes(){
+  if(!ACC.sb){if(!ACC.failed)setTimeout(()=>{if(!$("news").hidden)loadNewsVotes()},1200);return}
+  try{
+    const {data,error}=await ACC.sb.from("news_vote_counts").select("*");if(error)throw error;
+    NV.counts={};for(const r of data||[])NV.counts[r.ver]={up:r.up,down:r.down};
+    NV.mine={};const {data:s}=await ACC.sb.auth.getSession(),me=s&&s.session&&s.session.user.id;
+    if(me){const {data:v}=await ACC.sb.from("news_votes").select("ver,value").eq("voter",me);for(const x of v||[])NV.mine[x.ver]=x.value}
+    NV.ok=true;
+  }catch(e){NV.ok=false}
+  if(!$("news").hidden)renderNewsBody();
+}
+function openNews(){
+  renderNewsBody();
+  $("news").hidden=false;store.set("yd-news-seen",CHANGELOG[0].ver);$("newsNew").hidden=true;
+  loadNewsVotes();
+}
+$("newsBody").addEventListener("click",async e=>{
+  const b=e.target.closest(".nacts button.vote");if(!b||NV.busy)return;
+  const ver=b.closest(".nacts").dataset.ver,v=+b.dataset.v,cur=NV.mine[ver]||0,next=cur===v?0:v;
+  const c=NV.counts[ver]||(NV.counts[ver]={up:0,down:0}),old={up:c.up,down:c.down,cur};
+  NV.busy=true;
+  if(cur===1)c.up--;if(cur===-1)c.down--;if(next===1)c.up++;if(next===-1)c.down++;NV.mine[ver]=next;renderNewsBody();
+  try{
+    const me=await voterId();let r;
+    if(next===0)r=await ACC.sb.from("news_votes").delete().eq("ver",ver).eq("voter",me);
+    else if(cur===0)r=await ACC.sb.from("news_votes").insert({ver,value:next});
+    else r=await ACC.sb.from("news_votes").update({value:next}).eq("ver",ver).eq("voter",me);
+    if(r.error)throw r.error;
+  }catch(err){c.up=old.up;c.down=old.down;NV.mine[ver]=old.cur;renderNewsBody();toast("반영하지 못했어요. 잠시 후 다시 눌러 주세요.")}
+  NV.busy=false;
+});
 $("newsBtn").onclick=openNews;
 $("newsClose").onclick=()=>{$("news").hidden=true};
 $("news").addEventListener("click",e=>{if(e.target.id==="news")$("news").hidden=true});
@@ -3174,7 +3219,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-25q";
+const APP_VER="2026-11-26a";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
