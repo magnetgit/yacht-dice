@@ -116,7 +116,9 @@ input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
 .clv summary{cursor:pointer;font-weight:500;font-size:14.5px}
 .clv[open] summary{margin-bottom:8px}
 .clv .d,.clhead .d{color:var(--muted);font-weight:600;font-size:12.5px;margin-left:6px}
-.clhead{font-weight:700;font-size:16px;margin:0}
+.clhead{font-weight:700;font-size:16px;margin:0;word-break:break-word}
+.nbody{white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:1.75}
+.clv summary{word-break:break-word}
 .nacts{margin-top:2px}
 .clv .nacts{margin-top:10px}
 .homelinks{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
@@ -508,7 +510,6 @@ button.chip:hover{border-color:var(--accent)}
         <p class="lead">방을 만들고 코드나 링크를 보내면 끝이에요. 중간에 튕겨도 같은 코드로 들어오면 하던 데서 이어서 해요.</p>
         <div class="homelinks">
         <button id="newsBtn" class="newsline" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12"/></svg><span class="nt" id="newsText"></span><span class="nb" id="newsNew" hidden>NEW</span><span class="ar" aria-hidden="true">›</span></button>
-        <button id="noticeBtn" class="newsline sm" type="button" aria-haspopup="dialog">공지 게시판</button>
         <button id="feedbackBtn" class="newsline sm" type="button" aria-haspopup="dialog">피드백 남기기</button>
         </div>
       </div>
@@ -663,8 +664,8 @@ button.chip:hover{border-color:var(--accent)}
   </div>
   <div id="board" hidden>
     <div class="panel" role="dialog" aria-labelledby="boardTitle">
-      <div class="row" style="align-items:center"><h2 id="boardTitle" style="flex:1">게시판</h2><button id="boardClose" class="btn ghost small" type="button">닫기</button></div>
-      <div class="vstyles" id="bTabs">
+      <div class="row" style="align-items:center"><h2 id="boardTitle" style="flex:1">피드백 게시판</h2><button id="boardClose" class="btn ghost small" type="button">닫기</button></div>
+      <div class="vstyles" id="bTabs" hidden>
         <label><input type="radio" name="bboard" value="notice"><span>공지</span></label>
         <label><input type="radio" name="bboard" value="feedback"><span>피드백</span></label>
       </div>
@@ -682,7 +683,13 @@ button.chip:hover{border-color:var(--accent)}
   </div>
   <div id="news" hidden>
     <div class="panel" role="dialog" aria-labelledby="newsTitle">
-      <div class="row" style="align-items:center"><h2 id="newsTitle" style="flex:1">업데이트 공지</h2><button id="newsClose" class="btn ghost small" type="button">닫기</button></div>
+      <div class="row" style="align-items:center"><h2 id="newsTitle" style="flex:1">공지</h2><button id="newsWrite" class="btn small" type="button" hidden>공지 쓰기</button><button id="newsClose" class="btn ghost small" type="button">닫기</button></div>
+      <div class="bform" id="newsForm" hidden>
+        <input id="nTitle" type="text" maxlength="60" placeholder="공지 제목" aria-label="공지 제목">
+        <textarea id="nBody" maxlength="2000" placeholder="공지 내용" aria-label="공지 내용"></textarea>
+        <p class="note status" id="nMsg" role="status" style="margin:0"></p>
+        <div class="row"><button id="nSend" class="btn small" type="button">올리기</button><button id="nCancel" class="btn ghost small" type="button">취소</button></div>
+      </div>
       <div id="newsBody" class="stack" style="gap:12px"></div>
     </div>
   </div>
@@ -2729,7 +2736,7 @@ $("overRanks").onclick=openRanks;
 /* ---------- boards: 공지 (notice, admins write) and 피드백 (feedback, anyone; can be anonymous) ----------
    Votes: one per account and post. People who are not logged in vote through an anonymous
    sign-in (one per device/browser). Pressing the same button again takes the vote back. */
-const BD={board:"notice",posts:[],mine:{},open:new Set(),busy:false,composing:false};
+const BD={board:"feedback",posts:[],mine:{},open:new Set(),busy:false,composing:false};
 async function voterId(){
   if(!ACC.sb)throw new Error("nodb");
   const {data}=await ACC.sb.auth.getSession();
@@ -2742,6 +2749,7 @@ async function checkAdmin(){
   if(!ACC.sb||!ACC.uid)return;
   try{const {data}=await ACC.sb.from("admins").select("user_id").eq("user_id",ACC.uid);ACC.admin=!!(data&&data.length)}catch(e){}
   if(!$("board").hidden)renderBoard();
+  if(!$("news").hidden)renderNewsBody();
 }
 function fmtDate(s){const d=new Date(s),p=n=>String(n).padStart(2,"0");return`${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`}
 function openBoard(which){
@@ -2834,111 +2842,164 @@ $("bSend").onclick=async()=>{
 };
 $("boardClose").onclick=()=>{$("board").hidden=true};
 $("board").addEventListener("click",e=>{if(e.target.id==="board")$("board").hidden=true});
-$("noticeBtn").onclick=()=>openBoard("notice");
 $("feedbackBtn").onclick=()=>openBoard("feedback");
 
 /* ---------- update notes ----------
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
-  {ver:"1.8",date:"2026.11.26",items:[
+  {ver:"1.9",time:"10:22",date:"2026.11.26",items:[
+    "공지 게시판을 업데이트 공지와 합쳤어요. 첫 화면의 공지 한 줄을 누르면 업데이트 내역과 운영자 공지가 날짜순으로 함께 보여요.",
+    "운영자 공지에도 좋아요·싫어요를 누를 수 있어요.",
+    "게시판은 피드백 전용이 됐어요."]},
+  {ver:"1.8",time:"10:18",date:"2026.11.26",items:[
     "업데이트 공지마다 좋아요·싫어요를 누를 수 있어요. 한 번 더 누르면 취소돼요.",
     "업데이트 공지 창의 글씨가 두껍고 흐리게 보이던 문제를 고쳤어요."]},
-  {ver:"1.7.1",date:"2026.11.25",items:[
+  {ver:"1.7.1",time:"18:43",date:"2026.11.25",items:[
     "게시판 글씨를 더 얇고 읽기 쉽게 바꿨어요."]},
-  {ver:"1.7",date:"2026.11.25",items:[
+  {ver:"1.7",time:"18:31",date:"2026.11.25",items:[
     "공지 게시판과 피드백 게시판이 생겼어요. 첫 화면의 버튼으로 들어가요.",
     "피드백은 로그인하지 않아도, 로그인했어도 익명으로 남길 수 있어요.",
     "글마다 추천·비추천을 누를 수 있어요. 한 번 더 누르면 취소돼요."]},
-  {ver:"1.6",date:"2026.11.25",items:[
+  {ver:"1.6",time:"18:20",date:"2026.11.25",items:[
     "주사위를 3D와 2D 중에서 고를 수 있어요. 위쪽 소리 조절 옆 3D/2D 버튼으로 바꾸고, 고른 모드는 이 기기에 저장돼요. 2D는 화면이 더 가벼워요.",
     "업데이트 공지를 첫 화면에서 볼 수 있어요.",
     "로그인 창에서 아이디 칸과 비밀번호 칸이 멀리 떨어져 보이던 문제를 고쳤어요."]},
-  {ver:"1.5",date:"2026.11.25",items:[
+  {ver:"1.5",time:"17:23",date:"2026.11.25",items:[
     "흔들기 → 던지기로 나눴어요. 흔드는 중에 취소하면 굴린 횟수를 쓰지 않고 고정할 주사위를 다시 고를 수 있어요.",
     "3D 나무 컵이 생겼어요. 흔드는 동안 컵 안에서 주사위가 섞이고, 던지면 컵을 기울여 쏟아요.",
     "판 위 주사위를 조금 작게, 컵은 넓게 바꿨어요.",
     "플레이어가 모두 나가고 관전자만 남은 방은 해산돼요.",
     "온라인 방의 데이터 전송량을 크게 줄였어요(모바일 데이터에서 더 안정적이에요)."]},
-  {ver:"1.4",date:"2026.11.25",items:[
+  {ver:"1.4",time:"15:27",date:"2026.11.25",items:[
     "로그인(선택)이 생겼어요. 로그인하면 온라인 대전 기록이 남아요.",
     "이번 주·이번 달·올해·전체 순위를 볼 수 있어요.",
     "통산 1등 횟수에 따라 닉네임 옆에 메달이 붙어요(1승 동, 10승 은, 30승 금, 100승 다이아).",
     "입장에 실패하면 방장 화면이 꺼진 건지, 네트워크가 막힌 건지 나눠서 알려 줘요."]},
-  {ver:"1.3",date:"2026.11.25",items:[
+  {ver:"1.3",time:"13:50",date:"2026.11.25",items:[
     "관전 입장이 생겼어요. 방이 가득 차도 관전할 수 있고, 관전자도 채팅할 수 있어요.",
     "위쪽 접속자 버튼으로 방에 누가 있는지 볼 수 있어요.",
     "족보를 읽어 주는 목소리와 말투를 고를 수 있어요.",
     "상단 합계가 63점을 넘으면 \"보너스! +35점\"이 떠요.",
     "주사위가 멈춘 뒤에도 3D 모습 그대로 남아요."]},
-  {ver:"1.2",date:"2026.11.25",items:[
+  {ver:"1.2",time:"10:59",date:"2026.11.25",items:[
     "주사위가 3D 물리로 굴러가요.",
     "PC에서는 내 판을 점수판 옆에 크게 보여 주고, 실시간 순위를 표시해요."]},
-  {ver:"1.1",date:"2026.11.24",items:[
+  {ver:"1.1",time:"21:36",date:"2026.11.24",items:[
     "AI 요트봇과 1대1 대결(쉬움·보통·어려움)",
     "방 안 채팅",
     "아이폰과 모바일 데이터에서도 입장할 수 있게 고쳤어요.",
     "새로고침하거나 방장 폰이 잠들어도 더 빨리 다시 이어져요."]},
-  {ver:"1.0",date:"2026.11.24",items:[
+  {ver:"1.0",time:"11:27",date:"2026.11.24",items:[
     "요트 다이스 라운지 첫 공개: 가입 없이 코드나 링크로 입장, 최대 8명이 동시에 플레이",
     "게임 중간 입장, 새로고침해도 하던 자리로 복귀",
     "요트 불꽃놀이, 콤보 팝업과 음성, 효과음과 볼륨 조절"]}
 ];
-function renderNews(){
-  const top=CHANGELOG[0];
-  $("newsText").textContent=`${top.date} ver ${top.ver} 업데이트 공지`;
-  $("newsNew").hidden=store.get("yd-news-seen")===top.ver;
+// One 공지 window for everything the players should know: version update notes (CHANGELOG, in this
+// file) and notices the admin writes (posts with board = 'notice'), newest first. Every item can be
+// liked or disliked; pressing the same button again cancels. Update notes count in news_votes
+// (per version), written notices in votes (per post).
+const NV={counts:{},mine:{},pcounts:{},pmine:{},notices:[],busy:false,ok:false,composing:false};
+// release time (KST) of an update, so written notices fall between updates in the right order
+function clTime(c,i){const [y,m,d]=c.date.split(".").map(Number),[hh,mm]=(c.time||"23:59").split(":").map(Number);return new Date(y,m-1,d,hh,mm,0).getTime()-i*1000}
+function newsItems(){
+  const u=CHANGELOG.map((c,i)=>({kind:"u",key:"u:"+c.ver,t:clTime(c,i),c}));
+  const n=NV.notices.map(p=>({kind:"n",key:"n:"+p.id,t:new Date(p.created_at).getTime(),p}));
+  return u.concat(n).sort((a,b)=>b.t-a.t);
 }
-// Each version can be liked or disliked like a board post (table news_votes; one vote per
-// account or per device for people who are not logged in; pressing the same button again cancels).
-const NV={counts:{},mine:{},busy:false,ok:false};
-function newsActs(ver){
-  const c=NV.counts[ver]||{up:0,down:0},my=NV.mine[ver]||0;
-  return`<div class="pacts nacts" data-ver="${esc(ver)}" ${NV.ok?"":"hidden"}>
+function newsLabel(it){return it.kind==="u"?`${it.c.date} ver ${it.c.ver} 업데이트 공지`:`${fmtDate(it.p.created_at).slice(0,10)} ${it.p.title}`}
+function newsSeen(key){const s=store.get("yd-news-seen");return s===key||"u:"+s===key}
+function renderNews(){
+  const top=newsItems()[0];
+  $("newsText").textContent=newsLabel(top);
+  $("newsNew").hidden=newsSeen(top.key);
+}
+function newsActs(kind,id){
+  const c=(kind==="u"?NV.counts[id]:NV.pcounts[id])||{up:0,down:0},my=(kind==="u"?NV.mine[id]:NV.pmine[id])||0;
+  return`<div class="pacts nacts" data-kind="${kind}" data-id="${esc(id)}" ${NV.ok?"":"hidden"}>
     <button class="vote up${my===1?" on":""}" type="button" data-v="1" aria-pressed="${my===1}" title="좋아요">${THUMB(1)}<span>좋아요</span> <b>${c.up}</b></button>
-    <button class="vote down${my===-1?" on":""}" type="button" data-v="-1" aria-pressed="${my===-1}" title="싫어요">${THUMB(-1)}<span>싫어요</span> <b>${c.down}</b></button></div>`;
+    <button class="vote down${my===-1?" on":""}" type="button" data-v="-1" aria-pressed="${my===-1}" title="싫어요">${THUMB(-1)}<span>싫어요</span> <b>${c.down}</b></button>
+    ${kind==="n"&&ACC.admin?`<button class="btn ghost small" type="button" data-del="${esc(id)}">삭제</button>`:""}</div>`;
+}
+function newsItemHTML(it){
+  const li=x=>`<ul class="cl">${x.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`;
+  if(it.kind==="u")return{head:`ver ${esc(it.c.ver)}<span class="d">${esc(it.c.date)} · 업데이트</span>`,body:li(it.c.items)+newsActs("u",it.c.ver)};
+  return{head:`${esc(it.p.title)}<span class="d">${fmtDate(it.p.created_at)} · ${esc(it.p.author_name)}</span>`,body:`<div class="nbody">${esc(it.p.body)}</div>`+newsActs("n",String(it.p.id))};
 }
 function renderNewsBody(){
-  const open=new Set([...document.querySelectorAll("#newsBody details[open]")].map(d=>d.dataset.ver));
-  const li=it=>`<ul class="cl">${it.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`,[top,...rest]=CHANGELOG;
-  $("newsBody").innerHTML=`<p class="clhead">ver ${esc(top.ver)}<span class="d">${esc(top.date)}</span></p>${li(top.items)}${newsActs(top.ver)}`
-    +(rest.length?`<h3>지난 업데이트</h3>`+rest.map(c=>`<details class="clv" data-ver="${esc(c.ver)}" ${open.has(c.ver)?"open":""}><summary>ver ${esc(c.ver)}<span class="d">${esc(c.date)}</span></summary>${li(c.items)}${newsActs(c.ver)}</details>`).join(""):"");
+  const open=new Set([...document.querySelectorAll("#newsBody details[open]")].map(d=>d.dataset.key));
+  const [top,...rest]=newsItems(),h=newsItemHTML(top);
+  $("newsWrite").hidden=!ACC.admin||NV.composing;$("newsForm").hidden=!NV.composing;
+  $("newsBody").innerHTML=`<p class="clhead">${h.head}</p>${h.body}`
+    +(rest.length?`<h3>지난 공지</h3>`+rest.map(it=>{const x=newsItemHTML(it);return`<details class="clv" data-key="${esc(it.key)}" ${open.has(it.key)?"open":""}><summary>${x.head}</summary>${x.body}</details>`}).join(""):"");
 }
-async function loadNewsVotes(){
-  if(!ACC.sb){if(!ACC.failed)setTimeout(()=>{if(!$("news").hidden)loadNewsVotes()},1200);return}
+async function loadNews(){
+  if(!ACC.sb){if(!ACC.failed)setTimeout(loadNews,1200);return}
   try{
+    const {data:posts,error:pe}=await ACC.sb.from("post_list").select("*").eq("board","notice").order("created_at",{ascending:false}).limit(30);
+    if(pe)throw pe;
+    NV.notices=posts||[];NV.pcounts={};for(const p of NV.notices)NV.pcounts[p.id]={up:p.up,down:p.down};
     const {data,error}=await ACC.sb.from("news_vote_counts").select("*");if(error)throw error;
     NV.counts={};for(const r of data||[])NV.counts[r.ver]={up:r.up,down:r.down};
-    NV.mine={};const {data:s}=await ACC.sb.auth.getSession(),me=s&&s.session&&s.session.user.id;
-    if(me){const {data:v}=await ACC.sb.from("news_votes").select("ver,value").eq("voter",me);for(const x of v||[])NV.mine[x.ver]=x.value}
+    NV.mine={};NV.pmine={};
+    const {data:s}=await ACC.sb.auth.getSession(),me=s&&s.session&&s.session.user.id;
+    if(me){
+      const {data:v}=await ACC.sb.from("news_votes").select("ver,value").eq("voter",me);for(const x of v||[])NV.mine[x.ver]=x.value;
+      if(NV.notices.length){const {data:pv}=await ACC.sb.from("votes").select("post_id,value").eq("voter",me).in("post_id",NV.notices.map(p=>p.id));for(const x of pv||[])NV.pmine[x.post_id]=x.value}
+    }
     NV.ok=true;
   }catch(e){NV.ok=false}
+  renderNews();
   if(!$("news").hidden)renderNewsBody();
 }
 function openNews(){
-  renderNewsBody();
-  $("news").hidden=false;store.set("yd-news-seen",CHANGELOG[0].ver);$("newsNew").hidden=true;
-  loadNewsVotes();
+  NV.composing=false;renderNewsBody();
+  $("news").hidden=false;store.set("yd-news-seen",newsItems()[0].key);$("newsNew").hidden=true;
+  loadNews();
 }
 $("newsBody").addEventListener("click",async e=>{
+  const del=e.target.closest("button[data-del]");
+  if(del){
+    if(!confirm("이 공지를 지울까요? 지우면 되돌릴 수 없어요."))return;
+    const {error}=await ACC.sb.from("posts").delete().eq("id",+del.dataset.del);
+    if(error){toast("지우지 못했어요.");return}
+    toast("공지를 지웠어요.");loadNews();return;
+  }
   const b=e.target.closest(".nacts button.vote");if(!b||NV.busy)return;
-  const ver=b.closest(".nacts").dataset.ver,v=+b.dataset.v,cur=NV.mine[ver]||0,next=cur===v?0:v;
-  const c=NV.counts[ver]||(NV.counts[ver]={up:0,down:0}),old={up:c.up,down:c.down,cur};
+  const box=b.closest(".nacts"),kind=box.dataset.kind,id=box.dataset.id,v=+b.dataset.v;
+  const counts=kind==="u"?NV.counts:NV.pcounts,mine=kind==="u"?NV.mine:NV.pmine;
+  const cur=mine[id]||0,next=cur===v?0:v,c=counts[id]||(counts[id]={up:0,down:0}),old={up:c.up,down:c.down,cur};
   NV.busy=true;
-  if(cur===1)c.up--;if(cur===-1)c.down--;if(next===1)c.up++;if(next===-1)c.down++;NV.mine[ver]=next;renderNewsBody();
+  if(cur===1)c.up--;if(cur===-1)c.down--;if(next===1)c.up++;if(next===-1)c.down++;mine[id]=next;renderNewsBody();
   try{
     const me=await voterId();let r;
-    if(next===0)r=await ACC.sb.from("news_votes").delete().eq("ver",ver).eq("voter",me);
-    else if(cur===0)r=await ACC.sb.from("news_votes").insert({ver,value:next});
-    else r=await ACC.sb.from("news_votes").update({value:next}).eq("ver",ver).eq("voter",me);
+    const tbl=kind==="u"?"news_votes":"votes",col=kind==="u"?"ver":"post_id",key=kind==="u"?id:+id;
+    if(next===0)r=await ACC.sb.from(tbl).delete().eq(col,key).eq("voter",me);
+    else if(cur===0)r=await ACC.sb.from(tbl).insert({[col]:key,value:next});
+    else r=await ACC.sb.from(tbl).update({value:next}).eq(col,key).eq("voter",me);
     if(r.error)throw r.error;
-  }catch(err){c.up=old.up;c.down=old.down;NV.mine[ver]=old.cur;renderNewsBody();toast("반영하지 못했어요. 잠시 후 다시 눌러 주세요.")}
+  }catch(err){c.up=old.up;c.down=old.down;mine[id]=old.cur;renderNewsBody();toast("반영하지 못했어요. 잠시 후 다시 눌러 주세요.")}
   NV.busy=false;
 });
+// the admin writes notices right here
+$("newsWrite").onclick=()=>{NV.composing=true;renderNewsBody();$("nMsg").textContent="";setTimeout(()=>$("nTitle").focus(),30)};
+$("nCancel").onclick=()=>{NV.composing=false;renderNewsBody()};
+$("nSend").onclick=async()=>{
+  if(!ACC.sb||!ACC.admin||NV.busy)return;
+  const title=$("nTitle").value.trim(),body=$("nBody").value.trim();
+  if(!title){$("nMsg").textContent="제목을 적어 주세요.";return}
+  if(!body){$("nMsg").textContent="내용을 적어 주세요.";return}
+  NV.busy=true;$("nMsg").textContent="올리는 중…";
+  const {error}=await ACC.sb.from("posts").insert({board:"notice",title:title.slice(0,60),body:body.slice(0,2000),author:ACC.uid});
+  NV.busy=false;
+  if(error){$("nMsg").textContent="올리지 못했어요. 잠시 후 다시 해 주세요.";return}
+  $("nTitle").value="";$("nBody").value="";NV.composing=false;toast("공지를 올렸어요.");
+  await loadNews();store.set("yd-news-seen",newsItems()[0].key);$("newsNew").hidden=true;
+};
 $("newsBtn").onclick=openNews;
 $("newsClose").onclick=()=>{$("news").hidden=true};
 $("news").addEventListener("click",e=>{if(e.target.id==="news")$("news").hidden=true});
-renderNews();
+renderNews();loadNews();
 
 /* ---------- wiring ---------- */
 $("nick").value=myName;
@@ -3219,7 +3280,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-26a";
+const APP_VER="2026-11-26b";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
