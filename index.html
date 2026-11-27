@@ -100,6 +100,11 @@ input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ic{color:#7fd6bf}}
 .ic svg{width:17px;height:17px}
 .tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--muted);white-space:nowrap;background:var(--panel)}
+.tag.lead1{color:#fff;border:0;font-weight:800;background:linear-gradient(135deg,#ff9a1f,#e5381f);box-shadow:0 0 8px rgba(255,110,20,.45)}
+.fl{display:inline-block;margin:0 3px;transform-origin:50% 90%;filter:drop-shadow(0 0 4px rgba(255,120,0,.75));animation:flick .7s ease-in-out infinite alternate}
+.fl+.fl,.fl:last-child{animation-delay:.35s}
+@keyframes flick{0%{transform:scale(1,1) rotate(-5deg)}50%{transform:scale(1.12,1.25) rotate(3deg)}100%{transform:scale(.94,1.08) rotate(-2deg)}}
+@media (prefers-reduced-motion:reduce){.fl{animation:none}}
 .tag.ok{color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,transparent);background:color-mix(in srgb,var(--good) 8%,var(--panel))}
 .tag.host{color:var(--brass);border-color:color-mix(in srgb,var(--brass) 50%,transparent);background:color-mix(in srgb,var(--brass) 9%,var(--panel))}
 .tag.bad{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent);background:color-mix(in srgb,var(--accent) 7%,var(--panel))}
@@ -166,8 +171,23 @@ input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
 .hero .lead{margin:4px 0 0;font-size:15px;color:var(--ink2);max-width:62ch}
 /* desktop: my cards stacked on the left, the room list as one tall card on the right */
 .home-grid{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);
-  grid-template-areas:"me rooms" "join rooms" "ai rooms" "create rec";grid-template-rows:auto auto auto 1fr;gap:18px;align-items:start}
+  grid-template-areas:"me rooms" "join rooms" "ai rooms" "create lchat";grid-template-rows:auto auto auto 1fr;gap:18px;align-items:start}
+.lchat{grid-area:lchat}
 .records{grid-area:rec}
+.adm{display:inline-block;margin-left:5px;padding:0 6px;border-radius:6px;font-size:10.5px;font-weight:800;line-height:1.6;letter-spacing:.02em;vertical-align:.12em;
+  color:#fff;background:linear-gradient(135deg,#c6442f,#8f2a1a);box-shadow:0 0 0 1px rgba(255,255,255,.35) inset;white-space:nowrap;-webkit-text-fill-color:#fff}
+.lchat .live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3fbf6f;box-shadow:0 0 0 3px color-mix(in srgb,#3fbf6f 25%,transparent);margin-right:6px;vertical-align:1px}
+.lcwho{list-style:none;margin:0;padding:8px;display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line2);border-radius:12px;background:var(--panel2);max-height:150px;overflow:auto}
+.lcwho li{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:600}
+.lcwho li .st{font-size:11px;color:var(--muted);font-weight:500}
+.lcmsgs{list-style:none;margin:0;padding:10px;display:flex;flex-direction:column;gap:6px;height:220px;overflow:auto;border:1px solid var(--line2);border-radius:12px;background:var(--panel2)}
+.lcmsgs li{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.lcmsgs li.mine{color:var(--ink)}
+.lcmsgs .n{font-weight:700;margin-right:6px}
+.lcmsgs .t{font-size:11px;color:var(--muted);margin-left:6px}
+.lcmsgs .del{border:0;background:none;color:var(--muted);cursor:pointer;font-size:11px;margin-left:4px}
+.lcmsgs li.empty{color:var(--muted);text-align:center;margin:auto}
+.lcin{display:flex;gap:8px}.lcin input{flex:1;min-width:0}
 .home-col{display:contents}
 .me-card{grid-area:me}.a-join{grid-area:join}.a-ai{grid-area:ai}.a-create{grid-area:create}
 .rooms{grid-area:rooms;align-self:stretch}
@@ -175,7 +195,7 @@ input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
 .rooms .rlist li.empty{flex:1;align-items:center;text-align:center;line-height:1.7}
 /* phones: nickname, join by code, room list, then create */
 @media (max-width:860px){
-  .home-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"me" "join" "ai" "rooms" "rec" "create";grid-template-rows:none}
+  .home-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"me" "join" "ai" "rooms" "lchat" "create";grid-template-rows:none}
   .rooms .rlist{max-height:420px;min-height:0}
 }
 .me-card{display:flex;flex-direction:column;gap:8px;background:linear-gradient(160deg,color-mix(in srgb,var(--felt) 9%,var(--panel)),var(--panel) 70%)}
@@ -516,6 +536,25 @@ button.chip:hover{border-color:var(--accent)}
 .sitem .btn{width:100%;justify-content:center}
 .sitem .pv .ttl{margin:0;font-size:13px;padding:2px 10px}
 #prof{z-index:36}
+#prof .panel{width:min(520px,100%)}
+.pcard{position:relative;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center;padding:18px;border-radius:18px;color:#fdf6e3;overflow:hidden;
+  background:radial-gradient(120% 140% at 15% 0%,color-mix(in srgb,var(--pa,#1f6b5c) 92%,#fff),var(--pb,#0b2f28) 75%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.pcard::after{content:"";position:absolute;inset:auto -40px -60px auto;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(240,200,110,.28),transparent 70%);pointer-events:none}
+.pav{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-size:28px;color:#3b2a06;background:linear-gradient(145deg,#ffe9a6,#d9a94c);box-shadow:0 0 0 3px rgba(255,255,255,.25),0 6px 14px rgba(0,0,0,.3)}
+.pid{min-width:0;display:flex;flex-direction:column;gap:4px}
+.pid b{font-size:21px;line-height:1.2;overflow-wrap:anywhere}
+.pid .ttl{margin-left:0}
+.pmeta2{font-size:12.5px;color:rgba(253,246,227,.78)}
+.pchips{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;position:relative;z-index:1}
+.pchips span{display:inline-flex;align-items:baseline;gap:3px;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.25);font-size:12.5px;color:rgba(253,246,227,.85)}
+.pchips b{font-size:16px;color:#fff;font-variant-numeric:tabular-nums}
+.pchips .pp{background:rgba(240,200,110,.25)}.pchips .pp b{color:#ffe08a}
+.ptabs{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--panel2);border:1px solid var(--line2);position:sticky;top:-18px;z-index:2}
+.ptabs button{flex:1;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:14px;padding:8px 6px;border-radius:10px;cursor:pointer}
+.ptabs button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.ptabs button:focus-visible{outline:3px solid color-mix(in srgb,var(--brass) 70%,transparent)}
+.ppane{display:flex;flex-direction:column;gap:10px}.ppane[hidden]{display:none}
+.ppane h3:first-child{margin-top:0}
 .newsline.wrapb{background:linear-gradient(135deg,#2b1d05,#6b4a12);color:#ffe9a6;border-color:#c9a24a}
 #wrap{position:fixed;inset:0;z-index:65;display:grid;place-items:center;padding:14px;background:rgba(6,10,9,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #wrap .wbox{width:min(440px,100%);height:min(720px,calc(100vh - 28px));border-radius:26px;overflow:hidden;display:flex;flex-direction:column;color:#fdf6e3;
@@ -554,7 +593,9 @@ button.chip:hover{border-color:var(--accent)}
 .achl .at{flex:1;min-width:0;display:flex;flex-direction:column}
 .achl .at small{font-size:12px;color:var(--muted)}
 .achl .ap{font-size:12.5px;color:var(--brass);font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
-#rep{z-index:38}#banned{z-index:60;background:rgba(8,14,12,.82)}
+#rep{z-index:38}
+#ranks .vstyles label{min-width:64px}#ranks .vstyles span{padding:7px 6px;font-size:13.5px}
+#rBest[hidden],#rWins[hidden]{display:none}#banned{z-index:60;background:rgba(8,14,12,.82)}
 #admin .panel{width:min(720px,100%);max-height:min(780px,calc(100vh - 32px))}
 #rep textarea{width:100%;resize:vertical;font:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line2);background:var(--field);color:var(--ink)}
 #repWhy label{min-width:120px}
@@ -763,16 +804,13 @@ button.chip:hover{border-color:var(--accent)}
             </ul>
           </details>
         </div>
-        <div class="panel stack records">
-          <div class="card-h"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg></span><h2>기록판</h2><span class="sp"></span><button id="recWins" class="btn ghost small" type="button">1등 순위</button></div>
-          <div class="vstyles" id="recTabs">
-            <label><input type="radio" name="recperiod" value="day"><span>오늘</span></label>
-            <label><input type="radio" name="recperiod" value="week"><span>이번 주</span></label>
-            <label><input type="radio" name="recperiod" value="month"><span>이번 달</span></label>
-            <label><input type="radio" name="recperiod" value="year"><span>올해</span></label>
-          </div>
-          <div id="recBody"><p class="note">불러오는 중…</p></div>
-          <p class="note" style="margin:0">각자 최고 점수로 줄 세운 상위 10명이에요. 점수가 같으면 먼저 낸 사람이 앞서요. 이름을 누르면 프로필이 열려요.</p>
+        <div class="panel stack lchat">
+          <div class="card-h"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><h2>라운지 채팅</h2><span class="sp"></span>
+            <button id="lcWho" class="btn ghost small" type="button" aria-expanded="false"><span class="live" aria-hidden="true"></span>접속 <b id="lcCount">0</b>명</button></div>
+          <ul class="lcwho" id="lcWhoList" hidden></ul>
+          <ul class="lcmsgs" id="lcMsgs" aria-live="polite"></ul>
+          <div class="lcin"><input id="lcInput" type="text" maxlength="100" placeholder="로그인하면 채팅할 수 있어요" autocomplete="off" aria-label="라운지 채팅 입력" disabled><button id="lcSend" class="btn small" type="button" disabled>보내기</button></div>
+          <p class="note" style="margin:0">사이트에 들어와 있는 모두와 이야기해요. 욕설은 가려지고 링크·연락처·도배는 올라가지 않아요.</p>
         </div>
       </div>
     </div>
@@ -901,6 +939,18 @@ button.chip:hover{border-color:var(--accent)}
   <div id="ranks" hidden>
     <div class="panel" role="dialog" aria-labelledby="ranksTitle">
       <div class="row" style="align-items:center"><h2 id="ranksTitle" style="flex:1">순위</h2><button id="ranksClose" class="btn ghost small" type="button">닫기</button></div>
+      <div class="ptabs" id="rMode" role="tablist"><button type="button" role="tab" data-rmode="best" aria-selected="true">최고 점수</button><button type="button" role="tab" data-rmode="wins" aria-selected="false">1등 횟수</button></div>
+      <div class="stack" id="rBest" style="gap:10px">
+        <div class="vstyles" id="recTabs">
+          <label><input type="radio" name="recperiod" value="day"><span>오늘</span></label>
+          <label><input type="radio" name="recperiod" value="week"><span>이번 주</span></label>
+          <label><input type="radio" name="recperiod" value="month"><span>이번 달</span></label>
+          <label><input type="radio" name="recperiod" value="year"><span>올해</span></label>
+        </div>
+        <div id="recBody"><p class="note">불러오는 중…</p></div>
+        <p class="note" style="margin:0">각자 최고 점수로 줄 세운 상위 10명이에요. 점수가 같으면 먼저 낸 사람이 앞서요. 이름을 누르면 프로필이 열려요.</p>
+      </div>
+      <div class="stack" id="rWins" style="gap:10px" hidden>
       <div class="vstyles" id="rTabs">
         <label><input type="radio" name="rperiod" value="day"><span>오늘</span></label>
         <label><input type="radio" name="rperiod" value="week"><span>이번 주</span></label>
@@ -910,6 +960,7 @@ button.chip:hover{border-color:var(--accent)}
       </div>
       <div id="ranksBody"></div>
       <p class="note" style="margin:0">1등 횟수로 순위를 매기고, 같으면 평균 등수가 더 좋은 사람이 앞서요. 로그인한 참가자가 2명 이상인 온라인 판만 기록돼요.</p>
+      </div>
       <div class="medals-key"><span><span class="medal m1"></span> 1승</span><span><span class="medal m2"></span> 10승</span><span><span class="medal m3"></span> 30승</span><span><span class="medal m4"></span> 100승</span></div>
     </div>
   </div>
@@ -1347,7 +1398,9 @@ function newCode(){const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i
    down; it is simply skipped. If fewer than two keepers answer, a page takes a free slot itself.
    Every member of a table announces it to every keeper it can reach, so a room shows up as long
    as anyone in it gets through. The "hub2" ids also keep older versions of the page apart. */
-const HUBS=[0,1,2,3,4,5].map(i=>PFX+"hub2-"+i);
+// test hook: ?hubns=abc uses a separate set of room-list slots, so tests don't touch the real list
+const HUBNS=(new URLSearchParams(location.search).get("hubns")||"").replace(/[^a-z0-9]/g,"").slice(0,12);
+const HUBS=[0,1,2,3,4,5].map(i=>PFX+"hub2-"+(HUBNS?HUBNS+"-":"")+i);
 const Dir={cpeer:null,hpeer:null,hubSlot:-1,hubConns:new Map(),reg:null,rooms:null,shown:"",timer:null,gen:0,claimAt:0,noHubSince:0,
   slots:HUBS.map((id,i)=>({i,id,conn:null,heard:0,retryAt:0,free:0,deadUntil:0,rooms:[],lastReg:0,regSent:""}))};
 // release our ids right away when the page goes, so others can take over quickly
@@ -1390,7 +1443,7 @@ function dirTick(){
       if(s.i===Dir.hubSlot)continue;
       if(s.conn&&s.conn.open){
         if(now-s.heard>25000){try{s.conn.close()}catch(e){}s.conn=null;s.rooms=[];s.retryAt=now+2000;continue}
-        sendReg(s,true);continue;
+        sendReg(s,now-s.lastReg>12000);continue;
       }
       if(!s.conn&&now>=s.retryAt)connectSlot(s);
     }
@@ -1417,7 +1470,7 @@ function connectSlot(s){
     if(m&&m.t==="list"&&Array.isArray(m.rooms)){
       s.rooms=m.rooms.filter(validRoom).slice(0,100);mergeRooms();
       // answer from the message event too, so a background tab (slowed timers) stays listed
-      if(Date.now()-s.lastReg>4000)sendReg(s,true);
+      if(Date.now()-s.lastReg>12000)sendReg(s,true);
     }
   });
   const gone=()=>{if(s.conn===c){clearTimeout(to);s.conn=null;s.rooms=[];s.retryAt=Date.now()+1500;mergeRooms()}};
@@ -1472,9 +1525,13 @@ function hubList(){
   if(Dir.reg)all.push(Object.assign({},Dir.reg,{ts:Date.now()}));
   return latest(all).slice(0,100);
 }
+// Sent to everyone only when the list changed (timestamps aside). Otherwise a connection gets it
+// again only after 10 s of silence, as a keep-alive. This used to go to every connection on every
+// listing update, which grew with the square of the number of open pages.
 function hubBroadcast(){
-  const msg={t:"list",rooms:hubList()};
-  for(const c of Dir.hubConns.values())if(c.k.open)try{c.k.send(msg)}catch(e){}
+  const rooms=hubList(),sig=JSON.stringify(rooms.map(r=>Object.assign({},r,{ts:0}))),now=Date.now(),msg={t:"list",rooms};
+  const changed=sig!==Dir.hubSig;Dir.hubSig=sig;
+  for(const c of Dir.hubConns.values())if(c.k.open&&(changed||now-(c.sent||0)>10000))try{c.k.send(msg);c.sent=now}catch(e){}
   mergeRooms();
 }
 // what this page shows: every keeper's list merged, plus our own room
@@ -1596,7 +1653,7 @@ function peerCid(p){const c=p&&p.presence&&p.presence.cid;return typeof c==="str
    so "시 1 발", "ㅅ.ㅂ" and "F.u.c.k" are caught. Matching letters are replaced with *. */
 const BADW={abuse:["시발","씨발","씨빨","시빨","씨팔","시팔","ㅅㅂ","ㅆㅂ","병신","ㅂㅅ","ㅄ","좆","존나","ㅈㄴ","지랄","ㅈㄹ","개새끼","새끼","니미","느금","엠창","미친놈","미친년","fuck","shit","bitch"],spam:["토토","카지노","바카라","먹튀","대출","텔레그램","오픈채팅"],loaded:false};
 const WCH=/[가-힣ㄱ-ㅎㅏ-ㅣa-z]/;
-function normMap(s){let t="";const idx=[];for(let i=0;i<s.length;i++){const c=s[i].toLowerCase();if(WCH.test(c)){t+=c;idx.push(i)}}return{t,idx}}
+function normMap(s){let t="";const idx=[];for(let i=0;i<s.length;i++){let c=s[i].toLowerCase();if(c.length!==1)c=s[i];if(WCH.test(c)){t+=c;idx.push(i)}}return{t,idx}}
 function maskBad(s){
   if(typeof s!=="string"||!s)return s;
   const {t,idx}=normMap(s);let hit=null;
@@ -2069,7 +2126,7 @@ function d3Mats(v){
   const stops=dc?dl.bg.map(x=>hex(x,null)).filter(Boolean):[base],pip=dc?dc.pip:cs.getPropertyValue("--pip").trim()||"#1c2422",red=dc?dc.red:cs.getPropertyValue("--pipred").trim()||"#c33f2b",fx=dc?dl.fx:null;
   const key=[stops.join(","),pip,red,fx].join("|");if(matCache.has(key))return matCache.get(key);
   const T3=D3.T3,mats=[null];mats.key=key;
-  if(matCache.size>10){const k0=matCache.keys().next().value;matCache.delete(k0)}
+  if(matCache.size>20){const k0=matCache.keys().next().value;matCache.delete(k0)}
   matCache.set(key,mats);
   // same pip layout as the flat dice: 16% padding, 5% gaps, 3x3 grid
   const N=256,cell=.58/3;
@@ -2710,9 +2767,10 @@ function paintView(v,p){
   v.el.classList.toggle("me",meMode()&&p.cid===myCid);
   v.el.classList.toggle("away",away);
   const lk=lookOfCid(p.cid);applyLook(v,lk);
-  v.name.innerHTML=nickHTML(p.name,lk)+medalOfCid(p.cid);
+  const isLead=leaders().has(p.cid);
+  v.name.innerHTML=(isLead?FLAME:"")+nickHTML(p.name,lk)+medalOfCid(p.cid)+(isLead?FLAME:"");
   const fin=done(b);
-  v.tags.innerHTML=(meMode()&&p.cid===myCid?'<span class="tag">나</span> ':"")+(away?'<span class="tag bad">연결 끊김</span>':fin?'<span class="tag ok">완료</span>':"");
+  v.tags.innerHTML=(isLead?'<span class="tag lead1">현재 1등</span> ':"")+(meMode()&&p.cid===myCid?'<span class="tag">나</span> ':"")+(away?'<span class="tag bad">연결 끊김</span>':fin?'<span class="tag ok">완료</span>':"");
   const filled=b?b.scores.filter(x=>x!==null).length:0;
   v.round.textContent=fin?"":`${Math.min(filled+1,12)}/12`;
   v.tot.textContent=b?totals(b.scores).total:0;
@@ -2742,7 +2800,7 @@ function paintView(v,p){
 }
 
 /* ---------- render ---------- */
-function show(id){const was=$("home").hidden;for(const s of["home","lobby","game"])$(s).hidden=s!==id;if(id==="home"&&was&&ACC.ready)loadRec(recPeriod)}
+function show(id){const was=$("home").hidden;for(const s of["home","lobby","game"])$(s).hidden=s!==id;}
 function render(){
   $("codeChip").hidden=!(mode==="online"&&code);$("codeChipVal").textContent=code||"";
   if(!mode){show("home");$("over").hidden=true;$("ended").hidden=true;stopRattle();return}
@@ -2830,11 +2888,18 @@ function renderGame(){
   renderOver();
 }
 let flashed=new Map();
+// who is in 1st right now (during play, 2+ players, ties all count, nobody at 0)
+function leaders(){
+  const out=new Set();if(!G||G.phase!=="play"||G.players.length<2)return out;
+  const t=G.players.map(p=>({cid:p.cid,v:totals(boardOf(p.cid)&&boardOf(p.cid).scores).total}));
+  const mx=Math.max(...t.map(x=>x.v));if(mx>0)for(const x of t)if(x.v===mx)out.add(x.cid);return out;
+}
+const FLAME='<span class="fl" aria-hidden="true">🔥</span>';
 function renderSheet(){
-  const ps=G.players;
+  const ps=G.players,lead=leaders();
   let h="<thead><tr><th>항목</th>";
   const goneSet=new Set(isOver()?G.final.filter(f=>f.away).map(f=>f.cid):[]);
-  ps.forEach(p=>h+=`<th class="${meMode()&&p.cid===myCid?"mine":""}" title="${esc(p.name)}">${esc(p.name)}${goneSet.has(p.cid)?'<br><span class="tag bad">접속 끊김</span>':""}</th>`);
+  ps.forEach(p=>h+=`<th class="${meMode()&&p.cid===myCid?"mine":""}" title="${esc(p.name)}">${lead.has(p.cid)?FLAME:""}${esc(p.name)}${lead.has(p.cid)?FLAME+'<br><span class="tag lead1">현재 1등</span>':""}${goneSet.has(p.cid)?'<br><span class="tag bad">접속 끊김</span>':""}</th>`);
   h+="</tr></thead><tbody>";
   const bs=ps.map(p=>boardOf(p.cid));
   const row=c=>{
@@ -2928,7 +2993,11 @@ function winsOf(uid){
   if(!c||Date.now()-c.t>300000){winsWant.add(uid);if(!winsT)winsT=setTimeout(fetchWins,250)}
   return c?c.w:0;
 }
-function medalOfCid(cid){return mode==="local"?"":medalHTML(winsOf(uidOf(cid)))}
+function medalOfCid(cid){return mode==="local"?"":medalHTML(winsOf(uidOf(cid)))+adminTag(uidOf(cid))}
+// "관리자" badge next to admin accounts, wherever names are shown
+const ADMINS=new Set();
+function adminTag(uid){return isUUID(uid)&&ADMINS.has(uid)?'<span class="adm" title="사이트 관리자">관리자</span>':""}
+function loadAdmins(){if(!ACC.sb)return;ACC.sb.from("admins").select("user_id").then(({data})=>{if(!Array.isArray(data))return;ADMINS.clear();for(const r of data)if(isUUID(r.user_id))ADMINS.add(r.user_id);try{render();if(window.LC){lcRender();lcRenderWho()}if(!$("ranks").hidden)setRMode(rMode)}catch(e){}},()=>{})}
 // keep known wins but make sure the cosmetics get fetched too
 function setW(uid,w){const c=winsCache.get(uid);winsCache.set(uid,c?Object.assign({},c,{w}):{w,t:0,lk:null})}
 function lookOfUid(uid){if(!isUUID(uid))return null;winsOf(uid);const c=winsCache.get(uid);return c&&c.lk||null}
@@ -2982,7 +3051,7 @@ async function fetchWins(){
       if(!c||c.w!==r.wins||c.lks!==ks)ch=true;
       winsCache.set(r.user_id,{w:r.wins,t:Date.now(),lk,lks:ks,lkv:c&&c.lkv});
     }
-    if(ch){render();if(!$("home").hidden)refreshNames()}
+    if(ch){render();if(!$("home").hidden){refreshNames();if(window.LC&&LC.msgs.length)lcRender()}}
   }catch(e){}
 }
 function setAcct(sess){
@@ -2999,15 +3068,16 @@ if(!new URLSearchParams(location.search).has("nodb"))
     const {data}=await ACC.sb.auth.getSession();
     setAcct(data&&data.session);
     ACC.sb.auth.onAuthStateChange((ev,sess)=>setTimeout(()=>setAcct(sess),0));
-    ACC.ready=true;acctUI();loadRec(recPeriod);loadWords();checkBan();wrapInit();if(ACC.uid)setTimeout(()=>claimAch([]),3000);
-  }).catch(()=>{ACC.failed=true;acctUI();loadRec(recPeriod)});
-else{ACC.failed=true;setTimeout(()=>loadRec(recPeriod),0)}
+    ACC.ready=true;acctUI();loadWords();checkBan();wrapInit();lcStart();loadAdmins();if(ACC.uid)setTimeout(()=>claimAch([]),3000);
+  }).catch(()=>{ACC.failed=true;acctUI();lcInputState()});
+else{ACC.failed=true}
 // keep the nickname shown on the rankings up to date
 function syncNick(){
   if(!ACC.sb||!ACC.uid||!myName||ACC.nickSent===myName)return;
   ACC.nickSent=myName;ACC.sb.from("profiles").update({nick:myName}).eq("id",ACC.uid).then(()=>{},()=>{});
 }
 function acctUI(){
+  if(window.LC&&LC.ch){lcTrack();lcInputState()}
   const el=$("acctBox");let h;
   if(ACC.failed)h='<span class="who note">전적 서버에 연결하지 못했어요. 게임은 그대로 할 수 있어요.</span>';
   else if(!ACC.ready)h='<span class="who note">전적 서버에 연결하는 중…</span>';
@@ -3127,8 +3197,10 @@ function recNote(){
     :st==="none"?"게임 시작 뒤에 로그인해서 이번 판은 기록되지 않았어요.":"";
 }
 // rankings
-let rPeriod="week";
-function openRanks(){$("ranks").hidden=false;loadRanks(rPeriod)}
+let rPeriod="week",rMode="best";
+function openRanks(m){if(m)rMode=m;$("ranks").hidden=false;setRMode(rMode)}
+function setRMode(m){rMode=m;document.querySelectorAll("#rMode [data-rmode]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.rmode===m)));
+  $("rBest").hidden=m!=="best";$("rWins").hidden=m!=="wins";if(m==="best")loadRec(recPeriod);else loadRanks(rPeriod)}
 async function loadRanks(p){
   rPeriod=p;document.querySelectorAll("#rTabs input").forEach(i=>i.checked=i.value===p);
   const body=$("ranksBody");
@@ -3139,13 +3211,14 @@ async function loadRanks(p){
     if(rPeriod!==p)return;
     if(!data||!data.length){body.innerHTML='<p class="note">아직 기록이 없어요. 로그인한 친구들과 한 판 해 보세요!</p>';return}
     for(const r of data)setW(r.user_id,r.total_wins);
-    body.innerHTML=`<table class="rtab"><thead><tr><th>#</th><th>이름</th><th class="num">1등</th><th class="num">판</th><th class="num">평균 등수</th></tr></thead><tbody>${data.map((r,i)=>`<tr class="${r.user_id===ACC.uid?"mine":""}"><td class="num">${i+1}</td><td class="nm">${plink(r.user_id,r.name)}${medalHTML(r.total_wins)}</td><td class="num">${r.wins}</td><td class="num">${r.games}</td><td class="num">${Number(r.avg_rank).toFixed(1)}</td></tr>`).join("")}</tbody></table>`;
+    body.innerHTML=`<table class="rtab"><thead><tr><th>#</th><th>이름</th><th class="num">1등</th><th class="num">판</th><th class="num">평균 등수</th></tr></thead><tbody>${data.map((r,i)=>`<tr class="${r.user_id===ACC.uid?"mine":""}"><td class="num">${i+1}</td><td class="nm">${plink(r.user_id,r.name)}${medalHTML(r.total_wins)}${adminTag(r.user_id)}</td><td class="num">${r.wins}</td><td class="num">${r.games}</td><td class="num">${Number(r.avg_rank).toFixed(1)}</td></tr>`).join("")}</tbody></table>`;
   }catch(e){if(rPeriod===p)body.innerHTML='<p class="note">순위를 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
 }
 $("rTabs").addEventListener("change",e=>{if(e.target.name==="rperiod")loadRanks(e.target.value)});
+$("rMode").addEventListener("click",e=>{const b=e.target.closest("[data-rmode]");if(b)setRMode(b.dataset.rmode)});
 $("ranksClose").onclick=()=>{$("ranks").hidden=true};
 $("ranks").addEventListener("click",e=>{if(e.target.id==="ranks")$("ranks").hidden=true});
-$("overRanks").onclick=openRanks;
+$("overRanks").onclick=()=>openRanks();
 
 /* ---------- lobby records board and player profiles ---------- */
 function plink(uid,name){return isUUID(uid)?`<button class="plink" type="button" data-prof="${uid}">${nickHTML(name,lookOfUid(uid))}</button>`:esc(name)}
@@ -3165,12 +3238,69 @@ async function loadRec(p){
     if(!data||!data.length){body.innerHTML=`<p class="note">${name} 아직 기록이 없어요. 로그인한 친구들과 한 판 해 보세요!</p>`;return}
     for(const r of data)setW(r.user_id,r.total_wins);
     recData=data;
-    body.innerHTML=`<table class="rtab"><thead><tr><th>#</th><th>이름</th><th class="num">최고점</th><th class="num">${p==="day"?"시각":"날짜"}</th><th class="num">판</th></tr></thead><tbody>${data.map((r,i)=>`<tr class="pl${i+1}${r.user_id===ACC.uid?" mine":""}"><td class="num rk">${i+1}</td><td class="nm">${plink(r.user_id,r.name)}${medalHTML(r.total_wins)}</td><td class="num big">${r.best}</td><td class="num when">${shortWhen(r.best_at,p)}</td><td class="num">${r.games}</td></tr>`).join("")}</tbody></table>`;
+    body.innerHTML=`<table class="rtab"><thead><tr><th>#</th><th>이름</th><th class="num">최고점</th><th class="num">${p==="day"?"시각":"날짜"}</th><th class="num">판</th></tr></thead><tbody>${data.map((r,i)=>`<tr class="pl${i+1}${r.user_id===ACC.uid?" mine":""}"><td class="num rk">${i+1}</td><td class="nm">${plink(r.user_id,r.name)}${medalHTML(r.total_wins)}${adminTag(r.user_id)}</td><td class="num big">${r.best}</td><td class="num when">${shortWhen(r.best_at,p)}</td><td class="num">${r.games}</td></tr>`).join("")}</tbody></table>`;
   }catch(e){if(seq===recSeq)body.innerHTML='<p class="note">기록을 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
 }
 $("recTabs").addEventListener("change",e=>{if(e.target.name==="recperiod")loadRec(e.target.value)});
-$("recWins").onclick=()=>{rPeriod=recPeriod;openRanks()};
+
 let profSeq=0;
+/* ---------- lounge chat: everyone on the site, over Supabase Realtime (a websocket, so no TURN) ----------
+   Who is online comes from Realtime presence; messages are rows in lobby_chat (the database checks
+   words, links, numbers and flooding; we also mask words before sending and when showing). */
+var LC={ch:null,msgs:[],people:[],busy:false,last:"",trackT:0};
+function lcTrackInfo(){return{name:(myName||$("nick").value.trim()||"손님").slice(0,12),uid:ACC.uid||null,where:mode==="online"?"게임 중":mode==="ai"?"봇전 중":"로비",at:Date.now()}}
+// the presence update is remembered as sent only when the server says ok (it can time out while
+// the connection re-joins, e.g. right after logging in); otherwise it is tried again
+function lcTrack(){if(!LC.ch||LC.trackT)return;LC.trackT=setTimeout(()=>{LC.trackT=0;const inf=lcTrackInfo(),k=JSON.stringify([inf.name,inf.uid,inf.where]);if(k===LC.last)return;LC.last=k;
+  Promise.resolve(LC.ch.track(inf)).then(r=>{if(r!=="ok"){if(LC.last===k)LC.last="";setTimeout(lcTrack,3000)}},()=>{if(LC.last===k)LC.last="";setTimeout(lcTrack,3000)})},400)}
+function lcStart(){
+  if(!ACC.sb||LC.ch)return;
+  LC.ch=ACC.sb.channel("lounge",{config:{presence:{key:myCid}}});
+  LC.ch.on("presence",{event:"sync"},()=>{
+    const st=LC.ch.presenceState(),list=[];
+    for(const [k,arr] of Object.entries(st)){const x=arr[arr.length-1];if(x)list.push({cid:k,name:maskBad(String(x.name||"손님").slice(0,12)),uid:isUUID(x.uid)?x.uid:null,where:typeof x.where==="string"?x.where.slice(0,8):""})}
+    LC.people=list.sort((a,b)=>(b.cid===myCid)-(a.cid===myCid)||a.name.localeCompare(b.name));lcRenderWho();
+  });
+  LC.ch.on("postgres_changes",{event:"INSERT",schema:"public",table:"lobby_chat"},p=>{const r=p.new;if(r&&!LC.msgs.some(m=>m.id===r.id)){LC.msgs.push(r);if(LC.msgs.length>80)LC.msgs.shift();lcRender(true)}});
+  LC.ch.on("postgres_changes",{event:"DELETE",schema:"public",table:"lobby_chat"},p=>{const id=p.old&&p.old.id;if(id){LC.msgs=LC.msgs.filter(m=>m.id!==id);lcRender()}});
+  LC.ch.subscribe(st=>{if(st==="SUBSCRIBED"){LC.last="";lcTrack();lcLoad()}});
+  lcInputState();
+}
+async function lcLoad(){
+  const {data,error}=await ACC.sb.from("lobby_chat").select("id,user_id,name,body,created_at").order("created_at",{ascending:false}).limit(50);
+  if(error)return;const have=new Set((data||[]).map(m=>m.id));
+  LC.msgs=(data||[]).concat(LC.msgs.filter(m=>!have.has(m.id))).sort((a,b)=>a.created_at<b.created_at?-1:a.created_at>b.created_at?1:a.id-b.id).slice(-80);lcRender(true);
+}
+function lcRender(stick){
+  const ul=$("lcMsgs");if(!ul)return;const atEnd=ul.scrollHeight-ul.scrollTop-ul.clientHeight<40;
+  if(!LC.msgs.length){ul.innerHTML='<li class="empty">아직 대화가 없어요. 먼저 인사해 보세요!</li>';return}
+  ul.innerHTML=LC.msgs.map(m=>{const d=new Date(m.created_at),t=`${p2(d.getHours())}:${p2(d.getMinutes())}`;
+    return`<li class="${m.user_id===ACC.uid?"mine":""}"><span class="n">${plink(m.user_id,maskBad(m.name||"손님"))}${medalHTML(winsOf(m.user_id))}${adminTag(m.user_id)}</span>${esc(maskBad(m.body))}<span class="t">${t}</span>${ACC.admin?`<button class="del" type="button" data-lcdel="${m.id}" title="지우기">✕</button>`:""}</li>`}).join("");
+  if(stick||atEnd)ul.scrollTop=ul.scrollHeight;
+}
+function lcRenderWho(){
+  $("lcCount").textContent=LC.people.length;
+  $("lcWhoList").innerHTML=LC.people.map(x=>`<li>${x.uid?plink(x.uid,x.name):esc(x.name)}${adminTag(x.uid)}${x.cid===myCid?' <span class="st">나</span>':""}${x.where&&x.where!=="로비"?` <span class="st">${esc(x.where)}</span>`:""}</li>`).join("")||'<li>아무도 없어요</li>';
+}
+function lcInputState(){
+  const on=!!(ACC.sb&&ACC.uid&&!BAN.info);$("lcInput").disabled=!on;$("lcSend").disabled=!on;
+  $("lcInput").placeholder=!ACC.sb?"채팅 서버에 연결하지 못했어요":!ACC.uid?"로그인하면 채팅할 수 있어요":BAN.info?"이용이 제한된 상태예요":"메시지를 입력해 주세요";
+}
+async function lcSend(){
+  if(LC.busy||!ACC.uid)return;const inp=$("lcInput"),raw=inp.value.replace(/\s+/g," ").trim().slice(0,100);if(!raw)return;
+  const why=spamWhy(raw);if(why&&why!=="abuse"){toast(SPAM_MSG[why]);return}
+  const body=maskBad(raw);if(body!==raw)toast("욕설이나 비속어는 *로 가려서 보내요.");
+  LC.busy=true;
+  const {error}=await ACC.sb.from("lobby_chat").insert({body});
+  LC.busy=false;
+  if(error){const m=String(error.message),sp=/spam:(\w+)/.exec(m);toast(sp?(sp[1]==="fast"?"조금 천천히 보내 주세요.":sp[1]==="dup"?"같은 말은 조금 있다가 다시 보내 주세요.":SPAM_MSG[sp[1]]||"보내지 못했어요."):/banned/.test(m)?"이용이 제한된 상태라 보낼 수 없어요.":"보내지 못했어요. 잠시 후 다시 해 주세요.");return}
+  inp.value="";
+}
+$("lcSend").onclick=lcSend;
+$("nick").addEventListener("input",()=>lcTrack());
+$("lcInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();lcSend()}});
+$("lcWho").onclick=()=>{const l=$("lcWhoList"),o=l.hidden;l.hidden=!o;$("lcWho").setAttribute("aria-expanded",String(o))};
+$("lcMsgs").addEventListener("click",async e=>{const b=e.target.closest("[data-lcdel]");if(!b)return;if(!confirm("이 대화를 지울까요?"))return;const {error}=await ACC.sb.from("lobby_chat").delete().eq("id",+b.dataset.lcdel);if(error)toast("지우지 못했어요.")});
 /* ---------- year-end recap ("결산") ----------
    From Dec 20 to Jan 15 it opens by itself once per device per year (the year that is ending).
    ?wrap=2026 opens any year on demand. Numbers are counted by the database at that moment (wrap()). */
@@ -3207,12 +3337,13 @@ function wrapSlides(w){
   S.push({bg:"linear-gradient(160deg,#0f4a3f,#07241f)",h:`<div class="wemoji">🎉</div><h2>내년에도<br>같이 굴려요!</h2><p class="wsub">이 화면은 첫 화면의 <b>${w.year} 결산</b> 버튼으로 언제든 다시 볼 수 있어요.</p>`});
   return S;
 }
+let wrapSeq=0;
 async function openWrap(yr){
-  WR.yr=yr;$("wrap").hidden=false;WR.i=0;
+  const seq=++wrapSeq;WR.yr=yr;$("wrap").hidden=false;WR.i=0;WR.slides=[];
   $("wrapSlide").innerHTML='<p class="wsub">결산을 모으는 중…</p>';$("wrapProg").innerHTML="";$("wrapDots").textContent="";
   if(!ACC.sb){$("wrapSlide").innerHTML='<p class="wsub">기록 서버에 연결하지 못했어요. 잠시 후 다시 열어 주세요.</p>';return}
-  try{const {data,error}=await ACC.sb.rpc("wrap",{yr});if(error||!data)throw error||0;WR.data=data;WR.slides=wrapSlides(data);wrapShow()}
-  catch(e){$("wrapSlide").innerHTML='<p class="wsub">결산을 불러오지 못했어요.<br>기록 서버가 잠시 쉬고 있을 수 있어요. 잠시 후 다시 열어 주세요.</p>'}
+  try{const {data,error}=await ACC.sb.rpc("wrap",{yr});if(seq!==wrapSeq)return;if(error||!data)throw error||0;WR.data=data;WR.slides=wrapSlides(data);wrapShow()}
+  catch(e){if(seq!==wrapSeq)return;$("wrapSlide").innerHTML='<p class="wsub">결산을 불러오지 못했어요.<br>기록 서버가 잠시 쉬고 있을 수 있어요. 잠시 후 다시 열어 주세요.</p>'}
 }
 function wrapShow(){
   const n=WR.slides.length;WR.i=Math.max(0,Math.min(n-1,WR.i));const sl=WR.slides[WR.i];
@@ -3237,7 +3368,7 @@ function wrapInit(){
    auto ones are judged by the database from the records; "feat" ones (things that happened in a
    game) are noticed here and sent at the end of the game. Each can be earned once. */
 const ACH={turns:{},done:new Set(),catalog:null,queue:[],showing:false};
-function achTurn(gid,dice,rolls,c,pts){(ACH.turns[gid]=ACH.turns[gid]||[]).push({d:dice.slice(),r:rolls,c,pts})}
+function achTurn(gid,dice,rolls,c,pts){for(const k in ACH.turns)if(k!==String(gid))delete ACH.turns[k];(ACH.turns[gid]=ACH.turns[gid]||[]).push({d:dice.slice(),r:rolls,c,pts})}
 function achFeats(b,turns){
   const f=new Set(),same=d=>d.every(x=>x===d[0]);
   const ys=turns.filter(t=>same(t.d));
@@ -3292,7 +3423,7 @@ const BAN={info:null};
 async function checkBan(){
   if(!ACC.sb)return;
   try{const {data,error}=await ACC.sb.rpc("checkin",{p_cid:myCid,p_name:myName||null});if(error)return;BAN.info=data||null}catch(e){return}
-  const b=BAN.info;$("banned").hidden=!b;if(!b)return;
+  const b=BAN.info;$("banned").hidden=!b;if(LC.ch)lcInputState();if(!b)return;
   $("banWhy").textContent=b.reason;$("banUntil").textContent=b.until?fmtDate(b.until)+"까지":"영구";
   if(mode){try{leave()}catch(e){}}
 }
@@ -3344,12 +3475,13 @@ $("rep").addEventListener("click",e=>{if(e.target.id==="rep")$("rep").hidden=tru
 // admin panel
 let admTab="reports";
 function openAdmin(){$("admin").hidden=false;loadAdmin()}
+let admSeq=0;
 async function loadAdmin(){
-  const body=$("adminBody");body.innerHTML='<p class="note">불러오는 중…</p>';
+  const body=$("adminBody"),seq=++admSeq,tab=admTab;body.innerHTML='<p class="note">불러오는 중…</p>';
   try{
-    const {data,error}=await ACC.sb.rpc(admTab==="reports"?"admin_reports":"admin_bans");if(error)throw error;
-    body.innerHTML=admTab==="reports"?admReportsHTML(data||[]):admBansHTML(data||[]);
-  }catch(e){body.innerHTML='<p class="note">불러오지 못했어요. 관리자 계정으로 로그인했는지 확인해 주세요.</p>'}
+    const {data,error}=await ACC.sb.rpc(tab==="reports"?"admin_reports":"admin_bans");if(seq!==admSeq)return;if(error)throw error;
+    body.innerHTML=tab==="reports"?admReportsHTML(data||[]):admBansHTML(data||[]);
+  }catch(e){if(seq===admSeq)body.innerHTML='<p class="note">불러오지 못했어요. 관리자 계정으로 로그인했는지 확인해 주세요.</p>'}
 }
 const devTag=c=>c?"기기 "+esc(String(c).slice(-6)):"";
 function admReportsHTML(list){
@@ -3397,7 +3529,7 @@ const SHOP={kind:"nick",items:null,owned:new Set(),eq:{},pts:null,busy:false};
 const SLOT_COL={nick:"eq_nick",title:"eq_title",dice:"eq_dice",felt:"eq_felt"};
 function ptsHTML(pt){return pt?`<span>내 포인트</span><b>${pt.balance}P</b><span class="how">1등 ${pt.wins}번 × 10P = ${pt.win_pts}P · 봇전 승리 ${pt.bot_pts}P${pt.ach_pts?` · 업적 ${pt.ach_pts}P`:""}${pt.spent?` · 사용 ${pt.spent}P`:""}</span><span class="how">온라인 1등 10P, 봇전 승리 쉬움 1P·보통 2P·어려움 3P (봇전은 하루 10P까지), 업적 달성 보상</span>`:'<span>포인트를 불러오지 못했어요.</span>'}
 async function openShop(){
-  $("shop").hidden=false;
+  $("shop").hidden=false;$("shopPts").innerHTML='<span>포인트 불러오는 중…</span>';
   if(!ACC.sb||!ACC.uid){$("shopPts").innerHTML='<span>로그인하면 포인트를 모으고 꾸미기를 살 수 있어요.</span>';}
   document.querySelectorAll("#shopTabs input").forEach(i=>i.checked=i.value===SHOP.kind);
   $("shopBody").innerHTML='<p class="note">불러오는 중…</p>';
@@ -3483,23 +3615,37 @@ async function openProfile(uid){
     const day=s=>fmtDate(s).slice(0,10),top=d.top||[];
     const mine=d.id===ACC.uid;
     $("profTitle").textContent=mine?"마이페이지":"프로필";
-    const pr=mine?await ACC.sb.rpc("my_practice").then(r=>r.error?null:r.data,()=>null):null;
+    const [pr,lk,pt]=await Promise.all([
+      mine?ACC.sb.rpc("my_practice").then(r=>r.error?null:r.data,()=>null):null,
+      ACC.sb.rpc("looks_of",{ids:[d.id]}).then(r=>r.data&&r.data[0]?{nick:r.data[0].nick,title:r.data[0].title,felt:r.data[0].felt}:null,()=>null),
+      mine?ACC.sb.rpc("my_points").then(r=>r.error?null:r.data,()=>null):null]);
     if(seq!==profSeq)return;
     const lose=d.games-d.wins,best=top[0];
-    const lk=await ACC.sb.rpc("looks_of",{ids:[d.id]}).then(r=>r.data&&r.data[0]?{nick:r.data[0].nick,title:r.data[0].title}:null,()=>null);
-    const pt=mine?await ACC.sb.rpc("my_points").then(r=>r.error?null:r.data,()=>null):null;
-    if(seq!==profSeq)return;
-    body.innerHTML=`<div class="phead"><b>${nickHTML(d.name,lk)}${medalHTML(d.wins)}${titleHTML(lk)}</b><span class="note">@${esc(d.username)} · ${day(d.joined)} 가입${d.last_played?` · 마지막 판 ${day(d.last_played)}`:""}</span></div>
-      <h3>온라인 대전</h3>
-      <div class="pbest">${best?`<span>최고 점수</span><b>${best.score}점</b><span class="dt">${fmtDate(best.played_at)} · ${best.players}명 중 ${best.rank}등</span>`:'<span>아직 기록된 온라인 판이 없어요.</span>'}</div>
-      <div class="pstats"><div><b>${d.wins}승 ${lose}패</b><span>${d.games}판${d.games?` · 승률 ${Math.round(d.wins/d.games*100)}%`:""}</span></div><div><b>${d.games?Number(d.avg_rank).toFixed(1):"-"}</b><span>평균 등수</span></div><div><b>${d.games?Math.round(d.avg_score):"-"}</b><span>평균 점수</span></div></div>
-      <h3>최고 기록 TOP 5</h3>
-      ${top.length?`<ol class="ptop">${top.map((t,i)=>`<li><span class="no">${i+1}</span><span class="sc">${t.score}</span><span class="pl">${t.players}명 중 ${t.rank}등${t.rank===1?" 🏆":""}</span><span class="dt">${fmtDate(t.played_at)}</span></li>`).join("")}</ol>`:'<p class="note">로그인한 친구와 온라인으로 한 판 하면 남아요. 승패는 1등이면 승, 아니면 패로 세요.</p>'}
-      ${mine?practiceHTML(pr):""}
-      ${mine?`<h3>포인트</h3><div class="pts">${ptsHTML(pt)}</div><button class="btn small" type="button" id="profShop">꾸미기 상점 열기</button>`:""}`;
+    const felt=lk&&lk.felt,fa=felt&&hex(felt.a,null),fb=felt&&hex(felt.b,null);
+    const rate=d.games?Math.round(d.wins/d.games*100):null;
+    const tabs=[["rec","전적"],["ach","업적"]].concat(mine?[["prac","연습"],["pts","포인트"]]:[]);
+    body.innerHTML=`<div class="pcard" style="${fa&&fb?`--pa:${fa};--pb:${fb}`:""}">
+        <span class="pav" aria-hidden="true">${esc([...(d.name||"?")][0]||"?")}</span>
+        <div class="pid"><b>${nickHTML(d.name,lk)}${medalHTML(d.wins)}${adminTag(d.id)}</b>${titleHTML(lk)?`<div>${titleHTML(lk)}</div>`:""}
+          <span class="pmeta2">@${esc(d.username)} · ${day(d.joined)} 가입${d.last_played?` · 마지막 판 ${day(d.last_played)}`:""}</span></div>
+        <div class="pchips"><span><b>${d.wins}</b>승</span><span><b>${lose}</b>패</span><span><b>${rate===null?"-":rate+"%"}</b>승률</span><span><b>${best?best.score:"-"}</b>최고점</span>${mine&&pt?`<span class="pp"><b>${pt.balance}</b>P</span>`:""}</div>
+      </div>
+      <div class="ptabs" role="tablist">${tabs.map((t,k)=>`<button type="button" role="tab" data-ptab="${t[0]}" aria-selected="${k===0}">${t[1]}</button>`).join("")}</div>
+      <section class="ppane" data-pane="rec">
+        <h3>온라인 대전</h3>
+        <div class="pbest">${best?`<span>최고 점수</span><b>${best.score}점</b><span class="dt">${fmtDate(best.played_at)} · ${best.players}명 중 ${best.rank}등</span>`:'<span>아직 기록된 온라인 판이 없어요.</span>'}</div>
+        <div class="pstats"><div><b>${d.wins}승 ${lose}패</b><span>${d.games}판${d.games?` · 승률 ${rate}%`:""}</span></div><div><b>${d.games?Number(d.avg_rank).toFixed(1):"-"}</b><span>평균 등수</span></div><div><b>${d.games?Math.round(d.avg_score):"-"}</b><span>평균 점수</span></div></div>
+        <h3>최고 기록 TOP 5</h3>
+        ${top.length?`<ol class="ptop">${top.map((t,i)=>`<li><span class="no">${i+1}</span><span class="sc">${t.score}</span><span class="pl">${t.players}명 중 ${t.rank}등${t.rank===1?" 🏆":""}</span><span class="dt">${fmtDate(t.played_at)}</span></li>`).join("")}</ol>`:'<p class="note">로그인한 친구와 온라인으로 한 판 하면 남아요. 승패는 1등이면 승, 아니면 패로 세요.</p>'}
+      </section>
+      <section class="ppane" data-pane="ach" hidden><p class="note">업적 불러오는 중…</p></section>
+      ${mine?`<section class="ppane" data-pane="prac" hidden>${practiceHTML(pr)}</section>
+      <section class="ppane" data-pane="pts" hidden><h3>포인트</h3><div class="pts">${ptsHTML(pt)}</div><button class="btn small" type="button" id="profShop">꾸미기 상점 열기</button></section>`:""}`;
+    body.querySelector(".ptabs").addEventListener("click",e=>{const b=e.target.closest("[data-ptab]");if(!b)return;
+      body.querySelectorAll("[data-ptab]").forEach(x=>x.setAttribute("aria-selected",String(x===b)));
+      body.querySelectorAll(".ppane").forEach(x=>x.hidden=x.dataset.pane!==b.dataset.ptab)});
     const ps=$("profShop");if(ps)ps.onclick=()=>{$("prof").hidden=true;openShop()};
-    const ah=document.createElement("div");ah.style.cssText="display:flex;flex-direction:column;gap:8px";ah.innerHTML='<p class="note">업적 불러오는 중…</p>';body.appendChild(ah);
-    achSection(d.id,mine).then(h=>{if(seq===profSeq)ah.innerHTML=h});
+    achSection(d.id,mine).then(h=>{if(seq===profSeq){const a=body.querySelector('[data-pane="ach"]');if(a)a.innerHTML=h;const n=/업적 (\d+)/.exec(h);const t=body.querySelector('[data-ptab="ach"]');if(n&&t)t.textContent="업적 "+n[1]}});
     if(!mine){const rb=document.createElement("button");rb.className="btn ghost small repb";rb.type="button";rb.textContent="이 사람 신고하기";rb.style.alignSelf="flex-start";rb.onclick=()=>openReport({uid:d.id,name:d.name+" (@"+d.username+")"});body.appendChild(rb)}
   }catch(e){if(seq===profSeq)body.innerHTML='<p class="note">프로필을 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
 }
@@ -3642,7 +3788,7 @@ $("boardList").addEventListener("click",async e=>{
 const SPAM_MSG={link:"링크나 사이트 주소는 올릴 수 없어요.",phone:"전화번호나 긴 숫자는 올릴 수 없어요.",abuse:"욕설이나 비속어가 있어서 올릴 수 없어요.",word:"광고로 보이는 말이 있어서 올릴 수 없어요.",fast:"글은 30초에 하나씩 올릴 수 있어요. 잠시 뒤에 다시 해 주세요.",daily:"오늘 올릴 수 있는 글(10개)을 다 썼어요. 내일 다시 올려 주세요.",dup:"같은 내용의 글이 이미 올라와 있어요."};
 function spamWhy(raw){
   if(/(https?:\/\/|www\.|[a-z0-9-]+\.(com|net|org|kr|io|me|xyz|top|co|ly|gg|site|shop|club|biz|info|link|app)([^a-z]|$)|open\.kakao|t\.me\/|discord\.gg)/i.test(raw))return"link";
-  if(/01[016789][0-9]{7,8}/.test(raw.replace(/[\s.\-()]/g,""))||/[0-9]{9,}/.test(raw.replace(/[^0-9]/g,"")))return"phone";
+  if(/01[016789][0-9]{7,8}/.test(raw.replace(/[\s.\-()]/g,""))||/[0-9]{9,}/.test(raw.replace(/[.\-]/g,"")))return"phone";
   const k=badKind(raw);return k==="abuse"?"abuse":k==="spam"?"word":null;
 }
 $("bTabs").addEventListener("change",e=>{if(e.target.name==="bboard"){BD.board=e.target.value;BD.composing=false;BD.open.clear();loadBoard()}});
@@ -3675,6 +3821,13 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.12",time:"15:29",date:"2026.11.27",items:[
+    "첫 화면에 라운지 채팅이 생겼어요. 사이트에 들어와 있는 사람 모두와 이야기할 수 있고, '접속 n명'을 누르면 누가 있는지 보여요. 채팅은 로그인하면 쓸 수 있고, 욕설은 가려지고 링크·연락처·도배는 막혀요.",
+    "관리자 계정 이름 옆에는 '관리자' 표시가 붙어요.",
+    "게임 중 지금 1등인 사람은 점수판과 판 이름 양옆에 불꽃이 타오르고 '현재 1등' 표시가 붙어요.",
+    "마이페이지·프로필을 새로 꾸몄어요. 위쪽 카드에 승패·승률·최고점이 보이고, 전적·업적·연습·포인트를 탭으로 나눴어요.",
+    "방 목록을 주고받는 방식을 바꿔서 중계 서버 사용량을 크게 줄였어요(첫 화면 기준 약 13분의 1).",
+    "점수를 여러 개 적은 글이 전화번호로 잘못 막히던 문제 등 자잘한 오류를 고쳤어요."]},
   {ver:"2.11",time:"14:55",date:"2026.11.27",items:[
     "아이폰·모바일 데이터 연결에 쓰는 중계 서버를 하나 더 붙였어요. 한쪽 무료 사용량이 다 떨어져도 계속 연결돼요."]},
   {ver:"2.10",time:"14:09",date:"2026.11.27",items:[
@@ -4163,7 +4316,7 @@ function startLocal(names){
 document.addEventListener("keydown",e=>{
   if(!meMode()||!G||G.phase!=="play"||e.target.tagName==="INPUT")return;
   if(e.code==="Space"){e.preventDefault();doRoll(myCid)}
-  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks,#news,#board,#prof,#shop,#rep,#admin,#banned")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
+  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks,#news,#board,#prof,#shop,#rep,#admin,#banned,#wrap")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
   else if(/^Digit[1-5]$/.test(e.code))toggleHold(myCid,+e.code.slice(5)-1);
 });
 
@@ -4173,7 +4326,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27l";
+const APP_VER="2026-11-27m";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{

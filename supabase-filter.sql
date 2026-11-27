@@ -71,7 +71,7 @@ begin
   if raw ~* '(https?://|www\.|[a-z0-9-]+\.(com|net|org|kr|io|me|xyz|top|co|ly|gg|site|shop|club|biz|info|link|app)([^a-z]|$)|open\.kakao|t\.me/|discord\.gg)' then
     raise exception 'spam:link';
   end if;
-  if regexp_replace(raw, '[\s.\-()]', '', 'g') ~ '01[016789][0-9]{7,8}' or digits ~ '[0-9]{9,}' then
+  if regexp_replace(raw, '[\s.\-()]', '', 'g') ~ '01[016789][0-9]{7,8}' or regexp_replace(raw, '[.-]', '', 'g') ~ '[0-9]{9,}' then
     raise exception 'spam:phone';
   end if;
   select kind into hit from public.filter_words where position(word in norm) > 0 order by kind limit 1;
