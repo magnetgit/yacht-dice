@@ -1107,7 +1107,7 @@ const Dir={cpeer:null,hpeer:null,hubSlot:-1,hubConns:new Map(),reg:null,rooms:nu
   slots:HUBS.map((id,i)=>({i,id,conn:null,heard:0,retryAt:0,free:0,deadUntil:0,rooms:[],lastReg:0,regSent:""}))};
 // release our ids right away when the page goes, so others can take over quickly
 window.addEventListener("pagehide",()=>{try{if(Dir.cpeer)Dir.cpeer.destroy()}catch(e){}try{if(Dir.hpeer)Dir.hpeer.destroy()}catch(e){}});
-if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok}},setBoard:(c,b)=>setBoard(c,b)};
+if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok,restQ}},setBoard:(c,b)=>setBoard(c,b)};
 // A private room is listed by name only: its code never leaves the table.
 function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)&&(r.sc===undefined||isInt(r.sc,0,30))&&(r.ts===undefined||(typeof r.ts==="number"&&isFinite(r.ts)))}
 function liveHubs(){return Dir.slots.filter(s=>s.conn&&s.conn.open).length+(Dir.hubSlot>=0?1:0)}
@@ -2166,10 +2166,13 @@ function d3Rest(v,b){
     const T3=D3.T3,Wu=W/d,Hu=H/d,pos=positions(b?b.rollId:0),keep=(b&&restQ.get(b.rollId))||{},geo=d3Geo(),scene=new T3.Scene();
     scene.add(d3Cup(cupGeom(Wu,Hu)));
     for(const i of tray){
-      const p=pos[i],k=keep[i]&&keep[i].v===b.dice[i]?keep[i]:null;
-      const fv=k?k.fv:faceVals(2,b.dice[i]),m=new T3.Mesh(geo,fv.map(x=>mats[x]));m.castShadow=true;
-      m.position.set((p.x/100-.5)*Wu,k?k.y:.5,(p.y/100-.5)*Hu);
-      if(k)m.quaternion.set(k.q[0],k.q[1],k.q[2],k.q[3]);else m.rotation.set(0,-p.r*Math.PI/180,0);
+      const p=pos[i];let k=keep[i]&&keep[i].v===b.dice[i]?keep[i]:null;
+      // no physics result for this die (after a refresh, or a 2D landing): pick the side numbers
+      // once and keep them, so holding or releasing other dice doesn't repaint its sides
+      if(!k&&b){k=keep[i]={fv:faceVals(2,b.dice[i]),v:b.dice[i],y:.5,q:null};restQ.set(b.rollId,keep)}
+      const m=new T3.Mesh(geo,k.fv.map(x=>mats[x]));m.castShadow=true;
+      m.position.set((p.x/100-.5)*Wu,k.y,(p.y/100-.5)*Hu);
+      if(k.q)m.quaternion.set(k.q[0],k.q[1],k.q[2],k.q[3]);else m.rotation.set(0,-p.r*Math.PI/180,0);
       scene.add(m);
     }
     scene.add(new T3.AmbientLight(0xffffff,D3LIGHT.amb));
@@ -2899,6 +2902,8 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.0.7",time:"09:08",date:"2026.11.27",items:[
+    "3D에서 주사위를 고정했다 풀면 남은 주사위의 옆면 숫자가 바뀌어 보이던 문제를 고쳤어요."]},
   {ver:"2.0.6",time:"18:49",date:"2026.11.26",items:[
     "3D에서 던진 주사위 일부가 컵 안에 남던 문제를 고쳤어요. 컵을 눕혀 두는 동안 주사위가 꼭 빠져나오게 했어요."]},
   {ver:"2.0.5",time:"14:13",date:"2026.11.26",items:[
@@ -3350,7 +3355,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-26i";
+const APP_VER="2026-11-27a";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
