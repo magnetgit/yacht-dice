@@ -3043,7 +3043,7 @@ function renderSheet(){
 let standKey="";
 function renderStandings(){
   const el=$("standings");
-  const rows=G.players.map(p=>{const b=boardOf(p.cid);return{cid:p.cid,name:p.name,t:totals(b&&b.scores).total,away:isAway(p.cid)}});
+  const rows=G.players.map(p=>{const b=boardOf(p.cid),lk=lookOfCid(p.cid);return{cid:p.cid,name:p.name,t:totals(b&&b.scores).total,away:isAway(p.cid),nk:lk&&lk.nick?JSON.stringify(lk.nick):""}});
   const key=JSON.stringify(rows)+myCid;if(key===standKey)return;standKey=key;
   if(!rows.some(r=>r.t>0)){el.innerHTML='<span class="lbl">현재 순위</span><span class="wait">첫 점수를 기다리는 중…</span>';return}
   rows.sort((a,b)=>b.t-a.t);
@@ -3051,7 +3051,7 @@ function renderStandings(){
   for(const r of rows){
     const place=rows.findIndex(x=>x.t===r.t)+1;
     const cls="rk"+(place===1?" top":"")+(meMode()&&r.cid===myCid?" me":"")+(r.away?" away":"");
-    h+=`<span class="${cls}"><span class="n">${place}위</span>${esc(r.name)}<span class="t">${r.t}</span></span>`;
+    h+=`<span class="${cls}"><span class="n">${place}위</span>${nickHTML(r.name,lookOfCid(r.cid))}<span class="t">${r.t}</span></span>`;
   }
   el.innerHTML=h;
 }
@@ -3953,7 +3953,7 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
 const CHANGELOG=[
   {ver:"2.16",time:"16:32",date:"2026.11.27",items:[
     "다른 사람이 산 꾸미기가 내 화면에 늦게 보이던 문제를 고쳤어요. 누가 아이템을 장착하면 접속 중인 모두에게 바로 알려서 곧바로 바뀌어요.",
-    "점수판 위쪽 이름과 게임 중 채팅 이름에도 닉네임 효과가 보여요."]},
+    "점수판 위쪽 이름, 점수판 아래 '현재 순위', 게임 중 채팅 이름에도 닉네임 효과가 보여요."]},
   {ver:"2.15",time:"16:18",date:"2026.11.27",items:[
     "비싼 주사위·펠트에 특수 효과가 생겼어요. 대리석은 광택, 진주는 무지갯빛 일렁임, 황금은 빛나는 광채와 멈출 때 금빛 불꽃, 은하는 반짝이는 별과 멈출 때 별가루가 흩날려요.",
     "블랙 & 골드 펠트는 금테를 따라 빛이 흐르고, 로열 벨벳은 광택이 지나가고, 은하수는 별이 반짝이며 가끔 별똥별이 떨어져요."]},
@@ -4471,7 +4471,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27q";
+const APP_VER="2026-11-27r";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
