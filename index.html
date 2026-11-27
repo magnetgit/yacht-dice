@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
 <title>요트 다이스 라운지</title>
+<script>try{var t=localStorage.getItem("yd-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
@@ -19,7 +21,9 @@
   --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Malgun Gothic",sans-serif;
   --f-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
   --d:clamp(30px,6vw,44px);
+  color-scheme:light dark;
 }
+:root[data-theme="light"]{color-scheme:light}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0c1311; --bg2:#101a17; --panel:#141e1b; --panel2:#18231f; --field:#0f1815;
   --ink:#e7eeea; --ink2:#c3d0ca; --muted:#8fa29b; --line:#23312c; --line2:#2e3f39;
@@ -541,6 +545,13 @@ button.chip:hover{border-color:var(--accent)}
   .soundbar{padding-right:10px;gap:4px}
   .vol{width:52px}
   .sound{padding:8px 10px}
+}
+@media (max-width:400px){
+  .soundbar{gap:2px;padding-right:6px}
+  .soundbar .vbtn{padding:6px 5px}
+  .vol{width:40px}
+  .sound{padding:8px 7px}
+  .brand{gap:8px}
   #peopleBtn{padding:6px 10px;flex:none}#peopleBtn .pl{display:none}
   .panel{padding:16px}
   .lobby-card{padding:18px}
@@ -563,6 +574,7 @@ button.chip:hover{border-color:var(--accent)}
       <button id="soundBtn" class="btn ghost small sound" type="button" aria-pressed="true"></button>
       <input id="volume" class="vol" type="range" min="0" max="100" step="5" aria-label="소리 크기" title="소리 크기">
       <button id="d3Btn" class="btn ghost small vbtn d3b" type="button" aria-pressed="true">3D</button>
+      <button id="themeBtn" class="btn ghost small vbtn" type="button"></button>
       <button id="voiceBtn" class="btn ghost small vbtn" type="button" aria-haspopup="dialog" aria-label="목소리 고르기" title="목소리 고르기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M18 6.5a4 4 0 0 1 0 5M20.5 4a7.5 7.5 0 0 1 0 10"/></svg></button>
     </div>
   </header>
@@ -1844,6 +1856,15 @@ function setDice3d(on){
   paintDice3d();try{render()}catch(e){}
   toast(on?"주사위를 3D로 보여 줘요.":"주사위를 2D로 보여 줘요. 화면이 더 가벼워져요.");
 }
+// screen theme: auto (follow the phone), light, dark; kept on this device
+const THEMES=["auto","light","dark"],THEME_NAME={auto:"자동",light:"밝게",dark:"어둡게"};
+const THEME_ICON={
+  auto:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>',
+  light:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
+  dark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>'};
+function curTheme(){const t=store.get("yd-theme");return t==="light"||t==="dark"?t:"auto"}
+function paintTheme(){const t=curTheme(),b=$("themeBtn");if(t==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t);
+  if(b){b.innerHTML=THEME_ICON[t];b.setAttribute("aria-label","화면: "+THEME_NAME[t]+" · 누르면 바꿔요");b.title="화면 "+THEME_NAME[t]+(t==="auto"?" (휴대폰 설정을 따라요)":"")+" · 누르면 바꿔요"}}
 function paintDice3d(){const b=$("d3Btn");if(!b)return;b.textContent=D3.on&&!reduced?"3D":"2D";b.setAttribute("aria-pressed",D3.on?"true":"false");b.title=D3.on?"주사위 3D로 보는 중 · 누르면 2D(가벼운 화면)로 바꿔요":"주사위 2D로 보는 중 · 누르면 3D로 바꿔요";b.disabled=reduced}
 // local "up" direction of each face's picture, in BoxGeometry face order (+x,-x,+y,-y,+z,-z)
 const TEXUP=[[0,1,0],[0,1,0],[0,0,-1],[0,0,1],[0,1,0],[0,1,0]];
@@ -3095,6 +3116,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.4",time:"13:07",date:"2026.11.27",items:[
+    "위쪽에 화면 버튼이 생겼어요. 누를 때마다 자동 → 밝게 → 어둡게로 바뀌고, 고른 건 이 기기에 저장돼요.",
+    "휴대폰 브라우저가 화면을 강제로 어둡게 바꿔서 글자와 버튼이 잘 안 보이던 문제를 막았어요. 이제 어두운 화면도 사이트에서 직접 만든 색으로 보여요."]},
   {ver:"2.3",time:"11:19",date:"2026.11.27",items:[
     "로그인하면 아이디 옆에 마이페이지 버튼이 생겨요. 온라인 승패와 승률, 최고 점수와 그 날짜를 볼 수 있어요.",
     "봇전(난이도별 승패, 최고 점수)과 혼자 한 판 기록도 남아요. 이 기록은 마이페이지에서 나만 볼 수 있고, 기록판과 순위에는 들어가지 않아요."]},
@@ -3358,6 +3382,9 @@ $("peopleBtn").onclick=()=>{peopleShown="";$("people").hidden=false;peopleUI()};
 $("peopleClose").onclick=()=>{$("people").hidden=true};
 $("voiceBtn").onclick=openVoices;
 $("d3Btn").onclick=()=>setDice3d(!D3.on);paintDice3d();
+$("themeBtn").onclick=()=>{const t=THEMES[(THEMES.indexOf(curTheme())+1)%3];store.set("yd-theme",t);paintTheme();try{render()}catch(e){}
+  toast(t==="auto"?"화면 색을 휴대폰 설정에 맞춰요.":t==="light"?"밝은 화면으로 바꿨어요.":"어두운 화면으로 바꿨어요.")};
+paintTheme();
 $("voicesClose").onclick=()=>{$("voices").hidden=true};
 $("voices").addEventListener("click",e=>{
   if(e.target.id==="voices"){$("voices").hidden=true;return}
@@ -3558,7 +3585,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27d";
+const APP_VER="2026-11-27e";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
