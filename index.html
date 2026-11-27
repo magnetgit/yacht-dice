@@ -1405,7 +1405,7 @@ const Dir={cpeer:null,hpeer:null,hubSlot:-1,hubConns:new Map(),reg:null,rooms:nu
   slots:HUBS.map((id,i)=>({i,id,conn:null,heard:0,retryAt:0,free:0,deadUntil:0,rooms:[],lastReg:0,regSent:""}))};
 // release our ids right away when the page goes, so others can take over quickly
 window.addEventListener("pagehide",()=>{try{if(Dir.cpeer)Dir.cpeer.destroy()}catch(e){}try{if(Dir.hpeer)Dir.hpeer.destroy()}catch(e){}});
-if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get wc(){return winsCache},get ban(){return BAN},get ach(){return ACH},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok,restQ}},setBoard:(c,b)=>setBoard(c,b)};
+if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get wc(){return winsCache},get ban(){return BAN},get ach(){return ACH},get simc(){return simCache.size},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok,restQ}},setBoard:(c,b)=>setBoard(c,b)};
 // A private room is listed by name only: its code never leaves the table.
 function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)&&(r.sc===undefined||isInt(r.sc,0,30))&&(r.ts===undefined||(typeof r.ts==="number"&&isFinite(r.ts)))}
 function liveHubs(){return Dir.slots.filter(s=>s.conn&&s.conn.open).length+(Dir.hubSlot>=0?1:0)}
@@ -1775,6 +1775,7 @@ async function enterTable(c,isCreate,pwIn,restoreG,quick,spec){
   const nick=$("nick").value.trim().slice(0,12);
   if(!nick){$("homeMsg").textContent="닉네임을 먼저 적어 주세요.";$("nick").focus();return "nonick"}
   if(badKind(nick)==="abuse"){$("homeMsg").textContent="닉네임에 쓸 수 없는 말이 있어요.";$("nick").focus();return "badnick"}
+  if(!restoreG&&!quick){const np=await nickProblem(nick);if(np){$("homeMsg").textContent=np;$("nick").focus();return "nicktaken"}}
   if(BAN.info){$("banned").hidden=false;return "banned"}
   if(isCreate&&!restoreG&&badKind($("roomTitle").value)==="abuse"){$("homeMsg").textContent="방 이름에 쓸 수 없는 말이 있어요.";$("roomTitle").focus();return "badtitle"}
   c=c.toUpperCase().replace(/[^A-Z0-9]/g,"");
@@ -2031,13 +2032,54 @@ function cancelShake(cid){
   clearTimeout(stopT.get(cid));
   const b=clone(b0);b.rolling=false;setBoard(cid,b);
 }
+/* My own throw is simulated in a background worker (same code, run there), so the page doesn't
+   freeze while the physics is worked out; the cup keeps shaking meanwhile. The result is kept by
+   roll id and picked up by d3Roll. If the worker can't be used, d3Roll computes it as before. */
+const simCache=new Map(),stopPending=new Set();let simWorker=null,simSeq=0;const simWait=new Map();
+function simWorkerGet(){
+  if(simWorker!==null)return simWorker||null;
+  try{
+    const src=`import * as C from "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js";
+const D3={C};const CUP=${JSON.stringify(CUP)},CUPH=${CUPH},CUPTH=${CUPTH},CUPTIP=${CUPTIP};
+${cupGeom}
+${cupThrowAt}
+${d3SimFrom}
+${d3Sim}
+onmessage=e=>{const m=e.data;let sim=null;try{sim=m.start?d3SimFrom(m.Wu,m.Hu,m.start):null;if(!sim||!sim.allOut)sim=d3Sim(m.Wu,m.Hu,m.n,m.tries)}catch(err){sim=null}postMessage({id:m.id,sim})};`;
+    const w=new Worker(URL.createObjectURL(new Blob([src],{type:"text/javascript"})),{type:"module"});
+    w.onmessage=e=>{const r=simWait.get(e.data.id);if(r){simWait.delete(e.data.id);r(e.data.sim)}};
+    w.onerror=()=>{simWorker=false;for(const r of simWait.values())r(null);simWait.clear()};
+    simWorker=w;return w;
+  }catch(e){simWorker=false;return null}
+}
+function simInWorker(msg,ms){
+  const w=simWorkerGet();if(!w)return Promise.resolve(null);
+  const id=++simSeq;return new Promise(res=>{simWait.set(id,res);setTimeout(()=>{if(simWait.has(id)){simWait.delete(id);res(null)}},ms);w.postMessage(Object.assign({id},msg))});
+}
 function doStop(cid){
-  const b0=boardOf(cid);if(!canAct(cid)||!b0.rolling)return;
+  const b0=boardOf(cid);if(!canAct(cid)||!b0.rolling||stopPending.has(cid))return;
   clearTimeout(stopT.get(cid));
+  const v=views.get(cid),live=cid===myCid&&d3on()&&v&&v.anim&&v.anim.live?v.anim:null,u=live&&trayUnits(v);
+  if(live&&u&&simWorkerGet()){
+    const n=b0.held.filter(h=>!h).length;
+    if(n&&live.bodies.length===n){
+      stopPending.add(cid);
+      simInWorker({Wu:u.Wu,Hu:u.Hu,start:live.states(),n,tries:8},4000).then(sim=>{
+        stopPending.delete(cid);
+        const b1=boardOf(cid);if(!b1||!b1.rolling||!canAct(cid))return;
+        commitStop(cid,b1,sim&&sim.allOut?{sim,Wu:u.Wu,Hu:u.Hu}:null);
+      });
+      return;
+    }
+  }
+  commitStop(cid,b0,null);
+}
+function commitStop(cid,b0,pre){
   const b=clone(b0);
   b.mask=b.held.map(h=>!h);
   b.dice=b.dice.map((v,i)=>b.held[i]?v:rnd6());
   b.rolls++;b.rolling=false;b.rollId=rid();
+  if(pre){simCache.set(b.rollId,pre);if(simCache.size>8)simCache.delete(simCache.keys().next().value)}
   setBoard(cid,b);
 }
 function toggleHold(cid,i){
@@ -2090,6 +2132,11 @@ function d3Load(){
     const r=new T3.WebGLRenderer({alpha:true,antialias:dpr<2,powerPreference:"high-performance"});
     r.setClearColor(0x000000,0);r.shadowMap.enabled=true;r.shadowMap.type=T3.PCFSoftShadowMap;
     Object.assign(D3,{ok:true,T3,C,r,rw:0,rh:0,rpr:0});
+    const idle=window.requestIdleCallback||(f=>setTimeout(f,300));
+    idle(()=>{try{
+      const Wu=11,Hu=6.2,W=440,H=248,st=d3Stage(Wu,Hu,W,H),m=new T3.Mesh(d3Geo(),d3Mats(null).slice(1));m.castShadow=true;st.scene.add(m);
+      const cup=d3Cup(cupGeom(Wu,Hu));st.scene.add(cup);d3Fit(W,H,D3PR());r.compile(st.scene,st.cam);r.render(st.scene,st.cam);st.dispose();
+    }catch(e){}});
     try{render()}catch(e){}
   }).catch(()=>{}).finally(()=>{D3.loading=false});
 }
@@ -2162,8 +2209,7 @@ function d3Geo(){
 // Tray size in die units; the round cup sits at the left and the dice land to its right.
 const CUP={R:1.85,rim:.3};
 function trayUnits(v){
-  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--td);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
-  const W=v.tray.clientWidth,H=v.tray.clientHeight,d=v.probe.offsetWidth;
+  const {W,H,d}=traySize(v);
   if(W<60||H<40||d<8)return null;
   return{W,H,d,Wu:W/d,Hu:H/d};
 }
@@ -2361,11 +2407,11 @@ function d3SimFrom(Wu,Hu,start){
 }
 // Run the physics for n dice poured from the cup. Units: one die = 1; the tray is Wu x Hu.
 // Retries a few times if a die ends up leaning (on a wall or another die).
-function d3Sim(Wu,Hu,n){
+function d3Sim(Wu,Hu,n,tries){
   const C=D3.C,rnd=Math.random;
   const G=cupGeom(Wu,Hu),xL=G.xL;
   let best=null;
-  for(let attempt=0;attempt<8;attempt++){
+  for(let attempt=0;attempt<(tries||8);attempt++){
     const w=new C.World({gravity:new C.Vec3(0,-70,0),allowSleep:true});
     w.defaultContactMaterial.friction=.3;w.defaultContactMaterial.restitution=.32;
     const wall=(x,y,z,ax,ay,az,ang)=>{const b=new C.Body({mass:0,shape:new C.Plane()});b.position.set(x,y,z);if(ang)b.quaternion.setFromAxisAngle(new C.Vec3(ax,ay,az),ang);w.addBody(b)};
@@ -2461,7 +2507,11 @@ function d3Roll(v,b,idx){
   const Wu=W/d,Hu=H/d;
   const live=v.anim&&v.anim.live&&v.anim.bodies.length===idx.length?v.anim:null;
   // (if, against all odds, a die would stay in the cup, pour fresh dice onto the felt instead)
-  let sim;try{sim=live?d3SimFrom(Wu,Hu,live.states()):null;if(!sim||!sim.allOut)sim=d3Sim(Wu,Hu,idx.length)}catch(e){return null}
+  const pre=simCache.get(b.rollId);
+  let sim;try{
+    if(pre&&Math.abs(pre.Wu-Wu)<.01&&Math.abs(pre.Hu-Hu)<.01&&pre.sim.frames[0].length===idx.length)sim=pre.sim;
+    else{sim=live?d3SimFrom(Wu,Hu,live.states()):null;if(!sim||!sim.allOut)sim=d3Sim(Wu,Hu,idx.length,v.cid===myCid?8:3)}
+  }catch(e){return null}
   const T3=D3.T3,C=D3.C,last=sim.frames[sim.frames.length-1],out=[],taken=[];
   // where each die ends up, as the flat dice will show it (position in % of the tray, angle)
   idx.forEach((i,k)=>{
@@ -3012,7 +3062,7 @@ function medalOfCid(cid){return mode==="local"?"":medalHTML(winsOf(uidOf(cid)))+
 // "관리자" badge next to admin accounts, wherever names are shown
 const ADMINS=new Set();
 function adminTag(uid){return isUUID(uid)&&ADMINS.has(uid)?'<span class="adm" title="사이트 관리자">관리자</span>':""}
-function loadAdmins(){if(!ACC.sb)return;ACC.sb.from("admins").select("user_id").then(({data})=>{if(!Array.isArray(data))return;ADMINS.clear();for(const r of data)if(isUUID(r.user_id))ADMINS.add(r.user_id);try{render();if(window.LC){lcRender();lcRenderWho()}if(!$("ranks").hidden)setRMode(rMode)}catch(e){}},()=>{})}
+function loadAdmins(){if(!ACC.sb)return;ACC.sb.from("admins").select("user_id").then(({data})=>{if(!Array.isArray(data))return;ADMINS.clear();for(const r of data)if(isUUID(r.user_id))ADMINS.add(r.user_id);try{render();if(LC){lcRender();lcRenderWho()}if(!$("ranks").hidden)setRMode(rMode)}catch(e){}},()=>{})}
 // keep known wins but make sure the cosmetics get fetched too
 function setW(uid,w){const c=winsCache.get(uid);winsCache.set(uid,c?Object.assign({},c,{w}):{w,t:0,lk:null})}
 function lookOfUid(uid){if(!isUUID(uid))return null;winsOf(uid);const c=winsCache.get(uid);return c&&c.lk||null}
@@ -3066,7 +3116,7 @@ async function fetchWins(){
       if(!c||c.w!==r.wins||c.lks!==ks)ch=true;
       winsCache.set(r.user_id,{w:r.wins,t:Date.now(),lk,lks:ks,lkv:c&&c.lkv});
     }
-    if(ch){render();if(!$("home").hidden){refreshNames();if(window.LC&&LC.msgs.length)lcRender()}}
+    if(ch){render();if(!$("home").hidden){refreshNames();if(LC&&LC.msgs.length)lcRender()}}
   }catch(e){}
 }
 function setAcct(sess){
@@ -3089,10 +3139,19 @@ else{ACC.failed=true}
 // keep the nickname shown on the rankings up to date
 function syncNick(){
   if(!ACC.sb||!ACC.uid||!myName||ACC.nickSent===myName)return;
-  ACC.nickSent=myName;ACC.sb.from("profiles").update({nick:myName}).eq("id",ACC.uid).then(()=>{},()=>{});
+  ACC.nickSent=myName;ACC.sb.from("profiles").update({nick:myName}).eq("id",ACC.uid).then(({error})=>{if(error&&/nick taken|duplicate|unique/i.test(error.message))toast("이 닉네임은 다른 회원이 쓰고 있어서 기록에는 저장하지 않았어요.")},()=>{});
+}
+/* Nicknames don't repeat: not another member's nickname or ID (checked by the database), and not
+   the name of someone else who is on the site right now (lounge presence). */
+async function nickProblem(n){
+  n=String(n||"").trim();if(!n)return null;const low=n.toLowerCase();
+  if(LC&&LC.people.some(x=>x.cid!==myCid&&String(x.name).toLowerCase()===low))return"지금 접속 중인 사람이 쓰고 있는 닉네임이에요. 다른 닉네임을 써 주세요.";
+  if(!ACC.sb)return null;
+  try{const {data,error}=await ACC.sb.rpc("nick_taken",{n});if(!error&&data===true)return"이미 사용 중인 닉네임이에요. 다른 닉네임을 써 주세요."}catch(e){}
+  return null;
 }
 function acctUI(){
-  if(window.LC&&LC.ch){lcTrack();lcInputState()}
+  if(LC&&LC.ch){lcTrack();lcInputState()}
   const el=$("acctBox");let h;
   if(ACC.failed)h='<span class="who note">전적 서버에 연결하지 못했어요. 게임은 그대로 할 수 있어요.</span>';
   else if(!ACC.ready)h='<span class="who note">전적 서버에 연결하는 중…</span>';
@@ -3130,6 +3189,11 @@ async function acctGo(sign){
   acctBusy=true;$("acctMsg").textContent=sign?"가입하는 중…":"로그인하는 중…";
   try{
     const nick=(myName||$("nick").value.trim()).slice(0,12)||null;
+    if(sign){
+      const [idT,nkT]=await Promise.all([ACC.sb.rpc("nick_taken",{n:id}).then(r=>r.data===true,()=>false),nick?ACC.sb.rpc("nick_taken",{n:nick}).then(r=>r.data===true,()=>false):false]);
+      if(idT){$("acctMsg").textContent="이미 쓰이고 있는 아이디예요. 다른 아이디를 써 주세요.";acctBusy=false;return}
+      if(nkT){$("acctMsg").textContent="닉네임이 이미 사용 중이에요. 첫 화면에서 닉네임을 바꾼 뒤 가입해 주세요.";acctBusy=false;return}
+    }
     const r=sign?await ACC.sb.auth.signUp({email:id+SB_MAIL,password:pw,options:{data:{username:id,nick}}})
                :await ACC.sb.auth.signInWithPassword({email:id+SB_MAIL,password:pw});
     if(r.error)throw r.error;
@@ -3312,6 +3376,7 @@ async function lcSend(){
   inp.value="";
 }
 $("lcSend").onclick=lcSend;
+$("nick").addEventListener("change",async()=>{const n=$("nick").value.trim().slice(0,12);if(!n)return;const np=await nickProblem(n);if(np)$("homeMsg").textContent=np;else if(/닉네임/.test($("homeMsg").textContent))$("homeMsg").textContent=""});
 $("nick").addEventListener("input",()=>lcTrack());
 $("lcInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();lcSend()}});
 $("lcWho").onclick=()=>{const l=$("lcWhoList"),o=l.hidden;l.hidden=!o;$("lcWho").setAttribute("aria-expanded",String(o))};
@@ -3836,6 +3901,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.14",time:"16:13",date:"2026.11.27",items:[
+    "닉네임이 겹치지 않아요. 다른 회원의 닉네임·아이디와 같거나, 지금 접속 중인 사람이 쓰는 닉네임이면 '이미 사용 중인 닉네임'이라고 알려 줘요. 가입할 때도 아이디·닉네임 중복을 확인해요.",
+    "3D에서 던질 때 잠깐 멈추던 현상을 줄였어요. 내 던지기의 물리 계산을 화면과 따로(백그라운드에서) 해요. 다른 사람 판의 계산도 가볍게 했어요."]},
   {ver:"2.13",time:"15:51",date:"2026.11.27",items:[
     "3D 주사위를 가볍게 했어요. 같은 화면에서 여러 판을 그릴 때 그래픽 버퍼를 다시 만들지 않게 하고, 다른 사람 판은 절반 속도로 그려요. 휴대폰에서는 그림자와 해상도를 조금 낮춰 버벅임을 줄였어요."]},
   {ver:"2.12",time:"15:29",date:"2026.11.27",items:[
@@ -4218,7 +4286,11 @@ async function runBot(gid){
     await wait((900+Math.random()*900)*pace());
   }
 }
-$("aiBtn").onclick=()=>startAI(document.querySelector('input[name=aidiff]:checked').value);
+$("aiBtn").onclick=async()=>{
+  const n=($("nick").value.trim()||myName||"").slice(0,12);
+  if(n){const np=await nickProblem(n);if(np){$("homeMsg").textContent=np;$("nick").focus();return}}
+  startAI(document.querySelector('input[name=aidiff]:checked').value);
+};
 {const lv=store.get("yd-ailevel");const r=document.querySelector(`input[name=aidiff][value="${lv}"]`);if(r)r.checked=true}
 /* ---------- chat ----------
    Each player keeps their own last few messages in their presence; everyone merges what they
@@ -4343,7 +4415,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27n";
+const APP_VER="2026-11-27o";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
