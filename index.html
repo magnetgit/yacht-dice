@@ -501,6 +501,32 @@ button.chip:hover{border-color:var(--accent)}
 .sitem .btn{width:100%;justify-content:center}
 .sitem .pv .ttl{margin:0;font-size:13px;padding:2px 10px}
 #prof{z-index:36}
+.newsline.wrapb{background:linear-gradient(135deg,#2b1d05,#6b4a12);color:#ffe9a6;border-color:#c9a24a}
+#wrap{position:fixed;inset:0;z-index:65;display:grid;place-items:center;padding:14px;background:rgba(6,10,9,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#wrap .wbox{width:min(440px,100%);height:min(720px,calc(100vh - 28px));border-radius:26px;overflow:hidden;display:flex;flex-direction:column;color:#fdf6e3;
+  background:var(--wbg,linear-gradient(160deg,#0f4a3f,#07241f));box-shadow:0 0 0 2px rgba(226,180,67,.55),0 30px 80px rgba(0,0,0,.55);transition:background .5s}
+#wrap .wtop{display:flex;align-items:center;gap:10px;padding:14px 14px 0}
+#wrap .wprog{flex:1;display:flex;gap:4px}#wrap .wprog i{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.25)}#wrap .wprog i.on{background:#f0c86e}
+#wrap .wx{border:0;background:rgba(255,255,255,.12);color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px}
+#wrap .wslide{flex:1;min-height:0;overflow:auto;padding:22px 26px;display:flex;flex-direction:column;justify-content:center;gap:12px;text-align:center;cursor:pointer;user-select:none}
+#wrap .wslide>*{animation:wIn .5s both}#wrap .wslide>*:nth-child(2){animation-delay:.08s}#wrap .wslide>*:nth-child(3){animation-delay:.16s}#wrap .wslide>*:nth-child(4){animation-delay:.24s}#wrap .wslide>*:nth-child(5){animation-delay:.32s}
+@keyframes wIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#wrap .wslide>*{animation:none}}
+#wrap .we{font-size:12px;letter-spacing:.18em;color:#f0c86e;font-weight:800;text-transform:uppercase}
+#wrap h2{font-family:var(--f-display);font-weight:400;font-size:clamp(30px,8vw,40px);line-height:1.15;margin:0;color:#fff}
+#wrap .wbig{font-family:var(--f-display);font-size:clamp(52px,16vw,76px);line-height:1;color:#ffe08a;text-shadow:0 4px 18px rgba(240,200,110,.35)}
+#wrap .wname{font-size:clamp(24px,7vw,32px);font-weight:800;color:#fff}
+#wrap .wsub{font-size:15px;color:#e9dfc4;line-height:1.6}
+#wrap .wsub b{color:#ffe08a}
+#wrap .wlist{list-style:none;margin:6px auto 0;padding:0;display:flex;flex-direction:column;gap:8px;width:min(300px,100%)}
+#wrap .wlist li{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:14px;background:rgba(255,255,255,.08);font-weight:700}
+#wrap .wlist .r{width:26px;color:#f0c86e;font-family:var(--f-display);font-size:18px}#wrap .wlist .n{flex:1;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#wrap .wlist .v{color:#ffe08a;font-variant-numeric:tabular-nums}
+#wrap .wgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+#wrap .wgrid div{padding:12px 8px;border-radius:14px;background:rgba(255,255,255,.08)}#wrap .wgrid b{display:block;font-family:var(--f-display);font-size:26px;color:#ffe08a;font-weight:400}#wrap .wgrid span{font-size:12.5px;color:#e9dfc4}
+#wrap .wvs{display:flex;align-items:center;justify-content:center;gap:12px;font-weight:800;font-size:20px}#wrap .wvs i{font-style:normal;font-family:var(--f-display);color:#f0c86e;font-size:28px}
+#wrap .wnav{display:flex;align-items:center;gap:10px;padding:12px 14px 16px}#wrap .wnav .btn{min-width:72px;justify-content:center}#wrap .wnav .ghost{color:#fdf6e3;border-color:rgba(255,255,255,.3);background:transparent}
+#wrap .wdots{flex:1;text-align:center;font-size:12.5px;color:#e9dfc4;font-variant-numeric:tabular-nums}
+#wrap .wemoji{font-size:54px;line-height:1}
 #achPop{position:fixed;left:50%;top:18px;z-index:70;display:flex;align-items:center;gap:12px;padding:10px 16px 10px 12px;border-radius:16px;
   background:linear-gradient(135deg,#2b1d05,#5a3d0b);color:#fff3cf;box-shadow:0 0 0 2px #e2b443,0 12px 30px rgba(0,0,0,.35);transform:translate(-50%,-140%);transition:transform .35s cubic-bezier(.2,1.4,.4,1),opacity .35s;max-width:calc(100vw - 32px)}
 #achPop.in{transform:translate(-50%,0)}#achPop.out{opacity:0;transform:translate(-50%,-30%)}
@@ -649,6 +675,7 @@ button.chip:hover{border-color:var(--accent)}
         <div class="homelinks">
         <button id="newsBtn" class="newsline" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12"/></svg><span class="nt" id="newsText"></span><span class="nb" id="newsNew" hidden>NEW</span><span class="ar" aria-hidden="true">›</span></button>
         <button id="feedbackBtn" class="newsline sm" type="button" aria-haspopup="dialog">피드백 남기기</button>
+        <button id="wrapBtn" class="newsline sm wrapb" type="button" aria-haspopup="dialog" hidden></button>
         </div>
       </div>
     </div>
@@ -872,6 +899,13 @@ button.chip:hover{border-color:var(--accent)}
     </div>
   </div>
   <div id="achPop" hidden role="status" aria-live="polite"></div>
+  <div id="wrap" hidden>
+    <div class="wbox" role="dialog" aria-modal="true" aria-labelledby="wrapHead">
+      <div class="wtop"><span class="wprog" id="wrapProg"></span><button id="wrapClose" class="wx" type="button" aria-label="닫기">✕</button></div>
+      <div class="wslide" id="wrapSlide" aria-live="polite"></div>
+      <div class="wnav"><button id="wrapPrev" class="btn ghost small" type="button">이전</button><span class="wdots" id="wrapDots"></span><button id="wrapNext" class="btn small" type="button">다음</button></div>
+    </div>
+  </div>
   <div id="banned" hidden>
     <div class="panel" role="alertdialog" aria-labelledby="banTitle">
       <h2 id="banTitle">이용이 제한됐어요</h2>
@@ -2943,7 +2977,7 @@ if(!new URLSearchParams(location.search).has("nodb"))
     const {data}=await ACC.sb.auth.getSession();
     setAcct(data&&data.session);
     ACC.sb.auth.onAuthStateChange((ev,sess)=>setTimeout(()=>setAcct(sess),0));
-    ACC.ready=true;acctUI();loadRec(recPeriod);loadWords();checkBan();if(ACC.uid)setTimeout(()=>claimAch([]),3000);
+    ACC.ready=true;acctUI();loadRec(recPeriod);loadWords();checkBan();wrapInit();if(ACC.uid)setTimeout(()=>claimAch([]),3000);
   }).catch(()=>{ACC.failed=true;acctUI();loadRec(recPeriod)});
 else{ACC.failed=true;setTimeout(()=>loadRec(recPeriod),0)}
 // keep the nickname shown on the rankings up to date
@@ -3115,6 +3149,68 @@ async function loadRec(p){
 $("recTabs").addEventListener("change",e=>{if(e.target.name==="recperiod")loadRec(e.target.value)});
 $("recWins").onclick=()=>{rPeriod=recPeriod;openRanks()};
 let profSeq=0;
+/* ---------- year-end recap ("결산") ----------
+   From Dec 20 to Jan 15 it opens by itself once per device per year (the year that is ending).
+   ?wrap=2026 opens any year on demand. Numbers are counted by the database at that moment (wrap()). */
+const WR={yr:0,data:null,i:0,slides:[]};
+const DOW=["일","월","화","수","목","금","토"];
+function wrapWindowYear(){const d=new Date(),m=d.getMonth(),day=d.getDate();return m===11&&day>=20?d.getFullYear():m===0&&day<=15?d.getFullYear()-1:0}
+function wrapSlides(w){
+  const S=[],nm=(o,uid)=>nickHTML(o||"",lookOfUid(uid)),dt=s=>{const d=new Date(s);return`${d.getMonth()+1}월 ${d.getDate()}일`};
+  S.push({bg:"linear-gradient(160deg,#0f4a3f,#07241f)",h:`<div class="wemoji">🎲</div><div class="we">Yacht Dice Lounge</div><h2 id="wrapHead">${w.year} 결산</h2>
+    <p class="wsub">${w.games?`올해 우리는 온라인에서<br><b>${w.games}판</b>을 함께 굴렸어요.`:"올해는 아직 함께 한 온라인 판이 없어요."}</p>
+    <div class="wgrid"><div><b>${w.players}</b><span>함께한 사람</span></div><div><b>${w.bot_games}</b><span>요트봇과 한 판</span></div>${w.yachts?`<div style="grid-column:span 2"><b>${w.yachts}번</b><span>올해 나온 요트</span></div>`:""}</div>`});
+  const tw=w.top_wins||[];
+  if(tw.length)S.push({bg:"linear-gradient(160deg,#5a3d0b,#1d1203)",h:`<div class="we">올해의 챔피언</div><div class="wemoji">🏆</div><div class="wname">${nm(tw[0].nm,tw[0].user_id)}</div><div class="wbig">${tw[0].w}승</div><p class="wsub">${tw[0].g}판 중 <b>${tw[0].w}번</b> 1등을 했어요.</p>
+    ${tw.length>1?`<ul class="wlist">${tw.slice(1).map((t,i)=>`<li><span class="r">${i+2}</span><span class="n">${nm(t.nm,t.user_id)}</span><span class="v">${t.w}승</span></li>`).join("")}</ul>`:""}`});
+  const tg=w.top_games||[];
+  if(tg.length)S.push({bg:"linear-gradient(160deg,#1f3c7a,#0a1430)",h:`<div class="we">개근상</div><div class="wemoji">📅</div><div class="wname">${nm(tg[0].nm,tg[0].user_id)}</div><div class="wbig">${tg[0].g}판</div><p class="wsub">올해 가장 많이 라운지에 앉은 사람이에요.</p>
+    ${tg.length>1?`<ul class="wlist">${tg.slice(1).map((t,i)=>`<li><span class="r">${i+2}</span><span class="n">${nm(t.nm,t.user_id)}</span><span class="v">${t.g}판</span></li>`).join("")}</ul>`:""}`});
+  if(w.high)S.push({bg:"linear-gradient(160deg,#7a1f33,#2a0610)",h:`<div class="we">올해의 최고 점수</div><div class="wbig">${w.high.score}</div><div class="wname">${nm(w.high.nm,w.high.user_id)}</div><p class="wsub">${dt(w.high.played_at)}, ${w.high.players}명이 한 판에서 나온 점수예요.</p>`});
+  if(w.avg_king||w.rate_king)S.push({bg:"linear-gradient(160deg,#4d2a80,#170a2e)",h:`<div class="we">꾸준함의 왕</div>
+    ${w.avg_king?`<p class="wsub">평균 점수 1위</p><div class="wname">${nm(w.avg_king.nm,w.avg_king.user_id)}</div><div class="wbig" style="font-size:48px">${Math.round(w.avg_king.avg)}점</div>`:""}
+    ${w.rate_king?`<p class="wsub">승률 1위 · ${w.rate_king.g}판 ${w.rate_king.w}승</p><div class="wname">${nm(w.rate_king.nm,w.rate_king.user_id)} <span style="color:#ffe08a">${w.rate_king.rate}%</span></div>`:""}
+    <p class="wsub" style="font-size:12.5px;opacity:.8">5판 이상 한 사람 중에서 뽑았어요.</p>`});
+  if(w.rival&&w.rival.n>=2)S.push({bg:"linear-gradient(160deg,#8a3b12,#2a0f03)",h:`<div class="we">올해의 라이벌</div><div class="wemoji">⚔️</div>
+    <div class="wvs"><span>${nm(w.rival.na,w.rival.ua)}</span><i>VS</i><span>${nm(w.rival.nb,w.rival.ub)}</span></div>
+    <p class="wsub">같은 판에서 <b>${w.rival.n}번</b> 만났어요.<br>맞대결 성적 <b>${w.rival.wa} : ${w.rival.wb}</b></p>`});
+  if(w.month||w.dow||w.hour)S.push({bg:"linear-gradient(160deg,#0f5a63,#04201f)",h:`<div class="we">가장 뜨거웠던 때</div><div class="wemoji">🔥</div>
+    <div class="wgrid">${w.month?`<div><b>${w.month.m}월</b><span>${w.month.n}판</span></div>`:""}${w.dow?`<div><b>${DOW[w.dow.d]}요일</b><span>${w.dow.n}판</span></div>`:""}${w.hour?`<div style="grid-column:span 2"><b>${w.hour.h}시</b><span>가장 많이 모인 시간 · ${w.hour.n}판</span></div>`:""}</div>`});
+  if(w.yacht_king)S.push({bg:"linear-gradient(160deg,#6b4a12,#1d1203)",h:`<div class="we">요트 왕</div><div class="wemoji">🛥️</div><div class="wname">${nm(w.yacht_king.nm,w.yacht_king.user_id)}</div><div class="wbig">${w.yacht_king.y}번</div><p class="wsub">올해 요트를 가장 많이 굴렸어요.</p>`});
+  const me=w.me;
+  if(me&&(me.g||me.bot_g))S.push({bg:"linear-gradient(160deg,#165a4d,#062019)",h:`<div class="we">나의 ${w.year}</div><div class="wname">${esc(me.nm)}</div>
+    <div class="wgrid"><div><b>${me.g}판</b><span>온라인 판</span></div><div><b>${me.w}승</b><span>1등${me.rank_w&&me.g?` · ${me.of}명 중 ${me.rank_w}위`:""}</span></div>
+    ${me.best?`<div><b>${me.best.score}</b><span>최고 점수 · ${dt(me.best.played_at)}</span></div>`:""}<div><b>${me.yachts}번</b><span>굴린 요트</span></div>
+    <div><b>${me.bot_w}/${me.bot_g}</b><span>요트봇 승리</span></div><div><b>${me.ach}개</b><span>받은 업적</span></div></div>`});
+  S.push({bg:"linear-gradient(160deg,#0f4a3f,#07241f)",h:`<div class="wemoji">🎉</div><h2>내년에도<br>같이 굴려요!</h2><p class="wsub">이 화면은 첫 화면의 <b>${w.year} 결산</b> 버튼으로 언제든 다시 볼 수 있어요.</p>`});
+  return S;
+}
+async function openWrap(yr){
+  WR.yr=yr;$("wrap").hidden=false;WR.i=0;
+  $("wrapSlide").innerHTML='<p class="wsub">결산을 모으는 중…</p>';$("wrapProg").innerHTML="";$("wrapDots").textContent="";
+  if(!ACC.sb){$("wrapSlide").innerHTML='<p class="wsub">기록 서버에 연결하지 못했어요. 잠시 후 다시 열어 주세요.</p>';return}
+  try{const {data,error}=await ACC.sb.rpc("wrap",{yr});if(error||!data)throw error||0;WR.data=data;WR.slides=wrapSlides(data);wrapShow()}
+  catch(e){$("wrapSlide").innerHTML='<p class="wsub">결산을 불러오지 못했어요.<br>기록 서버가 잠시 쉬고 있을 수 있어요. 잠시 후 다시 열어 주세요.</p>'}
+}
+function wrapShow(){
+  const n=WR.slides.length;WR.i=Math.max(0,Math.min(n-1,WR.i));const sl=WR.slides[WR.i];
+  $("wrapSlide").innerHTML=sl.h;document.querySelector("#wrap .wbox").style.setProperty("--wbg",sl.bg);
+  $("wrapProg").innerHTML=WR.slides.map((_,k)=>`<i class="${k<=WR.i?"on":""}"></i>`).join("");
+  $("wrapDots").textContent=`${WR.i+1} / ${n}`;$("wrapPrev").disabled=WR.i===0;$("wrapNext").textContent=WR.i===n-1?"닫기":"다음";
+}
+function wrapStep(d){if(!WR.slides.length)return;if(d>0&&WR.i===WR.slides.length-1){closeWrap();return}WR.i+=d;wrapShow()}
+function closeWrap(){$("wrap").hidden=true}
+$("wrapNext").onclick=()=>wrapStep(1);$("wrapPrev").onclick=()=>wrapStep(-1);$("wrapClose").onclick=closeWrap;
+$("wrapSlide").addEventListener("click",e=>{const r=e.currentTarget.getBoundingClientRect();wrapStep(e.clientX<r.left+r.width*.3?-1:1)});
+{let sx=null;$("wrapSlide").addEventListener("touchstart",e=>{sx=e.touches[0].clientX},{passive:true});$("wrapSlide").addEventListener("touchend",e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>50){e.preventDefault();wrapStep(dx<0?1:-1)}})}
+document.addEventListener("keydown",e=>{if($("wrap").hidden)return;if(e.key==="ArrowRight")wrapStep(1);else if(e.key==="ArrowLeft")wrapStep(-1);else if(e.key==="Escape")closeWrap()});
+$("wrapBtn").onclick=()=>openWrap(+$("wrapBtn").dataset.yr);
+function wrapInit(){
+  const q=+new URLSearchParams(location.search).get("wrap"),yr=q>=2026&&q<=2100?q:wrapWindowYear();
+  if(!yr)return;
+  $("wrapBtn").hidden=false;$("wrapBtn").dataset.yr=yr;$("wrapBtn").textContent=`🎉 ${yr} 결산 보기`;
+  if(q||!store.get("yd-wrap-"+yr)){store.set("yd-wrap-"+yr,"1");setTimeout(()=>{if(!mode)openWrap(yr)},1200)}
+}
 /* ---------- achievements ----------
    auto ones are judged by the database from the records; "feat" ones (things that happened in a
    game) are noticed here and sent at the end of the game. Each can be earned once. */
@@ -3140,7 +3236,9 @@ function achTick(){
   const k=(mode||"")+":"+G.gid;if(ACH.done.has(k))return;ACH.done.add(k);
   const me=G.final.find(f=>f.cid===myCid);if(!me||me.away)return;
   const b=boardOf(myCid);if(!b||!done(b))return;
-  const feats=achFeats(b,ACH.turns[G.gid]||[]);delete ACH.turns[G.gid];
+  const turns=ACH.turns[G.gid]||[],feats=achFeats(b,turns);delete ACH.turns[G.gid];
+  const gm=mode==="ai"?"bot":G.final.length===1?"solo":"online",gk=(mode==="online"?code:"ai")+":"+G.gid;
+  ACC.sb.from("game_stats").insert({game_key:gk.slice(0,60),mode:gm,score:Math.min(330,totals(b.scores).total),yachts:Math.min(12,turns.filter(t=>t.d.every(x=>x===t.d[0])).length),bonus:totals(b.scores).bonus>0}).then(()=>{},()=>{});
   setTimeout(()=>claimAch(feats),3500);      // after this game's record is saved
   if(mode==="online")setTimeout(()=>claimAch([]),16000);   // once the others have confirmed the result
 }
@@ -3555,6 +3653,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.9",time:"14:06",date:"2026.11.27",items:[
+    "연말 결산을 미리 준비했어요. 12월 20일부터 1월 15일 사이에 사이트를 열면 올해의 챔피언, 개근상, 최고 점수, 라이벌, 나의 한 해를 카드로 넘겨 보는 결산이 자동으로 떠요.",
+    "결산에 넣을 수 있도록 판이 끝날 때마다 요트 횟수 같은 짧은 요약을 함께 저장해요(로그인한 경우)."]},
   {ver:"2.8",time:"13:54",date:"2026.11.27",items:[
     "업적이 생겼어요! 첫 승리, 250점 돌파, 요트봇 정복 같은 일반 업적과, 달성해야 조건이 공개되는 히든 업적이 있어요.",
     "업적을 달성하면 팝업과 함께 포인트를 받아요. 지금까지의 기록으로 이미 달성한 업적은 로그인하면 바로 받아요.",
@@ -3851,7 +3952,7 @@ $("voices").addEventListener("click",e=>{
 });
 $("vStyles").addEventListener("change",e=>{if(VSTYLES[e.target.value]){V.style=e.target.value;store.set("yd-vstyle",V.style);speakNow("풀하우스!",Math.max(.3,S.vol),curVoice())}});
 $("people").addEventListener("click",e=>{if(e.target.id==="people")$("people").hidden=true});
-document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("rep").hidden){$("rep").hidden=true;return}if(!$("prof").hidden){$("prof").hidden=true;return}if(!$("shop").hidden){$("shop").hidden=true;return}for(const id of ["people","voices","acct","ranks","news","board","admin"])if(!$(id).hidden)$(id).hidden=true});
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("wrap").hidden)return;if(!$("rep").hidden){$("rep").hidden=true;return}if(!$("prof").hidden){$("prof").hidden=true;return}if(!$("shop").hidden){$("shop").hidden=true;return}for(const id of ["people","voices","acct","ranks","news","board","admin"])if(!$(id).hidden)$(id).hidden=true});
 $("watchBtn").onclick=()=>enterTable($("joinCode").value,false,undefined,undefined,false,true);
 $("specBtn").onclick=()=>setSpec(seated());
 $("joinPlayBtn").onclick=()=>setSpec(false);
@@ -4045,7 +4146,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27i";
+const APP_VER="2026-11-27j";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
