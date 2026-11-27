@@ -2086,9 +2086,10 @@ function d3Load(){
     import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js"),
     import("https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js")
   ]).then(([T3,C])=>{
-    const r=new T3.WebGLRenderer({alpha:true,antialias:true});
+    const dpr=window.devicePixelRatio||1;
+    const r=new T3.WebGLRenderer({alpha:true,antialias:dpr<2,powerPreference:"high-performance"});
     r.setClearColor(0x000000,0);r.shadowMap.enabled=true;r.shadowMap.type=T3.PCFSoftShadowMap;
-    Object.assign(D3,{ok:true,T3,C,r});
+    Object.assign(D3,{ok:true,T3,C,r,rw:0,rh:0,rpr:0});
     try{render()}catch(e){}
   }).catch(()=>{}).finally(()=>{D3.loading=false});
 }
@@ -2241,7 +2242,7 @@ function cupThrow(pv,t){const c=cupThrowAt(t,pv.userData.Rt);cupPose(pv,c.ox,0,c
 function d3Stage(Wu,Hu,W,H){
   const T3=D3.T3,scene=new T3.Scene();
   scene.add(new T3.AmbientLight(0xffffff,D3LIGHT.amb));
-  const L=new T3.DirectionalLight(0xffffff,D3LIGHT.dir);L.position.set(-2.5,12,-3.5);L.castShadow=true;L.shadow.mapSize.set(1024,1024);
+  const L=new T3.DirectionalLight(0xffffff,D3LIGHT.dir);L.position.set(-2.5,12,-3.5);L.castShadow=true;L.shadow.mapSize.set(D3SHADOW(),D3SHADOW());
   Object.assign(L.shadow.camera,{left:-Wu/2-1,right:Wu/2+1,top:Hu/2+1,bottom:-Hu/2-1,near:1,far:30});L.shadow.camera.updateProjectionMatrix();scene.add(L);
   const flG=new T3.PlaneGeometry(Wu+2,Hu+2),flM=new T3.ShadowMaterial({opacity:.32}),fl=new T3.Mesh(flG,flM);fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;scene.add(fl);
   const Hc=16,cam=new T3.PerspectiveCamera(2*Math.atan(Hu/2/Hc)*180/Math.PI,W/H,1,60);
@@ -2273,7 +2274,7 @@ function d3Shake(v,b,idx){
   });
   const st=d3Stage(Wu,Hu,W,H),mats=d3Mats(v),geo=d3Geo(),cupM=d3Cup(g);st.scene.add(cupM);
   const meshes=bodies.map(()=>{const m=new T3.Mesh(geo,faceVals(Math.floor(rnd()*6),1+Math.floor(rnd()*6)).map(x=>mats[x]));m.castShadow=true;st.scene.add(m);return m});
-  const pr=Math.min(2,window.devicePixelRatio||1),cv=document.createElement("canvas");
+  const pr=D3PR(),cv=document.createElement("canvas");
   cv.className="d3";cv.width=Math.round(W*pr);cv.height=Math.round(H*pr);v.tray.appendChild(cv);
   const t0=performance.now();
   const a={v,live:true,hide:new Set(idx),scene:st.scene,cam:st.cam,meshes,bodies,cv,ctx:cv.getContext("2d"),pr,W,H,Wu,Hu,start:t0,last:t0,kick:-1,dur:Infinity,done:false};
@@ -2420,10 +2421,18 @@ function d3Draw(a,now){
   if(a.cupM)cupThrow(a.cupM,(now-a.start)/1000);
   d3Blit(a,true);
 }
+// pixel ratio and shadow detail: a bit lower on phones, where the 3D view is small anyway
+const D3PR=()=>Math.min(window.innerWidth<=600?1.5:2,window.devicePixelRatio||1);
+const D3SHADOW=()=>window.innerWidth<=600?512:1024;
+function d3Fit(W,H,pr){
+  const r=D3.r;
+  if(D3.rpr!==pr||W>D3.rw||H>D3.rh){D3.rpr=pr;D3.rw=Math.max(D3.rw,W);D3.rh=Math.max(D3.rh,H);r.setPixelRatio(pr);r.setSize(D3.rw,D3.rh,false)}
+  r.setViewport(0,D3.rh-H,W,H);r.setScissor(0,D3.rh-H,W,H);r.setScissorTest(true);
+}
+function d3Copy(ctx,W,H,pr,cw,ch){ctx.clearRect(0,0,cw,ch);ctx.drawImage(D3.r.domElement,0,0,Math.round(W*pr),Math.round(H*pr),0,0,cw,ch)}
 function d3Blit(a,front){
   const r=D3.r;
-  if(r.getPixelRatio()!==a.pr)r.setPixelRatio(a.pr);
-  const sz=r.getSize(new D3.T3.Vector2());if(sz.x!==a.W||sz.y!==a.H)r.setSize(a.W,a.H,false);
+  d3Fit(a.W,a.H,a.pr);
   if(front){
     if(!a.layered){a.layered=true;a.scene.traverse(o=>{if(o.isLight){o.layers.enableAll();if(o.shadow)o.shadow.camera.layers.enableAll()}})}
     // pass 1: felt, cup and dice still in the cup (all of them cast shadows); pass 2: dice out of the cup, on top
@@ -2432,13 +2441,14 @@ function d3Blit(a,front){
     r.render(a.scene,a.cam);
     r.autoClear=true;r.shadowMap.autoUpdate=true;a.cam.layers.set(0);
   }else r.render(a.scene,a.cam);
-  a.ctx.clearRect(0,0,a.cv.width,a.cv.height);a.ctx.drawImage(r.domElement,0,0,a.cv.width,a.cv.height);
+  d3Copy(a.ctx,a.W,a.H,a.pr,a.cv.width,a.cv.height);
 }
 function d3Loop(now){
   for(const a of [...D3.anims]){
     if(!a.v.el.isConnected){a.stop();continue}
-    d3Draw(a,now);
-    if(now-a.start>=a.dur)a.finish();
+    const end=now-a.start>=a.dur,other=a.v.cid!==myCid&&!a.tick;
+    if(end||!other||(a.fr=(a.fr||0)+1)%2===0)d3Draw(a,now);
+    if(end)a.finish();
   }
   if(D3.anims.size)requestAnimationFrame(d3Loop);else D3.loop=false;
 }
@@ -2474,13 +2484,13 @@ function d3Roll(v,b,idx){
   const near=(fa,fb)=>fa.every((p,j)=>{const q=fb[j];return Math.hypot(p[0]-q[0],p[1]-q[1],p[2]-q[2])<.06&&Math.abs(p[3]*q[3]+p[4]*q[4]+p[5]*q[5]+p[6]*q[6])>.999});
   while(rk>0&&near(sim.frames[rk-1],last))rk--;
   scene.add(new T3.AmbientLight(0xffffff,D3LIGHT.amb));
-  const L=new T3.DirectionalLight(0xffffff,D3LIGHT.dir);L.position.set(-2.5,12,-3.5);L.castShadow=true;L.shadow.mapSize.set(1024,1024);
+  const L=new T3.DirectionalLight(0xffffff,D3LIGHT.dir);L.position.set(-2.5,12,-3.5);L.castShadow=true;L.shadow.mapSize.set(D3SHADOW(),D3SHADOW());
   Object.assign(L.shadow.camera,{left:-Wu/2-1,right:Wu/2+1,top:Hu/2+1,bottom:-Hu/2-1,near:1,far:30});L.shadow.camera.updateProjectionMatrix();scene.add(L);
   const flG=new T3.PlaneGeometry(Wu+2,Hu+2),flM=new T3.ShadowMaterial({opacity:.32}),fl=new T3.Mesh(flG,flM);fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;scene.add(fl);
   // camera straight above, framed so a die's top face is exactly the size of a flat die
   const Hc=16,cam=new T3.PerspectiveCamera(2*Math.atan(Hu/2/Hc)*180/Math.PI,W/H,1,60);
   cam.position.set(0,1+Hc,0);cam.up.set(0,0,-1);cam.lookAt(0,1,0);
-  const pr=Math.min(2,window.devicePixelRatio||1),cv=document.createElement("canvas");
+  const pr=D3PR(),cv=document.createElement("canvas");
   cv.className="d3";cv.width=Math.round(W*pr);cv.height=Math.round(H*pr);v.tray.appendChild(cv);
   if(v.anim)v.anim.stop();
   const a={v,hide:new Set(idx),scene,cam,meshes,cupM,frames:sim.frames,cv,ctx:cv.getContext("2d"),pr,W,H,start:performance.now(),dur:(sim.frames.length-1)*1000/60,done:false};
@@ -2497,12 +2507,19 @@ function d3Roll(v,b,idx){
 // is drawn once onto a canvas that stays in the tray. The flat dice sit on top, invisible, so
 // clicking a die to hold it works as before. Redrawn only when something visible changes.
 const restQ=new Map();
+const trayRO=typeof ResizeObserver==="function"?new ResizeObserver(es=>{let any=false;for(const e of es){const v=e.target.__v;if(v&&v.sz){v.sz=null;any=true}}if(any)requestAnimationFrame(()=>{try{render()}catch(_){}})}):null;
+function traySize(v){
+  if(v.sz)return v.sz;
+  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--td);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
+  const sz={W:v.tray.clientWidth,H:v.tray.clientHeight,d:v.probe.offsetWidth};
+  if(trayRO&&!v.tray.__v){v.tray.__v=v;trayRO.observe(v.tray)}
+  if(trayRO&&sz.W>0)v.sz=sz;return sz;
+}
 function d3Rest(v,b){
   const drop=()=>{if(v.restCv){v.restCv.remove();v.restCv=null}v.rest=null;return false};
   if(!d3on()||!v.el.isConnected||v.anim||(b&&b.rolling))return drop();
   const tray=[];if(b&&b.rolls>0)for(let i=0;i<5;i++)if(!b.held[i])tray.push(i);
-  if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--td);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
-  const W=v.tray.clientWidth,H=v.tray.clientHeight,d=v.probe.offsetWidth;
+  const {W,H,d}=traySize(v);
   if(W<60||H<40||d<8)return drop();
   const mats=d3Mats(v),sig=[b?b.rollId:0,tray.join(""),tray.map(i=>b.dice[i]).join(""),W,H,d,mats.key].join("|");
   if(v.rest&&v.rest.sig===sig&&v.restCv&&v.restCv.isConnected)return tray.length>0;
@@ -2520,19 +2537,17 @@ function d3Rest(v,b){
       scene.add(m);
     }
     scene.add(new T3.AmbientLight(0xffffff,D3LIGHT.amb));
-    const L=new T3.DirectionalLight(0xffffff,D3LIGHT.dir);L.position.set(-2.5,12,-3.5);L.castShadow=true;L.shadow.mapSize.set(1024,1024);
+    const L=new T3.DirectionalLight(0xffffff,D3LIGHT.dir);L.position.set(-2.5,12,-3.5);L.castShadow=true;L.shadow.mapSize.set(D3SHADOW(),D3SHADOW());
     Object.assign(L.shadow.camera,{left:-Wu/2-1,right:Wu/2+1,top:Hu/2+1,bottom:-Hu/2-1,near:1,far:30});L.shadow.camera.updateProjectionMatrix();scene.add(L);
     const flG=new T3.PlaneGeometry(Wu+2,Hu+2),flM=new T3.ShadowMaterial({opacity:.32}),fl=new T3.Mesh(flG,flM);fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;scene.add(fl);
     const Hc=16,cam=new T3.PerspectiveCamera(2*Math.atan(Hu/2/Hc)*180/Math.PI,W/H,1,60);
     cam.position.set(0,1+Hc,0);cam.up.set(0,0,-1);cam.lookAt(0,1,0);
-    const pr=Math.min(2,window.devicePixelRatio||1),r=D3.r;
+    const pr=D3PR(),r=D3.r;
     if(!v.restCv){v.restCv=document.createElement("canvas");v.restCv.className="d3 rest"}
     const cv=v.restCv;if(cv.parentNode!==v.tray)v.tray.appendChild(cv);
     cv.width=Math.round(W*pr);cv.height=Math.round(H*pr);
-    if(r.getPixelRatio()!==pr)r.setPixelRatio(pr);
-    const sz=r.getSize(new T3.Vector2());if(sz.x!==W||sz.y!==H)r.setSize(W,H,false);
-    r.render(scene,cam);
-    const c2=cv.getContext("2d");c2.clearRect(0,0,cv.width,cv.height);c2.drawImage(r.domElement,0,0,cv.width,cv.height);
+    d3Fit(W,H,pr);r.render(scene,cam);
+    d3Copy(cv.getContext("2d"),W,H,pr,cv.width,cv.height);
     flG.dispose();flM.dispose();L.dispose&&L.dispose();
     v.rest={sig};return tray.length>0;
   }catch(e){return drop()}
@@ -3821,6 +3836,8 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.13",time:"15:51",date:"2026.11.27",items:[
+    "3D 주사위를 가볍게 했어요. 같은 화면에서 여러 판을 그릴 때 그래픽 버퍼를 다시 만들지 않게 하고, 다른 사람 판은 절반 속도로 그려요. 휴대폰에서는 그림자와 해상도를 조금 낮춰 버벅임을 줄였어요."]},
   {ver:"2.12",time:"15:29",date:"2026.11.27",items:[
     "첫 화면에 라운지 채팅이 생겼어요. 사이트에 들어와 있는 사람 모두와 이야기할 수 있고, '접속 n명'을 누르면 누가 있는지 보여요. 채팅은 로그인하면 쓸 수 있고, 욕설은 가려지고 링크·연락처·도배는 막혀요.",
     "관리자 계정 이름 옆에는 '관리자' 표시가 붙어요.",
@@ -4326,7 +4343,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27m";
+const APP_VER="2026-11-27n";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
