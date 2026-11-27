@@ -129,7 +129,7 @@ insert into public.items (id, kind, name, price, data, sort) values
   ('t_straight','title', '스트레이트 장인', 70, '{"t":"스트레이트 장인","tier":"silver"}', 20),
   ('t_yacht',   'title', '요트 마스터',    140, '{"t":"요트 마스터","tier":"gold"}', 30),
   ('t_legend',  'title', '펠트 위의 전설', 260, '{"t":"펠트 위의 전설","tier":"legend"}', 40),
-  ('t_god',     'title', '주사위의 신',    450, '{"t":"주사위의 신","tier":"legend"}', 41),
+  ('t_god',     'title', '주사위의 신',    450, '{"t":"주사위의 신","tier":"god"}', 41),
   -- 주사위
   ('d_ink',     'dice', '먹색 주사위',     40, '{"bg":["#2b2d31","#151619"],"pip":"#f4f1ea","red":"#ff6b5a"}', 10),
   ('d_ruby',    'dice', '루비 주사위',     40, '{"bg":["#d8433b","#9e2420"],"pip":"#fff6ee","red":"#ffe08a"}', 11),
