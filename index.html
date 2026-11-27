@@ -473,7 +473,15 @@ button.chip:hover{border-color:var(--accent)}
 .rtab .when{color:var(--muted);font-size:12.5px}
 .phead{display:flex;flex-direction:column;gap:2px}
 .phead b{font-size:20px}
-.pstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.pstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px}
+.pstats.b4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:520px){.pstats.b4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pbest{display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap;border:1px solid color-mix(in srgb,var(--brass) 45%,var(--line2));background:color-mix(in srgb,var(--brass) 8%,var(--panel));border-radius:12px;padding:10px 14px}
+.pbest b{font-size:24px;font-variant-numeric:tabular-nums}
+.pbest.sm b{font-size:19px}
+.pbest span{font-size:13px;color:var(--muted)}
+.pbest .dt{flex-basis:100%}
+#prof .lock{font-weight:600;letter-spacing:0;margin-left:6px;padding:1px 7px;border-radius:999px;border:1px solid var(--line2)}
 .pstats div{border:1px solid var(--line2);background:var(--panel2);border-radius:12px;padding:9px 6px;text-align:center}
 .pstats b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
 .pstats span{font-size:12px;color:var(--muted)}
@@ -483,7 +491,7 @@ button.chip:hover{border-color:var(--accent)}
 .ptop .sc{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;min-width:44px}
 .ptop .pl{flex:1;font-size:13.5px}
 .ptop .dt{font-size:12.5px;color:var(--muted);white-space:nowrap}
-@media (max-width:420px){.pstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 .vstyles label{flex:1;min-width:90px}
 .vstyles input{position:absolute;opacity:0}
 .vstyles span{display:block;text-align:center;padding:8px 10px;border-radius:12px;border:1px solid var(--line2);background:var(--panel2);cursor:pointer;font-weight:600;font-size:14px}
@@ -2736,7 +2744,7 @@ function acctUI(){
   if(ACC.failed)h='<span class="who note">전적 서버에 연결하지 못했어요. 게임은 그대로 할 수 있어요.</span>';
   else if(!ACC.ready)h='<span class="who note">전적 서버에 연결하는 중…</span>';
   else if(!ACC.uid)h='<span class="who note">로그인하면 전적과 순위, 메달이 남아요.</span><button class="btn small" type="button" data-a="login">로그인 / 가입</button><button class="btn ghost small" type="button" data-a="ranks">순위</button>';
-  else{const w=winsOf(ACC.uid);h=`<span class="who"><button class="plink" type="button" data-prof="${ACC.uid}" title="내 프로필 보기"><b>${esc(ACC.username)}</b></button>${medalHTML(w)} <span class="note">· 통산 ${w}승</span></span><button class="btn ghost small" type="button" data-a="ranks">순위</button><button class="btn ghost small" type="button" data-a="logout">로그아웃</button>`}
+  else{const w=winsOf(ACC.uid);h=`<span class="who"><button class="plink" type="button" data-prof="${ACC.uid}" title="내 프로필 보기"><b>${esc(ACC.username)}</b></button>${medalHTML(w)} <span class="note">· 통산 ${w}승</span></span><button class="btn small" type="button" data-prof="${ACC.uid}">마이페이지</button><button class="btn ghost small" type="button" data-a="ranks">순위</button><button class="btn ghost small" type="button" data-a="logout">로그아웃</button>`}
   if(h!==ACC.shown){ACC.shown=h;el.innerHTML=h}
   if(ACC.uid&&mode==="online"&&G)syncNick();
   reportTick();
@@ -2794,8 +2802,27 @@ function refreshWinsAfter(){
   const ids=G.final.map(f=>f.uid).filter(isUUID);if(!ids.length)return;
   for(const d of [5000,15000])setTimeout(()=>{for(const u of ids)winsCache.delete(u);try{render()}catch(e){}},d);
 }
+// 봇전과 혼자 한 판: 나만 볼 수 있는 기록 (증인이 없어 기록판·순위·메달에는 쓰지 않는다)
+function practiceTick(){
+  if(!G||G.phase!=="over"||!Array.isArray(G.final)||!ACC.sb||!ACC.uid)return;
+  let k,row;
+  const me=G.final.find(f=>f.cid===myCid);if(!me||me.away)return;
+  if(mode==="ai"){
+    const bot=G.final.find(f=>f.cid===BOT_CID);if(!bot)return;
+    k="ai:"+G.gid;row={kind:"bot",level:botLevel,score:me.t,bot_score:bot.t,result:me.t>bot.t?"win":me.t<bot.t?"lose":"draw"};
+  }else if(mode==="online"&&G.final.length===1){k="solo:"+gameKey();row={kind:"solo",score:me.t}}
+  else return;
+  if(ACC.reported.has(k))return;ACC.reported.add(k);
+  if(store.get("yd-rep-"+k)){ACC.rec[k]="ok";return}
+  row.game_key=k.slice(0,60);ACC.rec[k]="saving";
+  ACC.sb.from("practice").insert(row).then(({error})=>{
+    if(error&&error.code!=="23505"){ACC.rec[k]=/too fast/.test(error.message||"")?"fast":"fail";renderOver();return}
+    store.set("yd-rep-"+k,"1");ACC.rec[k]="ok";renderOver();
+  },()=>{ACC.rec[k]="fail";renderOver()});
+}
+function practiceKey(){return !G?"":mode==="ai"?"ai:"+G.gid:mode==="online"&&Array.isArray(G.final)&&G.final.length===1?"solo:"+gameKey():""}
 function reportTick(){
-  refreshWinsAfter();
+  refreshWinsAfter();practiceTick();
   if(mode!=="online"||!G||G.phase!=="over"||!Array.isArray(G.final)||!ACC.sb||!ACC.uid)return;
   const k=gameKey();if(ACC.reported.has(k))return;
   ACC.reported.add(k);
@@ -2812,9 +2839,15 @@ function reportTick(){
   },()=>{ACC.rec[k]="fail";renderOver()});
 }
 function recNote(){
-  if(mode==="ai")return ACC.uid?"AI 대결은 전적에 들어가지 않아요.":"";
-  if(mode!=="online"||!G)return"";
   if(ACC.failed)return"";
+  const pk=practiceKey();
+  if(pk){
+    if(!ACC.uid)return"로그인하면 봇전과 혼자 한 판도 마이페이지에 기록돼요.";
+    const st=ACC.rec[pk];
+    return st==="ok"?"마이페이지에 기록했어요. 나만 볼 수 있고, 기록판과 순위에는 들어가지 않아요."
+      :st==="saving"?"기록하는 중…":st==="fast"?"너무 빨리 끝난 판이라 기록하지 않았어요.":st==="fail"?"기록하지 못했어요. 인터넷 연결을 확인해 주세요.":"";
+  }
+  if(mode!=="online"||!G)return"";
   if(!ACC.uid)return"로그인하면 다음 판부터 전적이 남아요.";
   const st=ACC.rec[gameKey()];
   return st==="ok"?"전적을 저장했어요. 같은 판의 다른 로그인 참가자도 저장하면 순위에 반영돼요."
@@ -2866,6 +2899,16 @@ async function loadRec(p){
 $("recTabs").addEventListener("change",e=>{if(e.target.name==="recperiod")loadRec(e.target.value)});
 $("recWins").onclick=()=>{rPeriod=recPeriod;openRanks()};
 let profSeq=0;
+const LV={easy:"쉬움",normal:"보통",hard:"어려움"};
+function practiceHTML(pr){
+  if(!pr)return'<h3>봇전 · 혼자 한 판</h3><p class="note">기록을 불러오지 못했어요.</p>';
+  const bot=pr.bot||[],g=bot.reduce((a,x)=>a+x.games,0),w=bot.reduce((a,x)=>a+x.win,0),l=bot.reduce((a,x)=>a+x.lose,0),dr=bot.reduce((a,x)=>a+x.draw,0);
+  const bb=pr.bot_best,sb=pr.solo_best;
+  return`<h3>봇전 · 혼자 한 판 <span class="lock">나만 보여요</span></h3>
+    <div class="pstats b4"><div><b>${w}승 ${l}패</b><span>봇전 ${g}판${dr?` · 무 ${dr}`:""}</span></div>${bot.map(x=>`<div><b>${x.win}승 ${x.lose}패</b><span>${LV[x.level]}${x.draw?` · 무 ${x.draw}`:""}</span></div>`).join("")}</div>
+    <div class="pbest sm">${bb?`<span>봇전 최고</span><b>${bb.score}점</b><span class="dt">${fmtDate(bb.created_at)} · ${LV[bb.level]} · ${bb.result==="win"?"승":bb.result==="lose"?"패":"무"} (봇 ${bb.bot_score})</span>`:'<span>아직 봇전 기록이 없어요.</span>'}</div>
+    <div class="pbest sm">${sb?`<span>혼자 한 판 최고</span><b>${sb.score}점</b><span class="dt">${fmtDate(sb.created_at)} · 총 ${pr.solo_games}판</span>`:'<span>혼자 한 판 기록이 아직 없어요. 방을 만들고 혼자 시작하면 남아요.</span>'}</div>`;
+}
 async function openProfile(uid){
   if(!isUUID(uid))return;
   $("prof").hidden=false;const body=$("profBody"),seq=++profSeq;
@@ -2878,11 +2921,18 @@ async function openProfile(uid){
     if(!d){body.innerHTML='<p class="note">없는 계정이에요.</p>';return}
     winsCache.set(d.id,{w:d.wins,t:Date.now()});
     const day=s=>fmtDate(s).slice(0,10),top=d.top||[];
-    $("profTitle").textContent=d.id===ACC.uid?"내 프로필":"프로필";
+    const mine=d.id===ACC.uid;
+    $("profTitle").textContent=mine?"마이페이지":"프로필";
+    const pr=mine?await ACC.sb.rpc("my_practice").then(r=>r.error?null:r.data,()=>null):null;
+    if(seq!==profSeq)return;
+    const lose=d.games-d.wins,best=top[0];
     body.innerHTML=`<div class="phead"><b>${esc(d.name)}${medalHTML(d.wins)}</b><span class="note">@${esc(d.username)} · ${day(d.joined)} 가입${d.last_played?` · 마지막 판 ${day(d.last_played)}`:""}</span></div>
-      <div class="pstats"><div><b>${d.games}</b><span>판</span></div><div><b>${d.wins}</b><span>1등</span></div><div><b>${d.games?Number(d.avg_rank).toFixed(1):"-"}</b><span>평균 등수</span></div><div><b>${d.games?Math.round(d.avg_score):"-"}</b><span>평균 점수</span></div></div>
+      <h3>온라인 대전</h3>
+      <div class="pbest">${best?`<span>최고 점수</span><b>${best.score}점</b><span class="dt">${fmtDate(best.played_at)} · ${best.players}명 중 ${best.rank}등</span>`:'<span>아직 기록된 온라인 판이 없어요.</span>'}</div>
+      <div class="pstats"><div><b>${d.wins}승 ${lose}패</b><span>${d.games}판${d.games?` · 승률 ${Math.round(d.wins/d.games*100)}%`:""}</span></div><div><b>${d.games?Number(d.avg_rank).toFixed(1):"-"}</b><span>평균 등수</span></div><div><b>${d.games?Math.round(d.avg_score):"-"}</b><span>평균 점수</span></div></div>
       <h3>최고 기록 TOP 5</h3>
-      ${top.length?`<ol class="ptop">${top.map((t,i)=>`<li><span class="no">${i+1}</span><span class="sc">${t.score}</span><span class="pl">${t.players}명 중 ${t.rank}등${t.rank===1?" 🏆":""}</span><span class="dt">${fmtDate(t.played_at)}</span></li>`).join("")}</ol>`:'<p class="note">아직 기록된 판이 없어요. 로그인한 친구와 온라인으로 한 판 하면 남아요.</p>'}`;
+      ${top.length?`<ol class="ptop">${top.map((t,i)=>`<li><span class="no">${i+1}</span><span class="sc">${t.score}</span><span class="pl">${t.players}명 중 ${t.rank}등${t.rank===1?" 🏆":""}</span><span class="dt">${fmtDate(t.played_at)}</span></li>`).join("")}</ol>`:'<p class="note">로그인한 친구와 온라인으로 한 판 하면 남아요. 승패는 1등이면 승, 아니면 패로 세요.</p>'}
+      ${mine?practiceHTML(pr):""}`;
   }catch(e){if(seq===profSeq)body.innerHTML='<p class="note">프로필을 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-prof]");if(b){e.preventDefault();openProfile(b.dataset.prof)}});
@@ -3045,6 +3095,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.3",time:"11:19",date:"2026.11.27",items:[
+    "로그인하면 아이디 옆에 마이페이지 버튼이 생겨요. 온라인 승패와 승률, 최고 점수와 그 날짜를 볼 수 있어요.",
+    "봇전(난이도별 승패, 최고 점수)과 혼자 한 판 기록도 남아요. 이 기록은 마이페이지에서 나만 볼 수 있고, 기록판과 순위에는 들어가지 않아요."]},
   {ver:"2.2",time:"11:08",date:"2026.11.27",items:[
     "첫 화면에 기록판이 생겼어요. 오늘·이번 주·이번 달·올해 최고 점수 상위 10명을 보여줘요. 점수가 같으면 먼저 낸 사람이 앞서요.",
     "이름을 누르면 프로필이 열려요. 판 수, 1등 횟수, 평균 등수·점수와 최고 기록 5개(점수·등수·날짜)를 볼 수 있어요.",
@@ -3505,7 +3558,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27c";
+const APP_VER="2026-11-27d";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
