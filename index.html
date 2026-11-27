@@ -1441,7 +1441,7 @@ const Dir={cpeer:null,hpeer:null,hubSlot:-1,hubConns:new Map(),reg:null,rooms:nu
   slots:HUBS.map((id,i)=>({i,id,conn:null,heard:0,retryAt:0,free:0,deadUntil:0,rooms:[],lastReg:0,regSent:""}))};
 // release our ids right away when the page goes, so others can take over quickly
 window.addEventListener("pagehide",()=>{try{if(Dir.cpeer)Dir.cpeer.destroy()}catch(e){}try{if(Dir.hpeer)Dir.hpeer.destroy()}catch(e){}});
-if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get wc(){return winsCache},get ban(){return BAN},get ach(){return ACH},get simc(){return simCache.size},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok,restQ}},setBoard:(c,b)=>setBoard(c,b)};
+if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get wc(){return winsCache},get ban(){return BAN},get ach(){return ACH},get simc(){return simCache.size},get lc(){return LC},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok,restQ}},setBoard:(c,b)=>setBoard(c,b)};
 // A private room is listed by name only: its code never leaves the table.
 function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)&&(r.sc===undefined||isInt(r.sc,0,30))&&(r.ts===undefined||(typeof r.ts==="number"&&isFinite(r.ts)))}
 function liveHubs(){return Dir.slots.filter(s=>s.conn&&s.conn.open).length+(Dir.hubSlot>=0?1:0)}
@@ -3011,7 +3011,7 @@ function renderSheet(){
   const ps=G.players,lead=leaders();
   let h="<thead><tr><th>항목</th>";
   const goneSet=new Set(isOver()?G.final.filter(f=>f.away).map(f=>f.cid):[]);
-  ps.forEach(p=>h+=`<th class="${meMode()&&p.cid===myCid?"mine":""}" title="${esc(p.name)}">${lead.has(p.cid)?FLAME:""}${esc(p.name)}${lead.has(p.cid)?FLAME+'<br><span class="tag lead1">현재 1등</span>':""}${goneSet.has(p.cid)?'<br><span class="tag bad">접속 끊김</span>':""}</th>`);
+  ps.forEach(p=>h+=`<th class="${meMode()&&p.cid===myCid?"mine":""}" title="${esc(p.name)}">${lead.has(p.cid)?FLAME:""}${nickHTML(p.name,lookOfCid(p.cid))}${lead.has(p.cid)?FLAME+'<br><span class="tag lead1">현재 1등</span>':""}${goneSet.has(p.cid)?'<br><span class="tag bad">접속 끊김</span>':""}</th>`);
   h+="</tr></thead><tbody>";
   const bs=ps.map(p=>boardOf(p.cid));
   const row=c=>{
@@ -3102,7 +3102,7 @@ const winsCache=new Map(),winsWant=new Set();let winsT=0;
 function winsOf(uid){
   if(!isUUID(uid))return 0;
   const c=winsCache.get(uid);
-  if(!c||Date.now()-c.t>300000){winsWant.add(uid);if(!winsT)winsT=setTimeout(fetchWins,250)}
+  if(!c||Date.now()-c.t>120000){winsWant.add(uid);if(!winsT)winsT=setTimeout(fetchWins,250)}
   return c?c.w:0;
 }
 function medalOfCid(cid){return mode==="local"?"":medalHTML(winsOf(uidOf(cid)))+adminTag(uidOf(cid))}
@@ -3164,7 +3164,7 @@ async function fetchWins(){
       if(!c||c.w!==r.wins||c.lks!==ks)ch=true;
       winsCache.set(r.user_id,{w:r.wins,t:Date.now(),lk,lks:ks,lkv:c&&c.lkv});
     }
-    if(ch){render();if(!$("home").hidden){refreshNames();if(LC&&LC.msgs.length)lcRender()}}
+    if(ch){render();refreshNames();if(LC){lcRenderWho();if(LC.msgs.length)lcRender()}}
   }catch(e){}
 }
 function setAcct(sess){
@@ -3352,7 +3352,7 @@ function plink(uid,name){return isUUID(uid)?`<button class="plink" type="button"
 const p2=n=>String(n).padStart(2,"0");
 function shortWhen(s,period){const d=new Date(s);return period==="day"?`${p2(d.getHours())}:${p2(d.getMinutes())}`:`${d.getMonth()+1}.${d.getDate()}`}
 let recPeriod="week",recSeq=0,recData=null;
-let refreshT=0;function refreshNames(){clearTimeout(refreshT);refreshT=setTimeout(()=>{document.querySelectorAll(".plink[data-prof]").forEach(b=>{const lk=lookOfUid(b.dataset.prof);if(lk&&lk.nick&&!b.querySelector(".nk")&&!b.dataset.raw)b.innerHTML=nickHTML(b.textContent,lk)})},50)}
+let refreshT=0;function refreshNames(){clearTimeout(refreshT);refreshT=setTimeout(()=>{document.querySelectorAll(".plink[data-prof]").forEach(b=>{if(b.dataset.raw)return;const lk=lookOfUid(b.dataset.prof),h=nickHTML(b.textContent,lk);if(b.innerHTML!==h)b.innerHTML=h})},50)}
 async function loadRec(p){
   recPeriod=p;document.querySelectorAll("#recTabs input").forEach(i=>i.checked=i.value===p);
   const body=$("recBody"),seq=++recSeq;
@@ -3388,6 +3388,7 @@ function lcStart(){
     for(const [k,arr] of Object.entries(st)){const x=arr[arr.length-1];if(x)list.push({cid:k,name:maskBad(String(x.name||"손님").slice(0,12)),uid:isUUID(x.uid)?x.uid:null,where:typeof x.where==="string"?x.where.slice(0,8):""})}
     LC.people=list.sort((a,b)=>(b.cid===myCid)-(a.cid===myCid)||a.name.localeCompare(b.name));lcRenderWho();
   });
+  LC.ch.on("broadcast",{event:"look"},m=>{const u=m&&m.payload&&m.payload.uid;if(!isUUID(u))return;const c=winsCache.get(u);if(c)c.t=0;winsOf(u)});
   LC.ch.on("postgres_changes",{event:"INSERT",schema:"public",table:"lobby_chat"},p=>{const r=p.new;if(r&&!LC.msgs.some(m=>m.id===r.id)){LC.msgs.push(r);if(LC.msgs.length>80)LC.msgs.shift();lcRender(true)}});
   LC.ch.on("postgres_changes",{event:"DELETE",schema:"public",table:"lobby_chat"},p=>{const id=p.old&&p.old.id;if(id){LC.msgs=LC.msgs.filter(m=>m.id!==id);lcRender()}});
   LC.ch.subscribe(st=>{if(st==="SUBSCRIBED"){LC.last="";lcTrack();lcLoad()}});
@@ -3714,6 +3715,7 @@ $("shopBody").addEventListener("click",async e=>{
     // fetch my look again and tell the table
     const c=winsCache.get(ACC.uid);if(c)c.t=0;winsOf(ACC.uid);
     if(T)T.presence({lkv:Date.now()}).catch(()=>{});
+    if(LC&&LC.ch)LC.ch.send({type:"broadcast",event:"look",payload:{uid:ACC.uid}}).catch(()=>{});
     toast(eqv?"장착했어요.":"해제했어요.");
   }
 });
@@ -3949,6 +3951,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.16",time:"16:32",date:"2026.11.27",items:[
+    "다른 사람이 산 꾸미기가 내 화면에 늦게 보이던 문제를 고쳤어요. 누가 아이템을 장착하면 접속 중인 모두에게 바로 알려서 곧바로 바뀌어요.",
+    "점수판 위쪽 이름과 게임 중 채팅 이름에도 닉네임 효과가 보여요."]},
   {ver:"2.15",time:"16:18",date:"2026.11.27",items:[
     "비싼 주사위·펠트에 특수 효과가 생겼어요. 대리석은 광택, 진주는 무지갯빛 일렁임, 황금은 빛나는 광채와 멈출 때 금빛 불꽃, 은하는 반짝이는 별과 멈출 때 별가루가 흩날려요.",
     "블랙 & 골드 펠트는 금테를 따라 빛이 흐르고, 로열 벨벳은 광택이 지나가고, 은하수는 별이 반짝이며 가끔 별똥별이 떨어져요."]},
@@ -4397,7 +4402,7 @@ function chatSend(){
 function chatFloat(m){
   const feed=$("chatFeed");
   const d=document.createElement("div");d.className="cbub"+(m.cid===myCid?" mine":"");
-  const b=document.createElement("b");b.textContent=m.name||"손님";d.appendChild(b);d.appendChild(document.createTextNode(m.x));
+  const b=document.createElement("b");b.innerHTML=nickHTML(m.name||"손님",lookOfCid(m.cid));d.appendChild(b);d.appendChild(document.createTextNode(m.x));
   feed.appendChild(d);
   while(feed.children.length>6)feed.firstChild.remove();
   setTimeout(()=>{d.classList.add("out");setTimeout(()=>d.remove(),650)},8000);
@@ -4408,7 +4413,7 @@ function chatRenderHist(){
   for(const m of chat.log){
     const li=document.createElement("li");if(m.cid===myCid)li.className="mine";
     const meta=document.createElement("div");meta.className="meta";
-    const b=document.createElement("b");b.textContent=m.name||"손님";
+    const b=document.createElement("b");b.innerHTML=nickHTML(m.name||"손님",lookOfCid(m.cid));
     const tm=document.createElement("span");const dt=new Date(m.t);tm.textContent=String(dt.getHours()).padStart(2,"0")+":"+String(dt.getMinutes()).padStart(2,"0");
     meta.append(b,tm);
     const tx=document.createElement("div");tx.className="txt";tx.textContent=m.x;
@@ -4466,7 +4471,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27p";
+const APP_VER="2026-11-27q";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
