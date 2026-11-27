@@ -501,6 +501,18 @@ button.chip:hover{border-color:var(--accent)}
 .sitem .btn{width:100%;justify-content:center}
 .sitem .pv .ttl{margin:0;font-size:13px;padding:2px 10px}
 #prof{z-index:36}
+#achPop{position:fixed;left:50%;top:18px;z-index:70;display:flex;align-items:center;gap:12px;padding:10px 16px 10px 12px;border-radius:16px;
+  background:linear-gradient(135deg,#2b1d05,#5a3d0b);color:#fff3cf;box-shadow:0 0 0 2px #e2b443,0 12px 30px rgba(0,0,0,.35);transform:translate(-50%,-140%);transition:transform .35s cubic-bezier(.2,1.4,.4,1),opacity .35s;max-width:calc(100vw - 32px)}
+#achPop.in{transform:translate(-50%,0)}#achPop.out{opacity:0;transform:translate(-50%,-30%)}
+#achPop .ai{font-size:28px}#achPop small{display:block;font-size:11.5px;color:#f0c86e;font-weight:700;letter-spacing:.04em}#achPop b{font-size:16px}
+#achPop .ap{margin-left:6px;font-weight:800;color:#ffe08a;font-variant-numeric:tabular-nums}
+.achl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.achl li{display:flex;align-items:center;gap:10px;border:1px solid var(--line2);border-radius:12px;padding:8px 12px;background:var(--panel2);opacity:.62}
+.achl li.on{opacity:1;background:color-mix(in srgb,var(--brass) 10%,var(--panel));border-color:color-mix(in srgb,var(--brass) 50%,var(--line2))}
+.achl .ai{font-size:20px;width:26px;text-align:center}
+.achl .at{flex:1;min-width:0;display:flex;flex-direction:column}
+.achl .at small{font-size:12px;color:var(--muted)}
+.achl .ap{font-size:12.5px;color:var(--brass);font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
 #rep{z-index:38}#banned{z-index:60;background:rgba(8,14,12,.82)}
 #admin .panel{width:min(720px,100%);max-height:min(780px,calc(100vh - 32px))}
 #rep textarea{width:100%;resize:vertical;font:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line2);background:var(--field);color:var(--ink)}
@@ -859,6 +871,7 @@ button.chip:hover{border-color:var(--accent)}
       <div class="medals-key"><span><span class="medal m1"></span> 1승</span><span><span class="medal m2"></span> 10승</span><span><span class="medal m3"></span> 30승</span><span><span class="medal m4"></span> 100승</span></div>
     </div>
   </div>
+  <div id="achPop" hidden role="status" aria-live="polite"></div>
   <div id="banned" hidden>
     <div class="panel" role="alertdialog" aria-labelledby="banTitle">
       <h2 id="banTitle">이용이 제한됐어요</h2>
@@ -1283,7 +1296,7 @@ const Dir={cpeer:null,hpeer:null,hubSlot:-1,hubConns:new Map(),reg:null,rooms:nu
   slots:HUBS.map((id,i)=>({i,id,conn:null,heard:0,retryAt:0,free:0,deadUntil:0,rooms:[],lastReg:0,regSent:""}))};
 // release our ids right away when the page goes, so others can take over quickly
 window.addEventListener("pagehide",()=>{try{if(Dir.cpeer)Dir.cpeer.destroy()}catch(e){}try{if(Dir.hpeer)Dir.hpeer.destroy()}catch(e){}});
-if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get wc(){return winsCache},get ban(){return BAN},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok,restQ}},setBoard:(c,b)=>setBoard(c,b)};
+if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get wc(){return winsCache},get ban(){return BAN},get ach(){return ACH},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok,restQ}},setBoard:(c,b)=>setBoard(c,b)};
 // A private room is listed by name only: its code never leaves the table.
 function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)&&(r.sc===undefined||isInt(r.sc,0,30))&&(r.ts===undefined||(typeof r.ts==="number"&&isFinite(r.ts)))}
 function liveHubs(){return Dir.slots.filter(s=>s.conn&&s.conn.open).length+(Dir.hubSlot>=0?1:0)}
@@ -1923,6 +1936,7 @@ function pick(cid,c){
   const b0=boardOf(cid);
   if(!canAct(cid)||b0.rolling||busy.get(cid)||b0.rolls<1||b0.scores[c]!==null)return;
   const b=clone(b0);const pts=calc(b.dice,c);
+  if(cid===myCid&&G)achTurn(G.gid,b.dice,b0.rolls,c,pts);
   b.scores[c]=pts;b.last={c,pts,k:rid()};sfxScore(pts);
   b.rolls=0;b.rolling=false;b.held=[false,false,false,false,false];b.mask=[false,false,false,false,false];
   setBoard(cid,b);
@@ -2919,7 +2933,7 @@ function setAcct(sess){
   const su=sess&&sess.user,u=su&&!su.is_anonymous?su:null,uid=u?u.id:null;   // an anonymous session is only for voting
   ACC.username=u?((u.user_metadata&&u.user_metadata.username)||(u.email||"").split("@")[0]):null;
   if(uid===ACC.uid)return;
-  ACC.uid=uid;ACC.nickSent=null;setTimeout(checkAdmin,0);if(ACC.ready)setTimeout(checkBan,0);
+  ACC.uid=uid;ACC.nickSent=null;setTimeout(checkAdmin,0);if(ACC.ready){setTimeout(checkBan,0);if(uid)setTimeout(()=>claimAch([]),1500)}
   if(T)T.presence({uid}).catch(()=>{});
   try{render()}catch(e){}
 }
@@ -2929,7 +2943,7 @@ if(!new URLSearchParams(location.search).has("nodb"))
     const {data}=await ACC.sb.auth.getSession();
     setAcct(data&&data.session);
     ACC.sb.auth.onAuthStateChange((ev,sess)=>setTimeout(()=>setAcct(sess),0));
-    ACC.ready=true;acctUI();loadRec(recPeriod);loadWords();checkBan();
+    ACC.ready=true;acctUI();loadRec(recPeriod);loadWords();checkBan();if(ACC.uid)setTimeout(()=>claimAch([]),3000);
   }).catch(()=>{ACC.failed=true;acctUI();loadRec(recPeriod)});
 else{ACC.failed=true;setTimeout(()=>loadRec(recPeriod),0)}
 // keep the nickname shown on the rankings up to date
@@ -3022,7 +3036,7 @@ function practiceTick(){
 }
 function practiceKey(){return !G?"":mode==="ai"?"ai:"+G.gid:mode==="online"&&Array.isArray(G.final)&&G.final.length===1?"solo:"+gameKey():""}
 function reportTick(){
-  refreshWinsAfter();practiceTick();
+  refreshWinsAfter();practiceTick();achTick();
   if(mode!=="online"||!G||G.phase!=="over"||!Array.isArray(G.final)||!ACC.sb||!ACC.uid)return;
   const k=gameKey();if(ACC.reported.has(k))return;
   ACC.reported.add(k);
@@ -3101,6 +3115,58 @@ async function loadRec(p){
 $("recTabs").addEventListener("change",e=>{if(e.target.name==="recperiod")loadRec(e.target.value)});
 $("recWins").onclick=()=>{rPeriod=recPeriod;openRanks()};
 let profSeq=0;
+/* ---------- achievements ----------
+   auto ones are judged by the database from the records; "feat" ones (things that happened in a
+   game) are noticed here and sent at the end of the game. Each can be earned once. */
+const ACH={turns:{},done:new Set(),catalog:null,queue:[],showing:false};
+function achTurn(gid,dice,rolls,c,pts){(ACH.turns[gid]=ACH.turns[gid]||[]).push({d:dice.slice(),r:rolls,c,pts})}
+function achFeats(b,turns){
+  const f=new Set(),same=d=>d.every(x=>x===d[0]);
+  const ys=turns.filter(t=>same(t.d));
+  if(ys.length)f.add("yacht");
+  if(ys.length>=2)f.add("yacht_twice");
+  if(ys.some(t=>t.r===1))f.add("yacht_first");
+  if(ys.some(t=>t.d[0]===6))f.add("six_yacht");
+  if(ys.some(t=>t.d[0]===1))f.add("one_yacht");
+  const tt=totals(b.scores);
+  if(tt.bonus>0)f.add("bonus");
+  if(b.scores[10]===30)f.add("l_straight");
+  if(b.scores.every(x=>x!==null&&x>0))f.add("no_zero");
+  if(b.scores.every(x=>x!==null)&&tt.total<100)f.add("low_score");
+  return[...f];
+}
+function achTick(){
+  if(!G||G.phase!=="over"||!Array.isArray(G.final)||!ACC.sb||!ACC.uid)return;
+  const k=(mode||"")+":"+G.gid;if(ACH.done.has(k))return;ACH.done.add(k);
+  const me=G.final.find(f=>f.cid===myCid);if(!me||me.away)return;
+  const b=boardOf(myCid);if(!b||!done(b))return;
+  const feats=achFeats(b,ACH.turns[G.gid]||[]);delete ACH.turns[G.gid];
+  setTimeout(()=>claimAch(feats),3500);      // after this game's record is saved
+  if(mode==="online")setTimeout(()=>claimAch([]),16000);   // once the others have confirmed the result
+}
+async function claimAch(feats){
+  if(!ACC.sb||!ACC.uid)return;
+  try{const {data,error}=await ACC.sb.rpc("claim_achievements",{feats});if(error||!Array.isArray(data))return;for(const a of data)ACH.queue.push(a);achShow()}catch(e){}
+}
+function achShow(){
+  if(ACH.showing||!ACH.queue.length)return;ACH.showing=true;
+  const a=ACH.queue.shift(),el=$("achPop");
+  el.innerHTML=`<span class="ai" aria-hidden="true">🏆</span><span><small>${a.hidden?"히든 업적 달성!":"업적 달성!"}</small><b>${esc(a.name)}</b></span><span class="ap">+${a.points}P</span>`;
+  el.hidden=false;el.classList.remove("out");void el.offsetWidth;el.classList.add("in");
+  if(ready())try{fanfare(.6)}catch(e){}
+  setTimeout(()=>{el.classList.add("out");setTimeout(()=>{el.hidden=true;el.classList.remove("in","out");ACH.showing=false;achShow()},400)},3200);
+}
+async function achSection(uid,mine){
+  try{
+    if(!ACH.catalog){const r=await ACC.sb.from("achievements").select("id,name,descr,hidden,points,sort").order("sort");if(r.error)throw r.error;ACH.catalog=r.data||[]}
+    const u=await ACC.sb.from("user_achievements").select("ach_id,at").eq("user_id",uid);if(u.error)throw u.error;
+    const got=new Map((u.data||[]).map(r=>[r.ach_id,r.at])),all=ACH.catalog;
+    const list=mine?all:all.filter(a=>got.has(a.id));
+    const hiddenLeft=all.filter(a=>a.hidden&&!got.has(a.id)).length;
+    return`<h3>업적 ${got.size} / ${all.length}</h3>${list.length?`<ul class="achl">${list.map(a=>{const on=got.has(a.id),secret=a.hidden&&!on;
+      return`<li class="${on?"on":""}${a.hidden?" hid":""}"><span class="ai" aria-hidden="true">${on?"🏆":secret?"❔":"🔒"}</span><span class="at"><b>${secret?"???":esc(a.name)}</b><small>${secret?"히든 업적 · 조건은 달성하면 공개돼요":esc(a.descr)}</small></span><span class="ap">${on?fmtDate(got.get(a.id)).slice(0,10):"+"+a.points+"P"}</span></li>`}).join("")}</ul>`:'<p class="note">아직 달성한 업적이 없어요.</p>'}${!mine&&hiddenLeft?`<p class="note" style="margin:0">숨겨진 업적이 ${hiddenLeft}개 더 있어요.</p>`:""}`;
+  }catch(e){return'<h3>업적</h3><p class="note">업적을 불러오지 못했어요.</p>'}
+}
 /* ---------- moderation: ban check, reports, admin panel ---------- */
 const BAN={info:null};
 async function checkBan(){
@@ -3209,7 +3275,7 @@ $("adminClose").onclick=()=>{$("admin").hidden=true};
 $("admin").addEventListener("click",e=>{if(e.target.id==="admin")$("admin").hidden=true});
 const SHOP={kind:"nick",items:null,owned:new Set(),eq:{},pts:null,busy:false};
 const SLOT_COL={nick:"eq_nick",title:"eq_title",dice:"eq_dice",felt:"eq_felt"};
-function ptsHTML(pt){return pt?`<span>내 포인트</span><b>${pt.balance}P</b><span class="how">1등 ${pt.wins}번 × 10P = ${pt.win_pts}P · 봇전 승리 ${pt.bot_pts}P${pt.spent?` · 사용 ${pt.spent}P`:""}</span><span class="how">온라인 1등 10P, 봇전 승리 쉬움 1P·보통 2P·어려움 3P (봇전은 하루 10P까지)</span>`:'<span>포인트를 불러오지 못했어요.</span>'}
+function ptsHTML(pt){return pt?`<span>내 포인트</span><b>${pt.balance}P</b><span class="how">1등 ${pt.wins}번 × 10P = ${pt.win_pts}P · 봇전 승리 ${pt.bot_pts}P${pt.ach_pts?` · 업적 ${pt.ach_pts}P`:""}${pt.spent?` · 사용 ${pt.spent}P`:""}</span><span class="how">온라인 1등 10P, 봇전 승리 쉬움 1P·보통 2P·어려움 3P (봇전은 하루 10P까지), 업적 달성 보상</span>`:'<span>포인트를 불러오지 못했어요.</span>'}
 async function openShop(){
   $("shop").hidden=false;
   if(!ACC.sb||!ACC.uid){$("shopPts").innerHTML='<span>로그인하면 포인트를 모으고 꾸미기를 살 수 있어요.</span>';}
@@ -3312,6 +3378,8 @@ async function openProfile(uid){
       ${mine?practiceHTML(pr):""}
       ${mine?`<h3>포인트</h3><div class="pts">${ptsHTML(pt)}</div><button class="btn small" type="button" id="profShop">꾸미기 상점 열기</button>`:""}`;
     const ps=$("profShop");if(ps)ps.onclick=()=>{$("prof").hidden=true;openShop()};
+    const ah=document.createElement("div");ah.style.cssText="display:flex;flex-direction:column;gap:8px";ah.innerHTML='<p class="note">업적 불러오는 중…</p>';body.appendChild(ah);
+    achSection(d.id,mine).then(h=>{if(seq===profSeq)ah.innerHTML=h});
     if(!mine){const rb=document.createElement("button");rb.className="btn ghost small repb";rb.type="button";rb.textContent="이 사람 신고하기";rb.style.alignSelf="flex-start";rb.onclick=()=>openReport({uid:d.id,name:d.name+" (@"+d.username+")"});body.appendChild(rb)}
   }catch(e){if(seq===profSeq)body.innerHTML='<p class="note">프로필을 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
 }
@@ -3487,6 +3555,10 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.8",time:"13:54",date:"2026.11.27",items:[
+    "업적이 생겼어요! 첫 승리, 250점 돌파, 요트봇 정복 같은 일반 업적과, 달성해야 조건이 공개되는 히든 업적이 있어요.",
+    "업적을 달성하면 팝업과 함께 포인트를 받아요. 지금까지의 기록으로 이미 달성한 업적은 로그인하면 바로 받아요.",
+    "마이페이지에서 전체 업적과 진행 상황을, 다른 사람 프로필에서는 그 사람이 달성한 업적을 볼 수 있어요."]},
   {ver:"2.7",time:"13:46",date:"2026.11.27",items:[
     "신고하기: 접속자 목록, 프로필, 피드백 글에서 부적절한 사람이나 글을 신고할 수 있어요. 방에서 신고하면 그 사람의 최근 채팅이 증거로 함께 가요.",
     "관리자는 신고를 확인하고 기간(1·3·7·30일)이나 영구로 이용을 제한할 수 있어요. 제한된 계정·기기는 방에 들어갈 수 없어요."]},
@@ -3973,7 +4045,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27h";
+const APP_VER="2026-11-27i";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
