@@ -135,8 +135,8 @@ insert into public.items (id, kind, name, price, data, sort) values
   ('d_ruby',    'dice', '루비 주사위',     40, '{"bg":["#d8433b","#9e2420"],"pip":"#fff6ee","red":"#ffe08a"}', 11),
   ('d_mint',    'dice', '민트 주사위',     40, '{"bg":["#bff0dc","#7fd3b4"],"pip":"#17423a","red":"#d0453a"}', 12),
   ('d_marble',  'dice', '대리석 주사위',  110, '{"bg":["#ffffff","#e4e2dd"],"pip":"#2a2c30","red":"#b8862b","fx":"marble"}', 20),
-  ('d_pearl',   'dice', '진주 주사위',    160, '{"bg":["#fdf7ff","#e7f1ff","#fbeaf2"],"pip":"#5b4d66","red":"#d06a8e","fx":"sheen"}', 21),
-  ('d_gold',    'dice', '황금 주사위',    220, '{"bg":["#fff0b3","#e3b440","#a8761a"],"pip":"#3d2a05","red":"#8a1c12","fx":"sheen"}', 30),
+  ('d_pearl',   'dice', '진주 주사위',    160, '{"bg":["#fdf7ff","#e7f1ff","#fbeaf2"],"pip":"#5b4d66","red":"#d06a8e","fx":"pearl"}', 21),
+  ('d_gold',    'dice', '황금 주사위',    220, '{"bg":["#fff0b3","#e3b440","#a8761a"],"pip":"#3d2a05","red":"#8a1c12","fx":"gold"}', 30),
   ('d_galaxy',  'dice', '은하 주사위',    320, '{"bg":["#2a1856","#14082e","#3a1d6e"],"pip":"#f6f0ff","red":"#ff7ad9","fx":"stars"}', 40),
   -- 펠트
   ('f_navy',    'felt', '네이비 펠트',     30, '{"a":"#1f3c7a","b":"#0f2148"}', 10),

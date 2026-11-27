@@ -536,6 +536,42 @@ button.chip:hover{border-color:var(--accent)}
 .sitem .btn{width:100%;justify-content:center}
 .sitem .pv .ttl{margin:0;font-size:13px;padding:2px 10px}
 #prof{z-index:36}
+/* ---- premium dice: effects on the flat (and held) dice ---- */
+:is(.pboard,.dxwrap)[class*="dx-"] .slot .die,.dxwrap .die{position:relative}
+:is(.pboard,.dxwrap)[class*="dx-"] .die{overflow:hidden}
+:is(.pboard,.dxwrap)[class*="dx-"] .die::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit}
+:is(.pboard,.dxwrap).dx-marble .die::after{background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%);transform:translateX(-130%);animation:dxSweep 5s ease-in-out infinite}
+:is(.pboard,.dxwrap).dx-pearl .die::after{background:linear-gradient(135deg,rgba(255,160,215,.45),rgba(150,205,255,.45) 45%,rgba(185,255,215,.45));mix-blend-mode:soft-light;animation:dxPearl 3.6s ease-in-out infinite alternate}
+:is(.pboard,.dxwrap).dx-gold .die{animation:dxGlow 2.2s ease-in-out infinite alternate}
+:is(.pboard,.dxwrap).dx-gold .die::after{background:linear-gradient(115deg,transparent 38%,rgba(255,250,215,.95) 50%,transparent 62%);transform:translateX(-130%);animation:dxSweep 2.8s ease-in-out infinite}
+:is(.pboard,.dxwrap).dx-stars .die::after{background:radial-gradient(circle at 22% 28%,#fff 0 1px,transparent 1.8px),radial-gradient(circle at 74% 20%,#fff 0 .8px,transparent 1.5px),radial-gradient(circle at 66% 76%,#e8dcff 0 1px,transparent 1.8px),radial-gradient(circle at 30% 78%,#fff 0 .8px,transparent 1.5px);animation:dxTwinkle 1.6s ease-in-out infinite alternate}
+@keyframes dxSweep{0%,55%{transform:translateX(-130%)}85%,100%{transform:translateX(130%)}}
+@keyframes dxPearl{from{opacity:.35;transform:translate(-8%,-8%) scale(1.2)}to{opacity:.85;transform:translate(8%,8%) scale(1.2)}}
+@keyframes dxGlow{from{box-shadow:0 0 0 1px rgba(255,215,110,.5),0 3px 6px rgba(0,0,0,.25)}to{box-shadow:0 0 0 1px rgba(255,230,150,.9),0 0 12px rgba(255,200,80,.75),0 3px 6px rgba(0,0,0,.25)}}
+@keyframes dxTwinkle{from{opacity:.25}to{opacity:1}}
+/* landing burst */
+.lfx{position:absolute;inset:0;z-index:4;pointer-events:none}
+.lfx span{position:absolute;transform:translate(-50%,-50%);font-size:12px;line-height:1;opacity:0;animation:lfxBurst .85s ease-out forwards}
+.lfx .g{color:#ffd96a;text-shadow:0 0 6px rgba(255,190,60,.9)}
+.lfx .s{color:#f2ecff;text-shadow:0 0 6px rgba(180,150,255,.95);font-size:11px}
+@keyframes lfxBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.1)}}
+/* ---- premium felts ---- */
+.pboard.ft-gold .tray:not(.c3),.pboard.ft-gold .tray .felt,.pboard.ft-velvet .tray:not(.c3),.pboard.ft-velvet .tray .felt,.pboard.ft-stars .tray:not(.c3),.pboard.ft-stars .tray .felt{overflow:hidden}
+.pboard[class*="ft-"] .tray:not(.c3)::after,.pboard[class*="ft-"] .tray .felt::after{content:"";position:absolute;pointer-events:none;z-index:1}
+/* black & gold: light running along the gold rim */
+.pboard.ft-gold .tray:not(.c3)::after,.pboard.ft-gold .tray .felt::after{inset:0;border-radius:inherit;padding:3px;
+  background:linear-gradient(110deg,transparent 42%,#fff3c4 50%,transparent 58%) 0 0/300% 100%;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+  animation:ftRim 3.2s linear infinite}
+@keyframes ftRim{from{background-position:100% 0}to{background-position:-50% 0}}
+/* royal velvet: a soft sheen drifting across */
+.pboard.ft-velvet .tray:not(.c3)::after,.pboard.ft-velvet .tray .felt::after{top:0;bottom:0;left:-100%;width:300%;background:linear-gradient(115deg,transparent 40%,rgba(255,220,160,.16) 50%,transparent 60%);animation:ftSheen 6s ease-in-out infinite}
+@keyframes ftSheen{from{transform:translateX(-20%)}to{transform:translateX(40%)}}
+/* galaxy: twinkling stars, and now and then a shooting star */
+.pboard.ft-stars .tray:not(.c3)::after,.pboard.ft-stars .tray .felt::after{inset:0;background:radial-gradient(circle at 18% 62%,#fff 0 1.3px,transparent 2px),radial-gradient(circle at 47% 18%,#fff 0 1px,transparent 1.8px),radial-gradient(circle at 71% 46%,#e3d7ff 0 1.4px,transparent 2.2px),radial-gradient(circle at 88% 84%,#fff 0 1px,transparent 1.8px),radial-gradient(circle at 34% 90%,#cfe8ff 0 1px,transparent 1.8px);animation:dxTwinkle 2.4s ease-in-out infinite alternate}
+.pboard.ft-stars .tray .felt::before{content:"";position:absolute;z-index:1;pointer-events:none;top:12%;left:-30%;width:90px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95));transform:rotate(18deg);opacity:0;animation:ftShoot 7s ease-in infinite}
+@keyframes ftShoot{0%,82%{opacity:0;transform:translate(0,0) rotate(18deg)}84%{opacity:1}96%{opacity:0;transform:translate(420px,135px) rotate(18deg)}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){[class*="dx-"] .die,[class*="dx-"] .die::after,.pboard[class*="ft-"] .tray::after,.pboard[class*="ft-"] .felt::after,.pboard[class*="ft-"] .felt::before,.lfx span{animation:none!important}}
 #prof .panel{width:min(520px,100%)}
 .pcard{position:relative;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center;padding:18px;border-radius:18px;color:#fdf6e3;overflow:hidden;
   background:radial-gradient(120% 140% at 15% 0%,color-mix(in srgb,var(--pa,#1f6b5c) 92%,#fff),var(--pb,#0b2f28) 75%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
@@ -2184,13 +2220,13 @@ function d3Mats(v){
     x.fillStyle=gr;x.fillRect(0,0,N,N);
     if(fx==="stars"){let sd=v*97;const r=()=>(sd=(sd*9301+49297)%233280)/233280;for(let k=0;k<40;k++){x.fillStyle=`rgba(255,255,255,${.35+r()*.6})`;x.beginPath();x.arc(r()*N,r()*N,.6+r()*1.8,0,7);x.fill()}}
     else if(fx==="marble"){x.strokeStyle="rgba(120,118,126,.35)";x.lineWidth=3;for(let k=0;k<3;k++){x.beginPath();x.moveTo(0,N*(.2+k*.3));x.bezierCurveTo(N*.3,N*(.05+k*.3),N*.6,N*(.45+k*.25),N,N*(.25+k*.3));x.stroke()}}
-    else if(fx==="sheen"){const sh=x.createLinearGradient(0,0,N,N);sh.addColorStop(.35,"rgba(255,255,255,0)");sh.addColorStop(.47,"rgba(255,255,255,.6)");sh.addColorStop(.58,"rgba(255,255,255,0)");x.fillStyle=sh;x.fillRect(0,0,N,N)}
+    else if(fx==="sheen"||fx==="pearl"||fx==="gold"){const sh=x.createLinearGradient(0,0,N,N);sh.addColorStop(.35,"rgba(255,255,255,0)");sh.addColorStop(.47,"rgba(255,255,255,.6)");sh.addColorStop(.58,"rgba(255,255,255,0)");x.fillStyle=sh;x.fillRect(0,0,N,N)}
     for(const [rr,cc] of PIPS[v]){
       const cx=(.16+(cc-1)*(cell+.05)+cell/2)*N,cy=(.16+(rr-1)*(cell+.05)+cell/2)*N,rad=cell/2*N*(v===1?1.35:1);
       x.fillStyle=v===1?red:pip;x.beginPath();x.arc(cx,cy,rad,0,Math.PI*2);x.fill();
     }
     const t=new T3.CanvasTexture(c);t.colorSpace=T3.SRGBColorSpace;t.anisotropy=4;
-    mats.push(new T3.MeshStandardMaterial({map:t,roughness:fx==="sheen"?.3:.55,metalness:0}));
+    mats.push(new T3.MeshStandardMaterial({map:t,roughness:fx==="sheen"||fx==="pearl"||fx==="gold"?.3:.55,metalness:0}));
   }
   return mats;
 }
@@ -2624,6 +2660,16 @@ function makeView(cid){
   return v;
 }
 // Draw one board's tray; animate a fresh landing for everyone watching.
+// sparks (gold) or stardust (galaxy) where each thrown die comes to rest
+function landFx(v,b,rid0){
+  if(!v.el.isConnected||!b||b.rollId!==rid0)return;
+  const gold=v.el.classList.contains("dx-gold"),pos=positions(rid0),box=document.createElement("div");box.className="lfx";
+  let h="";
+  for(let i=0;i<5;i++){if(!b.mask[i]||b.held[i]||!pos[i])continue;
+    for(let k=0;k<7;k++){const a=k/7*Math.PI*2+Math.random()*.6,r=18+Math.random()*16;
+      h+=`<span class="${gold?"g":"s"}" style="left:${pos[i].x}%;top:${pos[i].y}%;--dx:${(Math.cos(a)*r).toFixed(1)}px;--dy:${(Math.sin(a)*r).toFixed(1)}px;animation-delay:${(Math.random()*.12).toFixed(2)}s">${gold?"✦":k%2?"✧":"·"}</span>`}}
+  if(!h)return;box.innerHTML=h;v.tray.appendChild(box);setTimeout(()=>box.remove(),1300);
+}
 function syncTray(v,b,act,away){
   const rolling=!!b&&b.rolling&&!away;
   const first=!v.seen.init;
@@ -2670,6 +2716,7 @@ function syncTray(v,b,act,away){
     }else face(el,b.dice[i]);
   }
   if(landed){busy.set(v.cid,true);setTimeout(()=>{busy.set(v.cid,false);render()},maxDur+40)}
+  if(landed&&!reduced&&(v.el.classList.contains("dx-gold")||v.el.classList.contains("dx-stars"))){const rid0=b.rollId;setTimeout(()=>landFx(v,b,rid0),Math.max(0,maxDur-120))}
   if(rolling&&d3on()&&!(v.anim&&v.anim.live)){const idx=[];for(let i=0;i<5;i++)if(!b.held[i])idx.push(i);if(idx.length)d3Shake(v,b,idx)}
   if(!rolling&&v.anim&&v.anim.live)v.anim.stop();   // shaking cancelled
   const ghost=d3Rest(v,b);
@@ -3088,10 +3135,10 @@ function diceCSS(d){
   let bg=`linear-gradient(145deg,${st.join(",")})`;
   if(d.fx==="stars")bg="radial-gradient(circle at 24% 30%,#fff 0 1px,transparent 1.6px),radial-gradient(circle at 70% 22%,#fff 0 .8px,transparent 1.4px),radial-gradient(circle at 62% 74%,#fff 0 1px,transparent 1.6px),radial-gradient(circle at 30% 80%,#cfc3ff 0 .8px,transparent 1.4px),radial-gradient(circle at 85% 55%,#fff 0 .7px,transparent 1.3px),"+bg;
   else if(d.fx==="marble")bg="linear-gradient(118deg,transparent 0 30%,rgba(120,118,126,.35) 31%,transparent 34% 58%,rgba(150,146,150,.28) 60%,transparent 63%),linear-gradient(62deg,transparent 0 44%,rgba(130,128,136,.22) 45%,transparent 48%),"+bg;
-  else if(d.fx==="sheen")bg="linear-gradient(125deg,transparent 0 35%,rgba(255,255,255,.75) 45%,transparent 56%),"+bg;
+  else if(d.fx==="sheen"||d.fx==="pearl"||d.fx==="gold")bg="linear-gradient(125deg,transparent 0 35%,rgba(255,255,255,.75) 45%,transparent 56%),"+bg;
   return{bg,pip:hex(d.pip,"#1c2422"),red:hex(d.red,"#c33f2b")};
 }
-const FELT_FX=new Set(["gold","velvet","stars"]);
+const FELT_FX=new Set(["gold","velvet","stars"]),DICE_FX=new Set(["marble","pearl","gold","stars"]);
 function applyLook(v,lk){
   const d=lk&&lk.dice,f=lk&&lk.felt,dc=d?diceCSS(d):null;
   const key=JSON.stringify([dc,f&&[hex(f.a,""),hex(f.b,""),f.fx]]);
@@ -3101,6 +3148,7 @@ function applyLook(v,lk){
   const a=f&&hex(f.a,null),b=f&&hex(f.b,null);
   if(a&&b){st.setProperty("--felt",a);st.setProperty("--felt2",b)}else{st.removeProperty("--felt");st.removeProperty("--felt2")}
   for(const x of FELT_FX)v.el.classList.toggle("ft-"+x,!!(a&&b&&f.fx===x));
+  for(const x of DICE_FX)v.el.classList.toggle("dx-"+x,!!(dc&&d.fx===x));
   v.rest=null;   // redraw the resting 3D dice with the new colors
 }
 async function fetchWins(){
@@ -3632,7 +3680,7 @@ function itemPreview(it){
   if(it.kind==="nick")return`<div class="pv">${nickHTML(myName||$("nick").value.trim()||ACC.username||"닉네임",{nick:d})}</div>`;
   if(it.kind==="title")return`<div class="pv">${titleHTML({title:d})}</div>`;
   if(it.kind==="dice"){const c=diceCSS(d);if(!c)return'<div class="pv"></div>';const pip=[[1,1],[1,3],[2,2],[3,1],[3,3]].map(([r,cc])=>`<i style="grid-area:${r}/${cc}"></i>`).join("");
-    return`<div class="pv" style="--die:${c.bg};--pip:${c.pip};--pipred:${c.red}"><span class="die v5">${pip}</span></div>`}
+    return`<div class="pv" style="--die:${c.bg};--pip:${c.pip};--pipred:${c.red}"><span class="dxwrap${DICE_FX.has(d.fx)?" dx-"+d.fx:""}"><span class="die v5">${pip}</span></span></div>`}
   const a=hex(d.a,"#165a4d"),b=hex(d.b,"#0c3a32");
   return`<div class="pboard ft-${FELT_FX.has(d.fx)?d.fx:"none"}" style="--felt:${a};--felt2:${b};display:block;padding:0;border:0;background:none;box-shadow:none"><div class="tray" style="height:64px;min-height:0;border-radius:10px"></div></div>`;
 }
@@ -3901,6 +3949,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.15",time:"16:18",date:"2026.11.27",items:[
+    "비싼 주사위·펠트에 특수 효과가 생겼어요. 대리석은 광택, 진주는 무지갯빛 일렁임, 황금은 빛나는 광채와 멈출 때 금빛 불꽃, 은하는 반짝이는 별과 멈출 때 별가루가 흩날려요.",
+    "블랙 & 골드 펠트는 금테를 따라 빛이 흐르고, 로열 벨벳은 광택이 지나가고, 은하수는 별이 반짝이며 가끔 별똥별이 떨어져요."]},
   {ver:"2.14",time:"16:13",date:"2026.11.27",items:[
     "닉네임이 겹치지 않아요. 다른 회원의 닉네임·아이디와 같거나, 지금 접속 중인 사람이 쓰는 닉네임이면 '이미 사용 중인 닉네임'이라고 알려 줘요. 가입할 때도 아이디·닉네임 중복을 확인해요.",
     "3D에서 던질 때 잠깐 멈추던 현상을 줄였어요. 내 던지기의 물리 계산을 화면과 따로(백그라운드에서) 해요. 다른 사람 판의 계산도 가볍게 했어요."]},
@@ -4415,7 +4466,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27o";
+const APP_VER="2026-11-27p";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
