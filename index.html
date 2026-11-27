@@ -132,6 +132,19 @@ input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
 .bform{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line2);border-radius:14px;background:var(--panel2)}
 .bform textarea{font:inherit;width:100%;min-height:120px;resize:vertical;padding:10px 14px;border-radius:var(--r-sm);border:1px solid var(--line2);background:var(--field);color:var(--ink)}
 .bform textarea:focus{outline:none;border-color:var(--brass);background:var(--panel);box-shadow:0 0 0 4px color-mix(in srgb,var(--brass) 18%,transparent)}
+.bphotos{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bphotos .btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.bphotos svg{width:16px;height:16px}
+.bthumbs{display:flex;gap:8px;flex-wrap:wrap}
+.bthumbs:empty{display:none}
+.bthumbs .th{position:relative;width:76px;height:76px;border-radius:10px;overflow:hidden;border:1px solid var(--line2);background:var(--panel)}
+.bthumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.bthumbs button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:14px;line-height:22px;padding:0;cursor:pointer}
+.pimgs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.pimgs a{display:block;width:120px;height:120px;border-radius:10px;overflow:hidden;border:1px solid var(--line2);background:var(--panel)}
+.pimgs img{width:100%;height:100%;object-fit:cover;display:block}
+.pmeta .pic{display:inline-flex;align-items:center;gap:3px;margin-left:6px}
+.pmeta .pic svg{width:13px;height:13px}
 .bform label.chk{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
 .posts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .post{border:1px solid var(--line);border-radius:14px;background:var(--panel2);padding:10px 14px}
@@ -692,6 +705,8 @@ button.chip:hover{border-color:var(--accent)}
       <div class="bform" id="bForm" hidden>
         <input id="bTitle" type="text" maxlength="60" placeholder="제목" aria-label="제목">
         <textarea id="bBody" maxlength="2000" placeholder="내용" aria-label="내용"></textarea>
+        <div class="bphotos"><label class="btn ghost small" id="bFileBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/><path d="M8 5l1.5-2h5L16 5"/></svg> 사진 추가<input type="file" id="bFile" accept="image/*" multiple hidden></label><span class="note" id="bFileNote">최대 4장</span></div>
+        <div class="bthumbs" id="bThumbs"></div>
         <label class="chk" id="bAnonRow"><input type="checkbox" id="bAnon"> 익명으로 쓰기</label>
         <p class="note" id="bAnonNote" style="margin:0">로그인하지 않으면 익명으로 올라가요.</p>
         <p class="note status" id="bMsg" role="status" style="margin:0"></p>
@@ -2834,6 +2849,46 @@ function renderBoardHead(){
   $("bIntro").textContent=BD.board==="notice"?"운영자가 올리는 공지예요.":"불편한 점이나 바라는 기능을 남겨 주세요. 로그인하지 않아도, 익명으로도 쓸 수 있어요.";
 }
 const THUMB=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${d<0?'style="transform:scaleY(-1)"':""}><path d="M7 10v11H4V10zM7 10l4-7a2 2 0 0 1 3 2l-1 5h6a2 2 0 0 1 2 2.3l-1.3 7A2 2 0 0 1 17.7 21H7"/></svg>`;
+// ---- photos: shrunk in the browser (longest side 1600px, JPEG) and stored in Supabase Storage
+const IMG_BASE=SB_URL+"/storage/v1/object/public/feedback/u/",CAM=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/></svg>`;
+function postImgs(p){return Array.isArray(p.images)?p.images.filter(u=>typeof u==="string"&&u.startsWith(IMG_BASE)&&!/[<>"' ]/.test(u)).slice(0,4):[]}
+BD.files=[];
+async function shrinkImage(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
+    const k=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(1,Math.round(img.naturalWidth*k)),h=Math.max(1,Math.round(img.naturalHeight*k));
+    const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);
+    let q=.85,blob=await new Promise(r=>c.toBlob(r,"image/jpeg",q));
+    while(blob&&blob.size>2.8e6&&q>.4){q-=.15;blob=await new Promise(r=>c.toBlob(r,"image/jpeg",q))}
+    return blob;
+  }finally{URL.revokeObjectURL(url)}
+}
+function renderThumbs(){
+  $("bThumbs").innerHTML=BD.files.map((f,i)=>`<div class="th"><img src="${f.url}" alt="첨부할 사진 ${i+1}"><button type="button" data-rm="${i}" aria-label="사진 빼기">×</button></div>`).join("");
+  $("bFileNote").textContent=BD.files.length?`${BD.files.length}/4장`:"최대 4장";
+  $("bFileBtn").style.display=BD.files.length>=4?"none":"";
+}
+function clearFiles(){for(const f of BD.files)URL.revokeObjectURL(f.url);BD.files=[];renderThumbs()}
+$("bFile").addEventListener("change",async e=>{
+  const list=[...e.target.files].filter(f=>/^image\//.test(f.type));e.target.value="";
+  for(const f of list){
+    if(BD.files.length>=4){toast("사진은 4장까지 붙일 수 있어요.");break}
+    try{const blob=await shrinkImage(f);if(!blob)throw 0;BD.files.push({blob,url:URL.createObjectURL(blob)})}catch(err){toast("이 사진은 열 수 없어요.")}
+  }
+  renderThumbs();
+});
+$("bThumbs").addEventListener("click",e=>{const b=e.target.closest("button[data-rm]");if(!b)return;const f=BD.files.splice(+b.dataset.rm,1)[0];if(f)URL.revokeObjectURL(f.url);renderThumbs()});
+async function uploadFiles(){
+  const urls=[];
+  for(const f of BD.files){
+    const name="u/"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,10)+".jpg";
+    const {error}=await ACC.sb.storage.from("feedback").upload(name,f.blob,{contentType:"image/jpeg",upsert:false});
+    if(error)throw error;
+    urls.push(ACC.sb.storage.from("feedback").getPublicUrl(name).data.publicUrl);
+  }
+  return urls;
+}
 function renderBoard(){
   renderBoardHead();
   const list=$("boardList");
@@ -2842,8 +2897,8 @@ function renderBoard(){
     const my=BD.mine[p.id]||0,open=BD.open.has(p.id),canDel=ACC.admin||(ACC.uid&&p.author===ACC.uid);
     return`<li class="post${open?" open":""}" data-id="${p.id}">
       <button class="ptitle" type="button" data-act="toggle" aria-expanded="${open}">${esc(p.title)}</button>
-      <div class="pmeta">${esc(p.author_name)} · ${fmtDate(p.created_at)}</div>
-      ${open?`<div class="pbody">${esc(p.body)}</div>`:""}
+      <div class="pmeta">${esc(p.author_name)} · ${fmtDate(p.created_at)}${postImgs(p).length?`<span class="pic">${CAM}${postImgs(p).length}</span>`:""}</div>
+      ${open?`<div class="pbody">${esc(p.body)}</div>${postImgs(p).length?`<div class="pimgs">${postImgs(p).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="첨부 사진" loading="lazy"></a>`).join("")}</div>`:""}`:""}
       <div class="pacts">
         <button class="vote up${my===1?" on":""}" type="button" data-act="vote" data-v="1" aria-pressed="${my===1}" title="추천">${THUMB(1)}<span>추천</span> <b>${p.up}</b></button>
         <button class="vote down${my===-1?" on":""}" type="button" data-act="vote" data-v="-1" aria-pressed="${my===-1}" title="비추천">${THUMB(-1)}<span>비추천</span> <b>${p.down}</b></button>
@@ -2877,19 +2932,20 @@ $("boardList").addEventListener("click",async e=>{
 });
 $("bTabs").addEventListener("change",e=>{if(e.target.name==="bboard"){BD.board=e.target.value;BD.composing=false;BD.open.clear();loadBoard()}});
 $("bWriteBtn").onclick=()=>{BD.composing=true;renderBoardHead();$("bMsg").textContent="";setTimeout(()=>$("bTitle").focus(),30)};
-$("bCancel").onclick=()=>{BD.composing=false;renderBoardHead()};
+$("bCancel").onclick=()=>{BD.composing=false;clearFiles();renderBoardHead()};
 $("bSend").onclick=async()=>{
   if(!ACC.sb||BD.busy)return;
   const title=$("bTitle").value.trim(),body=$("bBody").value.trim();
   if(!title){$("bMsg").textContent="제목을 적어 주세요.";$("bTitle").focus();return}
   if(!body){$("bMsg").textContent="내용을 적어 주세요.";$("bBody").focus();return}
   const anon=BD.board==="feedback"&&(!ACC.uid||$("bAnon").checked);
-  BD.busy=true;$("bMsg").textContent="올리는 중…";
+  BD.busy=true;$("bMsg").textContent=BD.files.length?"사진 올리는 중…":"올리는 중…";
   try{
     const row={board:BD.board,title:title.slice(0,60),body:body.slice(0,2000)};if(!anon)row.author=ACC.uid;
+    if(BD.files.length){row.images=await uploadFiles();$("bMsg").textContent="올리는 중…"}
     const {error}=await ACC.sb.from("posts").insert(row);
     if(error)throw error;
-    $("bTitle").value="";$("bBody").value="";$("bAnon").checked=false;BD.composing=false;$("bMsg").textContent="";
+    $("bTitle").value="";$("bBody").value="";$("bAnon").checked=false;clearFiles();BD.composing=false;$("bMsg").textContent="";
     toast("글을 올렸어요.");await loadBoard();
   }catch(err){$("bMsg").textContent=/too many/i.test(String(err&&err.message))?"잠깐만요! 1분 뒤에 다시 올려 주세요.":"올리지 못했어요. 잠시 후 다시 해 주세요."}
   BD.busy=false;
@@ -2902,6 +2958,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.1",time:"09:37",date:"2026.11.27",items:[
+    "피드백 글에 사진을 4장까지 붙일 수 있어요. 큰 사진은 자동으로 줄여서 올려요.",
+    "사진이 있는 글에는 카메라 표시가 붙고, 글을 펼치면 사진이 보여요. 누르면 크게 열려요."]},
   {ver:"2.0.7",time:"09:08",date:"2026.11.27",items:[
     "3D에서 주사위를 고정했다 풀면 남은 주사위의 옆면 숫자가 바뀌어 보이던 문제를 고쳤어요."]},
   {ver:"2.0.6",time:"18:49",date:"2026.11.26",items:[
@@ -3355,7 +3414,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27a";
+const APP_VER="2026-11-27b";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
