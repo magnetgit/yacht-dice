@@ -1198,6 +1198,13 @@ const ICE_SERVERS=[
          "turn:global.relay.metered.ca:443","turns:global.relay.metered.ca:443?transport=tcp"],
    username:"4b03f6e616c1f0533e50746b",credential:"ON8PZuwcRO1HihNK"}
 ];
+// Second relay: ExpressTURN free plan (1,000 GB a month, port 3478 TCP/UDP only). Metered above keeps
+// ports 80/443 for strict networks but its free plan is only 500 MB a month; with both listed the
+// connection uses whichever works, so play continues when one of them has run out.
+ICE_SERVERS.push({urls:["turn:free.expressturn.com:3478","turn:free.expressturn.com:3478?transport=tcp"],
+  username:"000000002111202594",credential:"wJgCYhntF6auPGuVum3GTSL5zlA="});
+// test hook: ?turnonly=xt (ExpressTURN) or ?turnonly=mt (Metered) keeps just that relay
+{const q=new URLSearchParams(location.search).get("turnonly");if(q==="xt"||q==="mt"){const keep=ICE_SERVERS.filter(x=>!x.username||(q==="xt")===/expressturn/.test(String(x.urls)));ICE_SERVERS.length=0;ICE_SERVERS.push(...keep)}}
 const PEER_OPTS={debug:0,config:Object.assign({iceServers:ICE_SERVERS},
   new URLSearchParams(location.search).has("relay")?{iceTransportPolicy:"relay"}:{})};
 const myCid=(()=>{
@@ -3668,6 +3675,8 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.11",time:"14:55",date:"2026.11.27",items:[
+    "아이폰·모바일 데이터 연결에 쓰는 중계 서버를 하나 더 붙였어요. 한쪽 무료 사용량이 다 떨어져도 계속 연결돼요."]},
   {ver:"2.10",time:"14:09",date:"2026.11.27",items:[
     "꾸미기 효과를 더 화려하게 바꿨어요. 오로라 닉네임은 글씨 뒤에 일렁이는 빛무리와 반짝이는 별이 생겼어요.",
     "칭호도 등급마다 효과가 달라요. 금색 칭호는 광택이 지나가고, '주사위의 신'은 검은 바탕에 금빛으로 빛나며 양옆에 별이 반짝여요."]},
@@ -4164,7 +4173,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27k";
+const APP_VER="2026-11-27l";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
