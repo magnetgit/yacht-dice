@@ -798,6 +798,7 @@ button.chip:hover{border-color:var(--accent)}
         <div class="bphotos"><label class="btn ghost small" id="bFileBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/><path d="M8 5l1.5-2h5L16 5"/></svg> 사진 추가<input type="file" id="bFile" accept="image/*" multiple hidden></label><span class="note" id="bFileNote">최대 4장</span></div>
         <div class="bthumbs" id="bThumbs"></div>
         <label class="chk" id="bAnonRow"><input type="checkbox" id="bAnon"> 익명으로 쓰기</label>
+        <input type="text" id="bSite" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
         <p class="note" id="bAnonNote" style="margin:0">로그인하지 않으면 익명으로 올라가요.</p>
         <p class="note status" id="bMsg" role="status" style="margin:0"></p>
         <div class="row"><button id="bSend" class="btn small" type="button">올리기</button><button id="bCancel" class="btn ghost small" type="button">취소</button></div>
@@ -1406,7 +1407,7 @@ function renderRooms(){
       const attrs=`type="button" data-code="${esc(r.code)}" data-lock="${r.lock?1:""}" data-title="${esc(r.title)}"`;
       const btn=!r.pub?'<span class="note" style="white-space:nowrap">코드로만 입장</span>'
         :`<span class="rbtns"><button class="btn small${r.phase==="lobby"?"":" ghost"}" ${attrs}${full?" disabled":""}>${full?"가득 참":r.phase==="lobby"?"입장":"들어가기"}</button><button class="btn small ghost" ${attrs} data-spec="1" title="게임에는 참가하지 않고 보기만 해요. 채팅은 할 수 있어요.">관전</button></span>`;
-      return `<li class="ph-${r.phase}"><div class="rinfo"><span><b>${esc(r.title)}</b>${tags}</span><span class="note">${r.count}/${MAXP} · ${st}${r.sc?" · 관전 "+r.sc:""}${r.pub?" · "+esc(r.code):""}</span></div>${btn}</li>`;
+      return `<li class="ph-${r.phase}"><div class="rinfo"><span><b>${esc(maskBad(r.title))}</b>${tags}</span><span class="note">${r.count}/${MAXP} · ${st}${r.sc?" · 관전 "+r.sc:""}${r.pub?" · "+esc(r.code):""}</span></div>${btn}</li>`;
     }).join(""):'<li class="empty">지금 열린 방이 없어요. 방을 만들어 보세요.</li>';
   }
   if(html===Dir.shown)return;   // the hub re-sends the list every few seconds; skip no-op redraws
@@ -1473,7 +1474,27 @@ function validG(g){
 function better(a,b){if(!b)return true;if(a.v!==b.v)return a.v>b.v;return String(a.w)>String(b.w)}
 const done=b=>!!b&&b.scores.every(v=>v!==null);
 function peerCid(p){const c=p&&p.presence&&p.presence.cid;return typeof c==="string"&&/^[a-z0-9]{8,40}$/.test(c)?c:null}
-function peerName(p){const n=p&&p.presence&&typeof p.presence.name==="string"?p.presence.name.slice(0,12).trim():"";return n||"손님"}
+/* Word filter. Text is compared after keeping only Hangul (incl. single jamo) and latin letters,
+   so "시 1 발", "ㅅ.ㅂ" and "F.u.c.k" are caught. Matching letters are replaced with *. */
+const BADW={abuse:["시발","씨발","씨빨","시빨","씨팔","시팔","ㅅㅂ","ㅆㅂ","병신","ㅂㅅ","ㅄ","좆","존나","ㅈㄴ","지랄","ㅈㄹ","개새끼","새끼","니미","느금","엠창","미친놈","미친년","fuck","shit","bitch"],spam:["토토","카지노","바카라","먹튀","대출","텔레그램","오픈채팅"],loaded:false};
+const WCH=/[가-힣ㄱ-ㅎㅏ-ㅣa-z]/;
+function normMap(s){let t="";const idx=[];for(let i=0;i<s.length;i++){const c=s[i].toLowerCase();if(WCH.test(c)){t+=c;idx.push(i)}}return{t,idx}}
+function maskBad(s){
+  if(typeof s!=="string"||!s)return s;
+  const {t,idx}=normMap(s);let hit=null;
+  for(const w of BADW.abuse){let at=t.indexOf(w);while(at>=0){hit=hit||new Set();for(let k=at;k<at+w.length;k++)hit.add(idx[k]);at=t.indexOf(w,at+1)}}
+  if(!hit)return s;let o="";for(let i=0;i<s.length;i++)o+=hit.has(i)?"*":s[i];return o;
+}
+function badKind(s){const t=normMap(String(s||"")).t;return BADW.abuse.some(w=>t.includes(w))?"abuse":BADW.spam.some(w=>t.includes(w))?"spam":null}
+function loadWords(){
+  if(!ACC.sb||BADW.loaded)return;
+  ACC.sb.from("filter_words").select("word,kind").then(({data,error})=>{
+    if(error||!Array.isArray(data)||!data.length)return;
+    BADW.abuse=data.filter(r=>r.kind==="abuse").map(r=>r.word);BADW.spam=data.filter(r=>r.kind==="spam").map(r=>r.word);BADW.loaded=true;
+    try{render()}catch(e){}
+  },()=>{});
+}
+function peerName(p){const n=p&&p.presence&&typeof p.presence.name==="string"?p.presence.name.slice(0,12).trim():"";return n?maskBad(n):"손님"}
 function peerByCid(c){return peers.find(p=>peerCid(p)===c)}
 function presentCids(){const s=new Set();for(const p of peers){const c=peerCid(p);if(c)s.add(c)}return s}
 function isAway(cid){return mode==="online"&&!presentCids().has(cid)}
@@ -1578,6 +1599,8 @@ async function enterTable(c,isCreate,pwIn,restoreG,quick,spec){
   if(joining)return "busy";
   const nick=$("nick").value.trim().slice(0,12);
   if(!nick){$("homeMsg").textContent="닉네임을 먼저 적어 주세요.";$("nick").focus();return "nonick"}
+  if(badKind(nick)==="abuse"){$("homeMsg").textContent="닉네임에 쓸 수 없는 말이 있어요.";$("nick").focus();return "badnick"}
+  if(isCreate&&!restoreG&&badKind($("roomTitle").value)==="abuse"){$("homeMsg").textContent="방 이름에 쓸 수 없는 말이 있어요.";$("roomTitle").focus();return "badtitle"}
   c=c.toUpperCase().replace(/[^A-Z0-9]/g,"");
   if(c.length<4){$("homeMsg").textContent="4글자 테이블 코드를 입력해 주세요.";$("joinCode").focus();return "nocode"}
   if(!netReady()){$("netErr").hidden=false;$("homeMsg").textContent="온라인 연결 모듈을 불러오지 못했어요.";return "net"}
@@ -2855,7 +2878,7 @@ if(!new URLSearchParams(location.search).has("nodb"))
     const {data}=await ACC.sb.auth.getSession();
     setAcct(data&&data.session);
     ACC.sb.auth.onAuthStateChange((ev,sess)=>setTimeout(()=>setAcct(sess),0));
-    ACC.ready=true;acctUI();loadRec(recPeriod);
+    ACC.ready=true;acctUI();loadRec(recPeriod);loadWords();
   }).catch(()=>{ACC.failed=true;acctUI();loadRec(recPeriod)});
 else{ACC.failed=true;setTimeout(()=>loadRec(recPeriod),0)}
 // keep the nickname shown on the rankings up to date
@@ -3231,9 +3254,9 @@ function renderBoard(){
   list.innerHTML=`<ul class="posts">${BD.posts.map(p=>{
     const my=BD.mine[p.id]||0,open=BD.open.has(p.id),canDel=ACC.admin||(ACC.uid&&p.author===ACC.uid);
     return`<li class="post${open?" open":""}" data-id="${p.id}">
-      <button class="ptitle" type="button" data-act="toggle" aria-expanded="${open}">${esc(p.title)}</button>
+      <button class="ptitle" type="button" data-act="toggle" aria-expanded="${open}">${esc(p.board==="notice"?p.title:maskBad(p.title))}</button>
       <div class="pmeta">${esc(p.author_name)} · ${fmtDate(p.created_at)}${postImgs(p).length?`<span class="pic">${CAM}${postImgs(p).length}</span>`:""}</div>
-      ${open?`<div class="pbody">${esc(p.body)}</div>${postImgs(p).length?`<div class="pimgs">${postImgs(p).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="첨부 사진" loading="lazy"></a>`).join("")}</div>`:""}`:""}
+      ${open?`<div class="pbody">${esc(p.board==="notice"?p.body:maskBad(p.body))}</div>${postImgs(p).length?`<div class="pimgs">${postImgs(p).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="첨부 사진" loading="lazy"></a>`).join("")}</div>`:""}`:""}
       <div class="pacts">
         <button class="vote up${my===1?" on":""}" type="button" data-act="vote" data-v="1" aria-pressed="${my===1}" title="추천">${THUMB(1)}<span>추천</span> <b>${p.up}</b></button>
         <button class="vote down${my===-1?" on":""}" type="button" data-act="vote" data-v="-1" aria-pressed="${my===-1}" title="비추천">${THUMB(-1)}<span>비추천</span> <b>${p.down}</b></button>
@@ -3265,6 +3288,13 @@ $("boardList").addEventListener("click",async e=>{
     BD.busy=false;
   }
 });
+// same rules the database applies (it has the final say)
+const SPAM_MSG={link:"링크나 사이트 주소는 올릴 수 없어요.",phone:"전화번호나 긴 숫자는 올릴 수 없어요.",abuse:"욕설이나 비속어가 있어서 올릴 수 없어요.",word:"광고로 보이는 말이 있어서 올릴 수 없어요.",fast:"글은 30초에 하나씩 올릴 수 있어요. 잠시 뒤에 다시 해 주세요.",daily:"오늘 올릴 수 있는 글(10개)을 다 썼어요. 내일 다시 올려 주세요.",dup:"같은 내용의 글이 이미 올라와 있어요."};
+function spamWhy(raw){
+  if(/(https?:\/\/|www\.|[a-z0-9-]+\.(com|net|org|kr|io|me|xyz|top|co|ly|gg|site|shop|club|biz|info|link|app)([^a-z]|$)|open\.kakao|t\.me\/|discord\.gg)/i.test(raw))return"link";
+  if(/01[016789][0-9]{7,8}/.test(raw.replace(/[\s.\-()]/g,""))||/[0-9]{9,}/.test(raw.replace(/[^0-9]/g,"")))return"phone";
+  const k=badKind(raw);return k==="abuse"?"abuse":k==="spam"?"word":null;
+}
 $("bTabs").addEventListener("change",e=>{if(e.target.name==="bboard"){BD.board=e.target.value;BD.composing=false;BD.open.clear();loadBoard()}});
 $("bWriteBtn").onclick=()=>{BD.composing=true;renderBoardHead();$("bMsg").textContent="";setTimeout(()=>$("bTitle").focus(),30)};
 $("bCancel").onclick=()=>{BD.composing=false;clearFiles();renderBoardHead()};
@@ -3274,6 +3304,8 @@ $("bSend").onclick=async()=>{
   if(!title){$("bMsg").textContent="제목을 적어 주세요.";$("bTitle").focus();return}
   if(!body){$("bMsg").textContent="내용을 적어 주세요.";$("bBody").focus();return}
   const anon=BD.board==="feedback"&&(!ACC.uid||$("bAnon").checked);
+  if(BD.board==="feedback"&&!ACC.admin){const why=spamWhy(title+" "+body);if(why){$("bMsg").textContent=SPAM_MSG[why];return}}
+  if($("bSite").value){$("bTitle").value="";$("bBody").value="";BD.composing=false;renderBoardHead();return}   // filled only by bots
   BD.busy=true;$("bMsg").textContent=BD.files.length?"사진 올리는 중…":"올리는 중…";
   try{
     const row={board:BD.board,title:title.slice(0,60),body:body.slice(0,2000)};if(!anon)row.author=ACC.uid;
@@ -3282,7 +3314,7 @@ $("bSend").onclick=async()=>{
     if(error)throw error;
     $("bTitle").value="";$("bBody").value="";$("bAnon").checked=false;clearFiles();BD.composing=false;$("bMsg").textContent="";
     toast("글을 올렸어요.");await loadBoard();
-  }catch(err){$("bMsg").textContent=/too many/i.test(String(err&&err.message))?"잠깐만요! 1분 뒤에 다시 올려 주세요.":"올리지 못했어요. 잠시 후 다시 해 주세요."}
+  }catch(err){const m=String(err&&err.message),sp=/spam:(\w+)/.exec(m);$("bMsg").textContent=sp&&SPAM_MSG[sp[1]]?SPAM_MSG[sp[1]]:/too many/i.test(m)?"잠깐만요! 1분 뒤에 다시 올려 주세요.":"올리지 못했어요. 잠시 후 다시 해 주세요."}
   BD.busy=false;
 };
 $("boardClose").onclick=()=>{$("board").hidden=true};
@@ -3293,6 +3325,10 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.6",time:"13:38",date:"2026.11.27",items:[
+    "채팅에서 욕설·비속어는 *로 가려져요. 띄어쓰기나 숫자를 섞어 써도 가려지고, 받는 쪽에서도 한 번 더 걸러요.",
+    "닉네임과 방 이름에는 욕설을 쓸 수 없어요.",
+    "피드백 게시판 스팸 막기: 링크·연락처·광고 문구가 있는 글, 30초 안에 또 쓰는 글, 같은 내용 반복 글은 올라가지 않아요. 하루에 10개까지 쓸 수 있어요."]},
   {ver:"2.5",time:"13:23",date:"2026.11.27",items:[
     "포인트가 생겼어요. 온라인에서 1등 하면 10P, 봇전에서 이기면 난이도에 따라 1~3P(하루 10P까지). 지금까지 이긴 판도 포인트로 쳐 드렸어요.",
     "꾸미기 상점: 포인트로 닉네임 색·효과, 칭호, 주사위, 펠트를 살 수 있어요. 화려할수록 비싸요. 장착하면 친구 화면에도 보여요.",
@@ -3600,7 +3636,9 @@ document.querySelectorAll('input[name=vis]').forEach(r=>r.addEventListener("chan
 let botLevel="normal",botGen=0,botTimer=null;
 function stopBot(){botGen++;clearTimeout(botTimer)}
 function startAI(level){
-  const nick=($("nick").value.trim()||myName||"나").slice(0,12);myName=nick;store.set("yd-nick",nick);
+  let nick=($("nick").value.trim()||myName||"나").slice(0,12);
+  if(badKind(nick)==="abuse"){$("homeMsg").textContent="닉네임에 쓸 수 없는 말이 있어요.";$("nick").focus();return}
+  myName=nick;store.set("yd-nick",nick);
   stopBot();botLevel=level;store.set("yd-ailevel",level);
   mode="ai";overDismissed=null;boards.clear();lastK.clear();busy.clear();resetViews();
   const gid=rid();
@@ -3662,6 +3700,7 @@ function chatClear(){if(chat.code)tabStore.del("yd-chat-"+chat.code);chat.code=n
 const validMsg=m=>m&&typeof m==="object"&&typeof m.id==="string"&&/^[a-z0-9]{4,16}$/.test(m.id)&&typeof m.x==="string"&&m.x.length>0&&m.x.length<=100&&typeof m.t==="number"&&isFinite(m.t);
 function chatAdd(m,float){
   if(chat.seen.has(m.id))return;chat.seen.add(m.id);
+  m.x=maskBad(m.x);m.name=maskBad(m.name);
   chat.log.push(m);chat.log.sort((a,b)=>a.t-b.t);if(chat.log.length>150)chat.log.splice(0,chat.log.length-150);
   chatSave();
   if(float)chatFloat(m);
@@ -3684,7 +3723,8 @@ function chatIngest(){
   chat.ready=true;
 }
 function chatSend(){
-  const inp=$("chatInput"),x=inp.value.replace(/\s+/g," ").trim().slice(0,100);
+  const inp=$("chatInput"),raw=inp.value.replace(/\s+/g," ").trim().slice(0,100),x=maskBad(raw);
+  if(x!==raw)toast("욕설이나 비속어는 *로 가려서 보내요.");
   if(!x||mode!=="online"||!T)return;
   const now=Date.now();if(now-chat.lastSend<600)return;chat.lastSend=now;
   const m={id:Math.random().toString(36).slice(2,10)+now.toString(36).slice(-4),t:now,x};
@@ -3766,7 +3806,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27f";
+const APP_VER="2026-11-27g";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
