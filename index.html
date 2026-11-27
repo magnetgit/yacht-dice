@@ -162,7 +162,8 @@ input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
 .hero .lead{margin:4px 0 0;font-size:15px;color:var(--ink2);max-width:62ch}
 /* desktop: my cards stacked on the left, the room list as one tall card on the right */
 .home-grid{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);
-  grid-template-areas:"me rooms" "join rooms" "ai rooms" "create rooms";grid-template-rows:auto auto auto 1fr;gap:18px;align-items:start}
+  grid-template-areas:"me rooms" "join rooms" "ai rooms" "create rec";grid-template-rows:auto auto auto 1fr;gap:18px;align-items:start}
+.records{grid-area:rec}
 .home-col{display:contents}
 .me-card{grid-area:me}.a-join{grid-area:join}.a-ai{grid-area:ai}.a-create{grid-area:create}
 .rooms{grid-area:rooms;align-self:stretch}
@@ -170,7 +171,7 @@ input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
 .rooms .rlist li.empty{flex:1;align-items:center;text-align:center;line-height:1.7}
 /* phones: nickname, join by code, room list, then create */
 @media (max-width:860px){
-  .home-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"me" "join" "ai" "rooms" "create";grid-template-rows:none}
+  .home-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"me" "join" "ai" "rooms" "rec" "create";grid-template-rows:none}
   .rooms .rlist{max-height:420px;min-height:0}
 }
 .me-card{display:flex;flex-direction:column;gap:8px;background:linear-gradient(160deg,color-mix(in srgb,var(--felt) 9%,var(--panel)),var(--panel) 70%)}
@@ -428,10 +429,10 @@ body.chat-on #app{padding-bottom:96px}
 button.chip{cursor:pointer;font:inherit;font-size:13px;color:var(--ink)}
 button.chip:hover{border-color:var(--accent)}
 .chip svg{width:16px;height:16px;flex:none}
-#people,#voices,#acct,#ranks,#news,#board{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-#people .panel,#voices .panel,#acct .panel,#ranks .panel,#news .panel,#board .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
-#people h2,#voices h2,#acct h2,#ranks h2,#news h2,#board h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
-#people h3,#voices h3,#acct h3,#ranks h3,#news h3,#board h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
+#people,#voices,#acct,#ranks,#news,#board,#prof{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#people .panel,#voices .panel,#acct .panel,#ranks .panel,#news .panel,#board .panel,#prof .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
+#people h2,#voices h2,#acct h2,#ranks h2,#news h2,#board h2,#prof h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
+#people h3,#voices h3,#acct h3,#ranks h3,#news h3,#board h3,#prof h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
 .pplist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .pplist li{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);flex-wrap:wrap}
 .pplist li.away{opacity:.6}
@@ -460,6 +461,29 @@ button.chip:hover{border-color:var(--accent)}
 .d3b{font-weight:800;font-size:12.5px;letter-spacing:.02em;min-width:34px;justify-content:center}
 .d3b[aria-pressed="false"]{color:var(--muted)}
 .vstyles{display:flex;gap:6px;flex-wrap:wrap}
+#prof{z-index:36}
+.records .vstyles label{min-width:64px}
+.records .vstyles span{padding:7px 6px;font-size:13.5px}
+.plink{all:unset;cursor:pointer;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom}
+.plink:hover{text-decoration:underline;text-underline-offset:3px}
+.plink:focus-visible{outline:3px solid color-mix(in srgb,var(--brass) 70%,transparent);border-radius:4px}
+.rtab td.nm .plink{max-width:calc(100% - 1.3em)}
+.rtab .pl1 td.rk{color:#b27a00;font-weight:800}.rtab .pl2 td.rk{color:#7f8b96;font-weight:800}.rtab .pl3 td.rk{color:#a8622c;font-weight:800}
+.rtab .big{font-weight:800;font-size:15px}
+.rtab .when{color:var(--muted);font-size:12.5px}
+.phead{display:flex;flex-direction:column;gap:2px}
+.phead b{font-size:20px}
+.pstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.pstats div{border:1px solid var(--line2);background:var(--panel2);border-radius:12px;padding:9px 6px;text-align:center}
+.pstats b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
+.pstats span{font-size:12px;color:var(--muted)}
+.ptop{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ptop li{display:flex;align-items:center;gap:10px;border:1px solid var(--line2);border-radius:12px;padding:8px 12px;background:var(--panel)}
+.ptop .no{width:22px;font-weight:800;color:var(--muted);text-align:center}
+.ptop .sc{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;min-width:44px}
+.ptop .pl{flex:1;font-size:13.5px}
+.ptop .dt{font-size:12.5px;color:var(--muted);white-space:nowrap}
+@media (max-width:420px){.pstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .vstyles label{flex:1;min-width:90px}
 .vstyles input{position:absolute;opacity:0}
 .vstyles span{display:block;text-align:center;padding:8px 10px;border-radius:12px;border:1px solid var(--line2);background:var(--panel2);cursor:pointer;font-weight:600;font-size:14px}
@@ -615,6 +639,17 @@ button.chip:hover{border-color:var(--accent)}
             </ul>
           </details>
         </div>
+        <div class="panel stack records">
+          <div class="card-h"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg></span><h2>기록판</h2><span class="sp"></span><button id="recWins" class="btn ghost small" type="button">1등 순위</button></div>
+          <div class="vstyles" id="recTabs">
+            <label><input type="radio" name="recperiod" value="day"><span>오늘</span></label>
+            <label><input type="radio" name="recperiod" value="week"><span>이번 주</span></label>
+            <label><input type="radio" name="recperiod" value="month"><span>이번 달</span></label>
+            <label><input type="radio" name="recperiod" value="year"><span>올해</span></label>
+          </div>
+          <div id="recBody"><p class="note">불러오는 중…</p></div>
+          <p class="note" style="margin:0">각자 최고 점수로 줄 세운 상위 10명이에요. 점수가 같으면 먼저 낸 사람이 앞서요. 이름을 누르면 프로필이 열려요.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -742,6 +777,7 @@ button.chip:hover{border-color:var(--accent)}
     <div class="panel" role="dialog" aria-labelledby="ranksTitle">
       <div class="row" style="align-items:center"><h2 id="ranksTitle" style="flex:1">순위</h2><button id="ranksClose" class="btn ghost small" type="button">닫기</button></div>
       <div class="vstyles" id="rTabs">
+        <label><input type="radio" name="rperiod" value="day"><span>오늘</span></label>
         <label><input type="radio" name="rperiod" value="week"><span>이번 주</span></label>
         <label><input type="radio" name="rperiod" value="month"><span>이번 달</span></label>
         <label><input type="radio" name="rperiod" value="year"><span>올해</span></label>
@@ -750,6 +786,12 @@ button.chip:hover{border-color:var(--accent)}
       <div id="ranksBody"></div>
       <p class="note" style="margin:0">1등 횟수로 순위를 매기고, 같으면 평균 등수가 더 좋은 사람이 앞서요. 로그인한 참가자가 2명 이상인 온라인 판만 기록돼요.</p>
       <div class="medals-key"><span><span class="medal m1"></span> 1승</span><span><span class="medal m2"></span> 10승</span><span><span class="medal m3"></span> 30승</span><span><span class="medal m4"></span> 100승</span></div>
+    </div>
+  </div>
+  <div id="prof" hidden>
+    <div class="panel" role="dialog" aria-labelledby="profTitle">
+      <div class="row" style="align-items:center"><h2 id="profTitle" style="flex:1">프로필</h2><button id="profClose" class="btn ghost small" type="button">닫기</button></div>
+      <div id="profBody"></div>
     </div>
   </div>
   <div id="voices" hidden>
@@ -2469,7 +2511,7 @@ function paintView(v,p){
 }
 
 /* ---------- render ---------- */
-function show(id){for(const s of["home","lobby","game"])$(s).hidden=s!==id}
+function show(id){const was=$("home").hidden;for(const s of["home","lobby","game"])$(s).hidden=s!==id;if(id==="home"&&was&&ACC.ready)loadRec(recPeriod)}
 function render(){
   $("codeChip").hidden=!(mode==="online"&&code);$("codeChipVal").textContent=code||"";
   if(!mode){show("home");$("over").hidden=true;$("ended").hidden=true;stopRattle();return}
@@ -2681,9 +2723,9 @@ if(!new URLSearchParams(location.search).has("nodb"))
     const {data}=await ACC.sb.auth.getSession();
     setAcct(data&&data.session);
     ACC.sb.auth.onAuthStateChange((ev,sess)=>setTimeout(()=>setAcct(sess),0));
-    ACC.ready=true;acctUI();
-  }).catch(()=>{ACC.failed=true;acctUI()});
-else ACC.failed=true;
+    ACC.ready=true;acctUI();loadRec(recPeriod);
+  }).catch(()=>{ACC.failed=true;acctUI();loadRec(recPeriod)});
+else{ACC.failed=true;setTimeout(()=>loadRec(recPeriod),0)}
 // keep the nickname shown on the rankings up to date
 function syncNick(){
   if(!ACC.sb||!ACC.uid||!myName||ACC.nickSent===myName)return;
@@ -2694,7 +2736,7 @@ function acctUI(){
   if(ACC.failed)h='<span class="who note">전적 서버에 연결하지 못했어요. 게임은 그대로 할 수 있어요.</span>';
   else if(!ACC.ready)h='<span class="who note">전적 서버에 연결하는 중…</span>';
   else if(!ACC.uid)h='<span class="who note">로그인하면 전적과 순위, 메달이 남아요.</span><button class="btn small" type="button" data-a="login">로그인 / 가입</button><button class="btn ghost small" type="button" data-a="ranks">순위</button>';
-  else{const w=winsOf(ACC.uid);h=`<span class="who"><b>${esc(ACC.username)}</b>${medalHTML(w)} <span class="note">· 통산 ${w}승</span></span><button class="btn ghost small" type="button" data-a="ranks">순위</button><button class="btn ghost small" type="button" data-a="logout">로그아웃</button>`}
+  else{const w=winsOf(ACC.uid);h=`<span class="who"><button class="plink" type="button" data-prof="${ACC.uid}" title="내 프로필 보기"><b>${esc(ACC.username)}</b></button>${medalHTML(w)} <span class="note">· 통산 ${w}승</span></span><button class="btn ghost small" type="button" data-a="ranks">순위</button><button class="btn ghost small" type="button" data-a="logout">로그아웃</button>`}
   if(h!==ACC.shown){ACC.shown=h;el.innerHTML=h}
   if(ACC.uid&&mode==="online"&&G)syncNick();
   reportTick();
@@ -2794,13 +2836,58 @@ async function loadRanks(p){
     if(rPeriod!==p)return;
     if(!data||!data.length){body.innerHTML='<p class="note">아직 기록이 없어요. 로그인한 친구들과 한 판 해 보세요!</p>';return}
     for(const r of data)winsCache.set(r.user_id,{w:r.total_wins,t:Date.now()});
-    body.innerHTML=`<table class="rtab"><thead><tr><th>#</th><th>이름</th><th class="num">1등</th><th class="num">판</th><th class="num">평균 등수</th></tr></thead><tbody>${data.map((r,i)=>`<tr class="${r.user_id===ACC.uid?"mine":""}"><td class="num">${i+1}</td><td class="nm">${esc(r.name)}${medalHTML(r.total_wins)}</td><td class="num">${r.wins}</td><td class="num">${r.games}</td><td class="num">${Number(r.avg_rank).toFixed(1)}</td></tr>`).join("")}</tbody></table>`;
+    body.innerHTML=`<table class="rtab"><thead><tr><th>#</th><th>이름</th><th class="num">1등</th><th class="num">판</th><th class="num">평균 등수</th></tr></thead><tbody>${data.map((r,i)=>`<tr class="${r.user_id===ACC.uid?"mine":""}"><td class="num">${i+1}</td><td class="nm">${plink(r.user_id,r.name)}${medalHTML(r.total_wins)}</td><td class="num">${r.wins}</td><td class="num">${r.games}</td><td class="num">${Number(r.avg_rank).toFixed(1)}</td></tr>`).join("")}</tbody></table>`;
   }catch(e){if(rPeriod===p)body.innerHTML='<p class="note">순위를 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
 }
 $("rTabs").addEventListener("change",e=>{if(e.target.name==="rperiod")loadRanks(e.target.value)});
 $("ranksClose").onclick=()=>{$("ranks").hidden=true};
 $("ranks").addEventListener("click",e=>{if(e.target.id==="ranks")$("ranks").hidden=true});
 $("overRanks").onclick=openRanks;
+
+/* ---------- lobby records board and player profiles ---------- */
+function plink(uid,name){return isUUID(uid)?`<button class="plink" type="button" data-prof="${uid}">${esc(name)}</button>`:esc(name)}
+const p2=n=>String(n).padStart(2,"0");
+function shortWhen(s,period){const d=new Date(s);return period==="day"?`${p2(d.getHours())}:${p2(d.getMinutes())}`:`${d.getMonth()+1}.${d.getDate()}`}
+let recPeriod="week",recSeq=0;
+async function loadRec(p){
+  recPeriod=p;document.querySelectorAll("#recTabs input").forEach(i=>i.checked=i.value===p);
+  const body=$("recBody"),seq=++recSeq;
+  if(!ACC.sb){body.innerHTML='<p class="note">전적 서버에 연결하지 못했어요.</p>';return}
+  if(!body.querySelector("table"))body.innerHTML='<p class="note">불러오는 중…</p>';
+  try{
+    const {data,error}=await ACC.sb.rpc("period_records",{period:p});if(error)throw error;
+    if(seq!==recSeq)return;
+    const name={day:"오늘은",week:"이번 주는",month:"이번 달은",year:"올해는"}[p];
+    if(!data||!data.length){body.innerHTML=`<p class="note">${name} 아직 기록이 없어요. 로그인한 친구들과 한 판 해 보세요!</p>`;return}
+    for(const r of data)winsCache.set(r.user_id,{w:r.total_wins,t:Date.now()});
+    body.innerHTML=`<table class="rtab"><thead><tr><th>#</th><th>이름</th><th class="num">최고점</th><th class="num">${p==="day"?"시각":"날짜"}</th><th class="num">판</th></tr></thead><tbody>${data.map((r,i)=>`<tr class="pl${i+1}${r.user_id===ACC.uid?" mine":""}"><td class="num rk">${i+1}</td><td class="nm">${plink(r.user_id,r.name)}${medalHTML(r.total_wins)}</td><td class="num big">${r.best}</td><td class="num when">${shortWhen(r.best_at,p)}</td><td class="num">${r.games}</td></tr>`).join("")}</tbody></table>`;
+  }catch(e){if(seq===recSeq)body.innerHTML='<p class="note">기록을 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
+}
+$("recTabs").addEventListener("change",e=>{if(e.target.name==="recperiod")loadRec(e.target.value)});
+$("recWins").onclick=()=>{rPeriod=recPeriod;openRanks()};
+let profSeq=0;
+async function openProfile(uid){
+  if(!isUUID(uid))return;
+  $("prof").hidden=false;const body=$("profBody"),seq=++profSeq;
+  $("profTitle").textContent="프로필";
+  if(!ACC.sb){body.innerHTML='<p class="note">전적 서버에 연결하지 못했어요.</p>';return}
+  body.innerHTML='<p class="note">불러오는 중…</p>';
+  try{
+    const {data:d,error}=await ACC.sb.rpc("profile_of",{uid});if(error)throw error;
+    if(seq!==profSeq)return;
+    if(!d){body.innerHTML='<p class="note">없는 계정이에요.</p>';return}
+    winsCache.set(d.id,{w:d.wins,t:Date.now()});
+    const day=s=>fmtDate(s).slice(0,10),top=d.top||[];
+    $("profTitle").textContent=d.id===ACC.uid?"내 프로필":"프로필";
+    body.innerHTML=`<div class="phead"><b>${esc(d.name)}${medalHTML(d.wins)}</b><span class="note">@${esc(d.username)} · ${day(d.joined)} 가입${d.last_played?` · 마지막 판 ${day(d.last_played)}`:""}</span></div>
+      <div class="pstats"><div><b>${d.games}</b><span>판</span></div><div><b>${d.wins}</b><span>1등</span></div><div><b>${d.games?Number(d.avg_rank).toFixed(1):"-"}</b><span>평균 등수</span></div><div><b>${d.games?Math.round(d.avg_score):"-"}</b><span>평균 점수</span></div></div>
+      <h3>최고 기록 TOP 5</h3>
+      ${top.length?`<ol class="ptop">${top.map((t,i)=>`<li><span class="no">${i+1}</span><span class="sc">${t.score}</span><span class="pl">${t.players}명 중 ${t.rank}등${t.rank===1?" 🏆":""}</span><span class="dt">${fmtDate(t.played_at)}</span></li>`).join("")}</ol>`:'<p class="note">아직 기록된 판이 없어요. 로그인한 친구와 온라인으로 한 판 하면 남아요.</p>'}`;
+  }catch(e){if(seq===profSeq)body.innerHTML='<p class="note">프로필을 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-prof]");if(b){e.preventDefault();openProfile(b.dataset.prof)}});
+$("profClose").onclick=()=>{$("prof").hidden=true};
+$("prof").addEventListener("click",e=>{if(e.target.id==="prof")$("prof").hidden=true});
 
 /* ---------- boards: 공지 (notice, admins write) and 피드백 (feedback, anyone; can be anonymous) ----------
    Votes: one per account and post. People who are not logged in vote through an anonymous
@@ -2958,6 +3045,10 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.2",time:"02:08",date:"2026.11.27",items:[
+    "첫 화면에 기록판이 생겼어요. 오늘·이번 주·이번 달·올해 최고 점수 상위 10명을 보여줘요. 점수가 같으면 먼저 낸 사람이 앞서요.",
+    "이름을 누르면 프로필이 열려요. 판 수, 1등 횟수, 평균 등수·점수와 최고 기록 5개(점수·등수·날짜)를 볼 수 있어요.",
+    "순위 창에 '오늘'도 추가했어요."]},
   {ver:"2.1",time:"09:37",date:"2026.11.27",items:[
     "피드백 글에 사진을 4장까지 붙일 수 있어요. 큰 사진은 자동으로 줄여서 올려요.",
     "사진이 있는 글에는 카메라 표시가 붙고, 글을 펼치면 사진이 보여요. 누르면 크게 열려요."]},
@@ -3225,7 +3316,7 @@ $("voices").addEventListener("click",e=>{
 });
 $("vStyles").addEventListener("change",e=>{if(VSTYLES[e.target.value]){V.style=e.target.value;store.set("yd-vstyle",V.style);speakNow("풀하우스!",Math.max(.3,S.vol),curVoice())}});
 $("people").addEventListener("click",e=>{if(e.target.id==="people")$("people").hidden=true});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")for(const id of ["people","voices","acct","ranks","news","board"])if(!$(id).hidden)$(id).hidden=true});
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("prof").hidden){$("prof").hidden=true;return}for(const id of ["people","voices","acct","ranks","news","board"])if(!$(id).hidden)$(id).hidden=true});
 $("watchBtn").onclick=()=>enterTable($("joinCode").value,false,undefined,undefined,false,true);
 $("specBtn").onclick=()=>setSpec(seated());
 $("joinPlayBtn").onclick=()=>setSpec(false);
@@ -3404,7 +3495,7 @@ function startLocal(names){
 document.addEventListener("keydown",e=>{
   if(!meMode()||!G||G.phase!=="play"||e.target.tagName==="INPUT")return;
   if(e.code==="Space"){e.preventDefault();doRoll(myCid)}
-  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks,#news,#board")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
+  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks,#news,#board,#prof")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
   else if(/^Digit[1-5]$/.test(e.code))toggleHold(myCid,+e.code.slice(5)-1);
 });
 
@@ -3414,7 +3505,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27b";
+const APP_VER="2026-11-27c";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
