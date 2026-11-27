@@ -4,7 +4,7 @@
 <title>요트 다이스 라운지</title>
 <script>try{var t=localStorage.getItem("yd-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;700&family=IBM+Plex+Mono:wght@600&display=swap">
 <style>
 /* Yacht Dice Lounge: warm ivory lounge with felt-green tables and brass accents.
    Layout: lobby = two columns (my stuff | rooms); game = boards around a central score table. */
@@ -494,7 +494,7 @@ button.chip:hover{border-color:var(--accent)}
 .nk-rainbow{background:linear-gradient(90deg,#ff4f6d,#ffa63d,#f2d43a,#3ccf7a,#3aa4ff,#9b6bff,#ff4f6d);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:nkflow 3s linear infinite}
 .nk-aurora{position:relative;display:inline-block;isolation:isolate;padding:0 .15em;background:linear-gradient(90deg,#26e0b0,#3aa4ff,#b06bff,#ff6fc8,#26e0b0);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:nkflow 6s ease-in-out infinite;filter:drop-shadow(0 0 4px rgba(120,120,255,.6))}
 /* aurora: a soft moving glow behind the letters and a twinkling star */
-.nk-aurora::before{content:"";position:absolute;inset:-2px -4px;z-index:-1;border-radius:999px;background:linear-gradient(90deg,rgba(38,224,176,.55),rgba(58,164,255,.5),rgba(176,107,255,.55),rgba(255,111,200,.5),rgba(38,224,176,.55));background-size:300% 100%;filter:blur(6px);animation:nkflow 5s linear infinite,auraPulse 2.2s ease-in-out infinite alternate}
+.nk-aurora::before{content:"";position:absolute;inset:-6px -10px;z-index:-1;border-radius:999px;background:radial-gradient(50% 60% at 25% 50%,rgba(38,224,176,.45),transparent 75%),radial-gradient(45% 60% at 60% 45%,rgba(176,107,255,.42),transparent 75%),radial-gradient(40% 60% at 85% 55%,rgba(255,111,200,.38),transparent 75%);animation:auraPulse 2.2s ease-in-out infinite alternate}
 .nk-aurora::after{content:"✦";position:absolute;right:-.55em;top:-.5em;font-size:.55em;color:#fff;-webkit-text-fill-color:#fff;text-shadow:0 0 6px #b9a6ff,0 0 10px #6fe3ff;animation:twinkle 1.7s ease-in-out infinite}
 @keyframes auraPulse{from{opacity:.45}to{opacity:.95}}
 @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1.2) rotate(30deg)}}
@@ -541,13 +541,24 @@ button.chip:hover{border-color:var(--accent)}
 :is(.pboard,.dxwrap)[class*="dx-"] .die{overflow:hidden}
 :is(.pboard,.dxwrap)[class*="dx-"] .die::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit}
 :is(.pboard,.dxwrap).dx-marble .die::after{background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%);transform:translateX(-130%);animation:dxSweep 5s ease-in-out infinite}
-:is(.pboard,.dxwrap).dx-pearl .die::after{background:linear-gradient(135deg,rgba(255,160,215,.45),rgba(150,205,255,.45) 45%,rgba(185,255,215,.45));mix-blend-mode:soft-light;animation:dxPearl 3.6s ease-in-out infinite alternate}
-:is(.pboard,.dxwrap).dx-gold .die{animation:dxGlow 2.2s ease-in-out infinite alternate}
+:is(.pboard,.dxwrap).dx-pearl .die::after{background:linear-gradient(135deg,rgba(255,170,220,.28),rgba(160,210,255,.28) 45%,rgba(190,255,220,.28));animation:dxPearl 3.6s ease-in-out infinite alternate}
+:is(.pboard,.dxwrap).dx-gold .die{box-shadow:0 0 0 1px rgba(255,228,150,.9),0 0 10px rgba(255,200,80,.55),0 3px 6px rgba(0,0,0,.25)}
 :is(.pboard,.dxwrap).dx-gold .die::after{background:linear-gradient(115deg,transparent 38%,rgba(255,250,215,.95) 50%,transparent 62%);transform:translateX(-130%);animation:dxSweep 2.8s ease-in-out infinite}
-:is(.pboard,.dxwrap).dx-stars .die::after{background:radial-gradient(circle at 22% 28%,#fff 0 1px,transparent 1.8px),radial-gradient(circle at 74% 20%,#fff 0 .8px,transparent 1.5px),radial-gradient(circle at 66% 76%,#e8dcff 0 1px,transparent 1.8px),radial-gradient(circle at 30% 78%,#fff 0 .8px,transparent 1.5px);animation:dxTwinkle 1.6s ease-in-out infinite alternate}
+:is(.pboard,.dxwrap).dx-stars .die::before{content:"";position:absolute;inset:-35%;pointer-events:none;background:radial-gradient(40% 32% at 35% 40%,rgba(175,95,255,.55),transparent 70%),radial-gradient(34% 28% at 68% 62%,rgba(70,150,255,.45),transparent 70%),radial-gradient(22% 18% at 60% 28%,rgba(255,120,210,.35),transparent 70%);animation:gxSpin 9s linear infinite}
+:is(.pboard,.dxwrap).dx-stars .die i{position:relative;z-index:1}
+:is(.pboard,.dxwrap).dx-stars .die::after{background:radial-gradient(circle at 22% 28%,#fff 0 1px,transparent 1.8px),radial-gradient(circle at 74% 20%,#fff 0 .8px,transparent 1.5px),radial-gradient(circle at 66% 76%,#e8dcff 0 1px,transparent 1.8px),radial-gradient(circle at 30% 78%,#fff 0 .8px,transparent 1.5px),radial-gradient(circle at 85% 55%,#cfe6ff 0 .7px,transparent 1.4px);animation:dxTwinkle 1.6s ease-in-out infinite alternate}
+@keyframes gxSpin{to{transform:rotate(360deg)}}
+/* 3D: the flat dice are only click targets there, so no effects on them */
+.tray .die.ghost,.tray .die.ghost::before,.tray .die.ghost::after{animation:none!important}
+.tray .die.ghost::before,.tray .die.ghost::after{display:none}
+.tray .die.ghost{outline:none!important;filter:none!important}
+.pboard.dx-gold .tray .die.ghost{box-shadow:none}
+/* dice that look too much like the felt get an outline */
+.pboard.dxo-l .die{outline:2px solid rgba(255,255,255,.9);outline-offset:-1px;filter:drop-shadow(0 0 3px rgba(210,190,255,.8))}
+.pboard.dxo-d .die{outline:2px solid rgba(20,20,20,.85);outline-offset:-1px}
 @keyframes dxSweep{0%,55%{transform:translateX(-130%)}85%,100%{transform:translateX(130%)}}
 @keyframes dxPearl{from{opacity:.35;transform:translate(-8%,-8%) scale(1.2)}to{opacity:.85;transform:translate(8%,8%) scale(1.2)}}
-@keyframes dxGlow{from{box-shadow:0 0 0 1px rgba(255,215,110,.5),0 3px 6px rgba(0,0,0,.25)}to{box-shadow:0 0 0 1px rgba(255,230,150,.9),0 0 12px rgba(255,200,80,.75),0 3px 6px rgba(0,0,0,.25)}}
+
 @keyframes dxTwinkle{from{opacity:.25}to{opacity:1}}
 /* landing burst */
 .lfx{position:absolute;inset:0;z-index:4;pointer-events:none}
@@ -567,11 +578,20 @@ button.chip:hover{border-color:var(--accent)}
 /* royal velvet: a soft sheen drifting across */
 .pboard.ft-velvet .tray:not(.c3)::after,.pboard.ft-velvet .tray .felt::after{top:0;bottom:0;left:-100%;width:300%;background:linear-gradient(115deg,transparent 40%,rgba(255,220,160,.16) 50%,transparent 60%);animation:ftSheen 6s ease-in-out infinite}
 @keyframes ftSheen{from{transform:translateX(-20%)}to{transform:translateX(40%)}}
-/* galaxy: twinkling stars, and now and then a shooting star */
-.pboard.ft-stars .tray:not(.c3)::after,.pboard.ft-stars .tray .felt::after{inset:0;background:radial-gradient(circle at 18% 62%,#fff 0 1.3px,transparent 2px),radial-gradient(circle at 47% 18%,#fff 0 1px,transparent 1.8px),radial-gradient(circle at 71% 46%,#e3d7ff 0 1.4px,transparent 2.2px),radial-gradient(circle at 88% 84%,#fff 0 1px,transparent 1.8px),radial-gradient(circle at 34% 90%,#cfe8ff 0 1px,transparent 1.8px);animation:dxTwinkle 2.4s ease-in-out infinite alternate}
-.pboard.ft-stars .tray .felt::before{content:"";position:absolute;z-index:1;pointer-events:none;top:12%;left:-30%;width:90px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95));transform:rotate(18deg);opacity:0;animation:ftShoot 7s ease-in infinite}
-@keyframes ftShoot{0%,82%{opacity:0;transform:translate(0,0) rotate(18deg)}84%{opacity:1}96%{opacity:0;transform:translate(420px,135px) rotate(18deg)}100%{opacity:0}}
-@media (prefers-reduced-motion:reduce){[class*="dx-"] .die,[class*="dx-"] .die::after,.pboard[class*="ft-"] .tray::after,.pboard[class*="ft-"] .felt::after,.pboard[class*="ft-"] .felt::before,.lfx span{animation:none!important}}
+/* galaxy felt: drifting nebula, stars twinkling at three paces (slowly drifting), shooting stars */
+.gx{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1;border-radius:inherit}
+.gx i{position:absolute;display:block}
+.gx .neb{inset:-40%;background:radial-gradient(28% 22% at 32% 40%,rgba(160,80,255,.42),transparent 70%),radial-gradient(26% 20% at 68% 62%,rgba(60,140,255,.34),transparent 70%),radial-gradient(18% 14% at 55% 28%,rgba(255,110,200,.3),transparent 70%),radial-gradient(20% 16% at 25% 75%,rgba(80,220,255,.2),transparent 70%);animation:gxSpin 40s linear infinite}
+.gx .st{inset:-20%;animation:gxTw 2.4s ease-in-out infinite alternate,gxDrift 60s linear infinite}
+.gx .s1{background:radial-gradient(circle,#fff 0 1.2px,transparent 1.8px) 0 0/97px 89px}
+.gx .s2{background:radial-gradient(circle,#e3d7ff 0 1px,transparent 1.6px) 31px 47px/131px 113px;animation-duration:3.3s,80s}
+.gx .s3{background:radial-gradient(circle,#cfe8ff 0 1.5px,transparent 2.2px) 61px 13px/173px 157px;animation-duration:1.7s,50s}
+.gx .sh{top:10%;left:-25%;width:110px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95));opacity:0;transform:rotate(16deg);animation:ftShoot 5.5s ease-in infinite}
+.gx .h2{top:45%;left:-30%;width:80px;animation-duration:8.5s;animation-delay:2.7s}
+@keyframes gxTw{from{opacity:.35}to{opacity:1}}
+@keyframes gxDrift{to{transform:translate(-60px,-25px)}}
+@keyframes ftShoot{0%,80%{opacity:0;transform:translate(0,0) rotate(16deg)}83%{opacity:1}96%{opacity:0;transform:translate(460px,132px) rotate(16deg)}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){[class*="dx-"] .die,[class*="dx-"] .die::before,[class*="dx-"] .die::after,.pboard[class*="ft-"] .tray::after,.pboard[class*="ft-"] .felt::after,.gx i,.lfx span{animation:none!important}}
 #prof .panel{width:min(520px,100%)}
 .pcard{position:relative;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center;padding:18px;border-radius:18px;color:#fdf6e3;overflow:hidden;
   background:radial-gradient(120% 140% at 15% 0%,color-mix(in srgb,var(--pa,#1f6b5c) 92%,#fff),var(--pb,#0b2f28) 75%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
@@ -1463,7 +1483,7 @@ function dirStart(){
     if(e&&e.type==="peer-unavailable"){
       // nobody holds that slot: note it as free (we may claim it) and stop waiting on it
       const msg=String(e.message||"");const s=Dir.slots.find(x=>msg.includes(x.id));
-      if(s){s.free=Date.now();s.retryAt=Date.now()+15000;if(s.conn){try{s.conn.close()}catch(_){}s.conn=null}}
+      if(s){s.free=Date.now();s.retryAt=Date.now()+15000;s.fail=Math.min(6,(s.fail||0)+1);if(s.conn){try{s.conn.close()}catch(_){}s.conn=null}}
       dirTick();return;
     }
     if(p.destroyed||!p.open)setTimeout(()=>{if(g===Dir.gen)dirStart()},4000+Math.random()*3000);
@@ -1481,7 +1501,10 @@ function dirTick(){
         if(now-s.heard>25000){try{s.conn.close()}catch(e){}s.conn=null;s.rooms=[];s.retryAt=now+2000;continue}
         sendReg(s,now-s.lastReg>12000);continue;
       }
-      if(!s.conn&&now>=s.retryAt)connectSlot(s);
+      if(!s.conn&&now>=s.retryAt){
+        if(liveHubs()>=2&&s.fail&&now-(s.lastTry||0)<Math.min(90000,6000*Math.pow(2,s.fail)))continue;
+        s.lastTry=now;connectSlot(s);
+      }
     }
   }
   if(Dir.hubSlot>=0){
@@ -1499,8 +1522,8 @@ function connectSlot(s){
   // not reliably say which, so we try to take the slot (maybeClaim); if it turns out to be taken,
   // claimSlot marks it unresponsive and we move on (a dead keeper used to stall everyone).
   const to=setTimeout(()=>{if(g===Dir.gen&&s.conn===c&&!c.open){try{c.close()}catch(e){}s.conn=null;
-    s.retryAt=Date.now()+(s.deadUntil>Date.now()?45000:6000);if(!(s.deadUntil>Date.now()))s.free=Date.now()}},6000);
-  c.on("open",()=>{if(g!==Dir.gen||s.conn!==c)return;clearTimeout(to);s.heard=Date.now();s.free=0;s.regSent="";sendReg(s,true);mergeRooms()});
+    s.retryAt=Date.now()+(s.deadUntil>Date.now()?45000:6000);s.fail=Math.min(6,(s.fail||0)+1);if(!(s.deadUntil>Date.now()))s.free=Date.now()}},6000);
+  c.on("open",()=>{if(g!==Dir.gen||s.conn!==c)return;clearTimeout(to);s.heard=Date.now();s.free=0;s.fail=0;s.regSent="";sendReg(s,true);mergeRooms()});
   c.on("data",m=>{
     if(g!==Dir.gen||s.conn!==c)return;s.heard=Date.now();
     if(m&&m.t==="list"&&Array.isArray(m.rooms)){
@@ -1806,12 +1829,18 @@ function attach(t){
 }
 let tablePw="",newRoom=null,joining=false;
 // Returns "ok" or an error code. restoreG: reopen this code myself with my saved copy of the game.
+let nickChecking=false;
 async function enterTable(c,isCreate,pwIn,restoreG,quick,spec){
   if(joining)return "busy";
   const nick=$("nick").value.trim().slice(0,12);
   if(!nick){$("homeMsg").textContent="닉네임을 먼저 적어 주세요.";$("nick").focus();return "nonick"}
   if(badKind(nick)==="abuse"){$("homeMsg").textContent="닉네임에 쓸 수 없는 말이 있어요.";$("nick").focus();return "badnick"}
-  if(!restoreG&&!quick){const np=await nickProblem(nick);if(np){$("homeMsg").textContent=np;$("nick").focus();return "nicktaken"}}
+  if(!restoreG&&!quick){
+    if(nickChecking)return "busy";nickChecking=true;
+    let np=null;try{np=await nickProblem(nick)}finally{nickChecking=false}
+    if(joining)return "busy";
+    if(np){$("homeMsg").textContent=np;$("nick").focus();return "nicktaken"}
+  }
   if(BAN.info){$("banned").hidden=false;return "banned"}
   if(isCreate&&!restoreG&&badKind($("roomTitle").value)==="abuse"){$("homeMsg").textContent="방 이름에 쓸 수 없는 말이 있어요.";$("roomTitle").focus();return "badtitle"}
   c=c.toUpperCase().replace(/[^A-Z0-9]/g,"");
@@ -2065,6 +2094,7 @@ function doRoll(cid){
 // stop shaking without throwing: no roll is used, and the dice can be held or released again
 function cancelShake(cid){
   const b0=boardOf(cid);if(!canAct(cid)||!b0.rolling)return;
+  stopPending.delete(cid);
   clearTimeout(stopT.get(cid));
   const b=clone(b0);b.rolling=false;setBoard(cid,b);
 }
@@ -2081,7 +2111,7 @@ ${cupGeom}
 ${cupThrowAt}
 ${d3SimFrom}
 ${d3Sim}
-onmessage=e=>{const m=e.data;let sim=null;try{sim=m.start?d3SimFrom(m.Wu,m.Hu,m.start):null;if(!sim||!sim.allOut)sim=d3Sim(m.Wu,m.Hu,m.n,m.tries)}catch(err){sim=null}postMessage({id:m.id,sim})};`;
+onmessage=e=>{const m=e.data;let sim=null;try{sim=m.start?d3SimFrom(m.Wu,m.Hu,m.start):null;if(!sim||!sim.allOut){sim=d3Sim(m.Wu,m.Hu,m.n,m.tries);if(sim)sim.allOut=true}}catch(err){sim=null}postMessage({id:m.id,sim})};`;
     const w=new Worker(URL.createObjectURL(new Blob([src],{type:"text/javascript"})),{type:"module"});
     w.onmessage=e=>{const r=simWait.get(e.data.id);if(r){simWait.delete(e.data.id);r(e.data.sim)}};
     w.onerror=()=>{simWorker=false;for(const r of simWait.values())r(null);simWait.clear()};
@@ -2090,7 +2120,7 @@ onmessage=e=>{const m=e.data;let sim=null;try{sim=m.start?d3SimFrom(m.Wu,m.Hu,m.
 }
 function simInWorker(msg,ms){
   const w=simWorkerGet();if(!w)return Promise.resolve(null);
-  const id=++simSeq;return new Promise(res=>{simWait.set(id,res);setTimeout(()=>{if(simWait.has(id)){simWait.delete(id);res(null)}},ms);w.postMessage(Object.assign({id},msg))});
+  const id=++simSeq;return new Promise(res=>{simWait.set(id,res);setTimeout(()=>{if(simWait.has(id)){simWait.delete(id);res(null);try{w.terminate()}catch(e){}if(simWorker===w)simWorker=false}},ms);w.postMessage(Object.assign({id},msg))});
 }
 function doStop(cid){
   const b0=boardOf(cid);if(!canAct(cid)||!b0.rolling||stopPending.has(cid))return;
@@ -2102,6 +2132,7 @@ function doStop(cid){
       stopPending.add(cid);
       simInWorker({Wu:u.Wu,Hu:u.Hu,start:live.states(),n,tries:8},4000).then(sim=>{
         stopPending.delete(cid);
+        const v1=views.get(cid);if(!v1||v1.anim!==live)return;   // cancelled (and maybe shaken again) meanwhile
         const b1=boardOf(cid);if(!b1||!b1.rolling||!canAct(cid))return;
         commitStop(cid,b1,sim&&sim.allOut?{sim,Wu:u.Wu,Hu:u.Hu}:null);
       });
@@ -2197,18 +2228,24 @@ const THEME_ICON={
   light:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
   dark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>'};
 function curTheme(){const t=store.get("yd-theme");return t==="light"||t==="dark"?t:"auto"}
-function paintTheme(){const t=curTheme(),b=$("themeBtn");if(t==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t);
+function paintTheme(){rootColCache=null;if(typeof views!=="undefined")for(const v of views.values()){v.lookKey=null;v.rest=null}const t=curTheme(),b=$("themeBtn");if(t==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t);
   if(b){b.innerHTML=THEME_ICON[t];b.setAttribute("aria-label","화면: "+THEME_NAME[t]+" · 누르면 바꿔요");b.title="화면 "+THEME_NAME[t]+(t==="auto"?" (휴대폰 설정을 따라요)":"")+" · 누르면 바꿔요"}}
 function paintDice3d(){const b=$("d3Btn");if(!b)return;b.textContent=D3.on&&!reduced?"3D":"2D";b.setAttribute("aria-pressed",D3.on?"true":"false");b.title=D3.on?"주사위 3D로 보는 중 · 누르면 2D(가벼운 화면)로 바꿔요":"주사위 2D로 보는 중 · 누르면 3D로 바꿔요";b.disabled=reduced}
 // local "up" direction of each face's picture, in BoxGeometry face order (+x,-x,+y,-y,+z,-z)
 const TEXUP=[[0,1,0],[0,1,0],[0,0,-1],[0,0,1],[0,1,0],[0,1,0]];
 const D3LIGHT={amb:1.15,dir:1.9};
 const matCache=new Map();
+let rootColCache=null;
+function rootCols(){
+  if(rootColCache)return rootColCache;
+  const cs=getComputedStyle(document.documentElement),g=(k,d)=>cs.getPropertyValue(k).trim()||d;
+  return rootColCache={die:g("--die","#fbf8f1"),pip:g("--pip","#1c2422"),red:g("--pipred","#c33f2b"),felt:g("--felt","#165a4d"),felt2:g("--felt2","#0c3a32")};
+}
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{rootColCache=null;for(const v of views.values()){v.lookKey=null;v.rest=null}})}catch(e){}
 function d3Mats(v){
-  const cs=getComputedStyle(document.documentElement),dl=v&&v.look&&v.look.dice,dc=dl&&diceCSS(dl);
-  const base=cs.getPropertyValue("--die").trim()||"#fbf8f1";
-  const stops=dc?dl.bg.map(x=>hex(x,null)).filter(Boolean):[base],pip=dc?dc.pip:cs.getPropertyValue("--pip").trim()||"#1c2422",red=dc?dc.red:cs.getPropertyValue("--pipred").trim()||"#c33f2b",fx=dc?dl.fx:null;
-  const key=[stops.join(","),pip,red,fx].join("|");if(matCache.has(key))return matCache.get(key);
+  const rc=rootCols(),dl=v&&v.look&&v.look.dice,dc=dl&&diceCSS(dl),ol=v&&v.outline||"";
+  const stops=dc?dl.bg.map(x=>hex(x,null)).filter(Boolean):[rc.die],pip=dc?dc.pip:rc.pip,red=dc?dc.red:rc.red,fx=dc?dl.fx:null;
+  const key=[stops.join(","),pip,red,fx,ol].join("|");if(matCache.has(key))return matCache.get(key);
   const T3=D3.T3,mats=[null];mats.key=key;
   if(matCache.size>20){const k0=matCache.keys().next().value;matCache.delete(k0)}
   matCache.set(key,mats);
@@ -2218,13 +2255,15 @@ function d3Mats(v){
     const c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d");
     const gr=x.createLinearGradient(0,0,N,N);stops.forEach((c,i)=>gr.addColorStop(stops.length>1?i/(stops.length-1):0,c));
     x.fillStyle=gr;x.fillRect(0,0,N,N);
-    if(fx==="stars"){let sd=v*97;const r=()=>(sd=(sd*9301+49297)%233280)/233280;for(let k=0;k<40;k++){x.fillStyle=`rgba(255,255,255,${.35+r()*.6})`;x.beginPath();x.arc(r()*N,r()*N,.6+r()*1.8,0,7);x.fill()}}
+    if(fx==="stars"){for(const [gx,gy,gr,col] of [[.3,.35,.45,"rgba(170,90,255,.55)"],[.72,.65,.4,"rgba(70,150,255,.45)"],[.6,.25,.25,"rgba(255,120,210,.35)"]]){const rg=x.createRadialGradient(gx*N,gy*N,0,gx*N,gy*N,gr*N);rg.addColorStop(0,col);rg.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=rg;x.fillRect(0,0,N,N)}
+      let sd=v*97;const r=()=>(sd=(sd*9301+49297)%233280)/233280;for(let k=0;k<40;k++){x.fillStyle=`rgba(255,255,255,${.35+r()*.6})`;x.beginPath();x.arc(r()*N,r()*N,.6+r()*1.8,0,7);x.fill()}}
     else if(fx==="marble"){x.strokeStyle="rgba(120,118,126,.35)";x.lineWidth=3;for(let k=0;k<3;k++){x.beginPath();x.moveTo(0,N*(.2+k*.3));x.bezierCurveTo(N*.3,N*(.05+k*.3),N*.6,N*(.45+k*.25),N,N*(.25+k*.3));x.stroke()}}
     else if(fx==="sheen"||fx==="pearl"||fx==="gold"){const sh=x.createLinearGradient(0,0,N,N);sh.addColorStop(.35,"rgba(255,255,255,0)");sh.addColorStop(.47,"rgba(255,255,255,.6)");sh.addColorStop(.58,"rgba(255,255,255,0)");x.fillStyle=sh;x.fillRect(0,0,N,N)}
     for(const [rr,cc] of PIPS[v]){
       const cx=(.16+(cc-1)*(cell+.05)+cell/2)*N,cy=(.16+(rr-1)*(cell+.05)+cell/2)*N,rad=cell/2*N*(v===1?1.35:1);
       x.fillStyle=v===1?red:pip;x.beginPath();x.arc(cx,cy,rad,0,Math.PI*2);x.fill();
     }
+    if(ol){x.strokeStyle=ol==="l"?"rgba(255,255,255,.95)":"rgba(20,20,20,.9)";x.lineWidth=16;x.strokeRect(8,8,N-16,N-16)}
     const t=new T3.CanvasTexture(c);t.colorSpace=T3.SRGBColorSpace;t.anisotropy=4;
     mats.push(new T3.MeshStandardMaterial({map:t,roughness:fx==="sheen"||fx==="pearl"||fx==="gold"?.3:.55,metalness:0}));
   }
@@ -2639,7 +2678,7 @@ function d3Rest(v,b){
   }catch(e){return drop()}
 }
 const views=new Map();
-function resetViews(){for(const v of views.values())v.el.remove();views.clear()}
+function resetViews(){for(const v of views.values()){if(trayRO)trayRO.unobserve(v.tray);v.el.remove()}views.clear()}
 function makeView(cid){
   const el=document.createElement("div");el.className="pboard";
   el.innerHTML=`<div class="phead"><span class="pips3" aria-label="굴린 횟수"><span></span><span></span><span></span></span><span class="pround"></span><span class="ptot"></span></div>
@@ -2680,7 +2719,7 @@ function syncTray(v,b,act,away){
   let sim3=null;
   if(landed&&!reduced){const idx=[];for(let i=0;i<5;i++)if(b.mask[i]&&!b.held[i])idx.push(i);if(idx.length)sim3=d3Roll(v,b,idx)}
   const pos=positions(b?b.rollId:0);
-  const trect=v.tray.getBoundingClientRect();
+  let trect=null;const TR=()=>trect||(trect=v.tray.getBoundingClientRect());
   const can=act&&b&&!rolling&&b.rolls>0&&b.rolls<3;
   let maxDur=0;
   for(let i=0;i<5;i++){
@@ -2700,7 +2739,7 @@ function syncTray(v,b,act,away){
     if(landed&&b.mask[i]&&sim3){el.getAnimations().forEach(a=>a.cancel());face(el,b.dice[i]);maxDur=Math.max(maxDur,sim3.dur)}
     else if(landed&&b.mask[i]){
       const dur=reduced?220:780+i*70;maxDur=Math.max(maxDur,dur);
-      const dx=(0.14-p.x/100)*trect.width,dy=(0.5-p.y/100)*trect.height;
+      const dx=(0.14-p.x/100)*TR().width,dy=(0.5-p.y/100)*TR().height;
       const r0=p.r-360-Math.round(Math.random()*180);
       el.animate(reduced?[{opacity:0},{opacity:1}]:[
         {transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${r0}deg) scale(.5)`,opacity:0},
@@ -2878,11 +2917,11 @@ function paintView(v,p){
   const b=boardOf(p.cid),away=isAway(p.cid),mine=isMine(p.cid)&&(mode==="local"||seated()),act=canAct(p.cid)&&!away;
   v.el.classList.toggle("me",meMode()&&p.cid===myCid);
   v.el.classList.toggle("away",away);
-  const lk=lookOfCid(p.cid);applyLook(v,lk);
+  const lk=lookOfCid(p.cid);applyLook(v,lk);if(v.gx||v.el.classList.contains("ft-stars"))syncGalaxy(v);
   const isLead=leaders().has(p.cid);
-  v.name.innerHTML=(isLead?FLAME:"")+nickHTML(p.name,lk)+medalOfCid(p.cid)+(isLead?FLAME:"");
+  const nameH=(isLead?FLAME:"")+nickHTML(p.name,lk)+medalOfCid(p.cid)+(isLead?FLAME:"");if(v.nameH!==nameH){v.nameH=nameH;v.name.innerHTML=nameH}
   const fin=done(b);
-  v.tags.innerHTML=(isLead?'<span class="tag lead1">현재 1등</span> ':"")+(meMode()&&p.cid===myCid?'<span class="tag">나</span> ':"")+(away?'<span class="tag bad">연결 끊김</span>':fin?'<span class="tag ok">완료</span>':"");
+  const tagsH=(isLead?'<span class="tag lead1">현재 1등</span> ':"")+(meMode()&&p.cid===myCid?'<span class="tag">나</span> ':"")+(away?'<span class="tag bad">연결 끊김</span>':fin?'<span class="tag ok">완료</span>':"");if(v.tagsH!==tagsH){v.tagsH=tagsH;v.tags.innerHTML=tagsH}
   const filled=b?b.scores.filter(x=>x!==null).length:0;
   v.round.textContent=fin?"":`${Math.min(filled+1,12)}/12`;
   v.tot.textContent=b?totals(b.scores).total:0;
@@ -2969,7 +3008,7 @@ function renderLobby(){
 }
 function renderGame(){
   const ps=G.players;
-  for(const [c,v] of views)if(!ps.some(p=>p.cid===c)){v.el.remove();views.delete(c)}
+  for(const [c,v] of views)if(!ps.some(p=>p.cid===c)){if(trayRO)trayRO.unobserve(v.tray);v.el.remove();views.delete(c)}
   // my board big next to the score table; everyone else alternates between the two side columns
   // a spectator sees the 방장's board (or the first player's) in the big spot
   const meP=meMode()?(ps.find(p=>p.cid===myCid)||(mode==="online"?ps.find(p=>p.cid===ownerCid())||ps[0]:null)):null;
@@ -3007,6 +3046,7 @@ function leaders(){
   const mx=Math.max(...t.map(x=>x.v));if(mx>0)for(const x of t)if(x.v===mx)out.add(x.cid);return out;
 }
 const FLAME='<span class="fl" aria-hidden="true">🔥</span>';
+let sheetHead="";
 function renderSheet(){
   const ps=G.players,lead=leaders();
   let h="<thead><tr><th>항목</th>";
@@ -3034,7 +3074,8 @@ function renderSheet(){
   // after the end, totals come from the recorded result (covers boards this view never saw)
   const tot=i=>{if(isOver()){const f=G.final.find(x=>x.cid===ps[i].cid);if(f)return f.t}return totals(bs[i]&&bs[i].scores).total};
   h+=`<tr class="total"><td>총점</td>${ps.map((p,i)=>`<td class="num">${tot(i)}</td>`).join("")}</tr></tbody>`;
-  $("sheet").innerHTML=h;
+  {const hi=h.indexOf("<tbody>"),head=h.slice(0,hi),body=h.slice(hi+7).replace(/<\/tbody>$/,""),tb=$("sheet").tBodies[0];
+   if(tb&&sheetHead===head)tb.innerHTML=body;else{$("sheet").innerHTML=h;sheetHead=head}}
   ps.forEach((p,i)=>{if(bs[i]&&bs[i].last)flashed.set(p.cid,bs[i].last.k)});
   $("sheet").querySelectorAll("button.pot").forEach(b=>b.onclick=()=>pick(b.dataset.cid,+b.dataset.c));
   renderStandings();
@@ -3139,6 +3180,20 @@ function diceCSS(d){
   return{bg,pip:hex(d.pip,"#1c2422"),red:hex(d.red,"#c33f2b")};
 }
 const FELT_FX=new Set(["gold","velvet","stars"]),DICE_FX=new Set(["marble","pearl","gold","stars"]);
+function syncGalaxy(v){
+  const want=v.el.classList.contains("ft-stars"),host=v.tray.classList.contains("c3")&&v.felt?v.felt:v.tray;
+  if(!want){if(v.gx){v.gx.remove();v.gx=null}return}
+  if(!v.gx){v.gx=document.createElement("div");v.gx.className="gx";v.gx.innerHTML='<i class="neb"></i><i class="st s1"></i><i class="st s2"></i><i class="st s3"></i><i class="sh"></i><i class="sh h2"></i>'}
+  if(v.gx.parentNode!==host)host.prepend(v.gx);
+}
+// dice and felt too close in brightness: outline the dice (light outline on dark dice, dark on light)
+const lum=h=>{const n=parseInt(h.slice(1),16),c=[n>>16&255,n>>8&255,n&255].map(x=>{x/=255;return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]};
+function outlineFor(dc,d,f){
+  const rc=rootCols(),ds=dc?d.bg.map(x=>hex(x,null)).filter(Boolean):[hex(rc.die,"#fbf8f1")],fs=f&&hex(f.a,null)&&hex(f.b,null)?[f.a,f.b]:[hex(rc.felt,"#165a4d"),hex(rc.felt2,"#0c3a32")];
+  const L1=ds.reduce((s,x)=>s+lum(x),0)/ds.length,L2=fs.reduce((s,x)=>s+lum(x),0)/fs.length;
+  const ratio=(Math.max(L1,L2)+.05)/(Math.min(L1,L2)+.05);
+  return ratio<2.6?(L1<.3?"l":"d"):"";
+}
 function applyLook(v,lk){
   const d=lk&&lk.dice,f=lk&&lk.felt,dc=d?diceCSS(d):null;
   const key=JSON.stringify([dc,f&&[hex(f.a,""),hex(f.b,""),f.fx]]);
@@ -3149,6 +3204,8 @@ function applyLook(v,lk){
   if(a&&b){st.setProperty("--felt",a);st.setProperty("--felt2",b)}else{st.removeProperty("--felt");st.removeProperty("--felt2")}
   for(const x of FELT_FX)v.el.classList.toggle("ft-"+x,!!(a&&b&&f.fx===x));
   for(const x of DICE_FX)v.el.classList.toggle("dx-"+x,!!(dc&&d.fx===x));
+  v.outline=outlineFor(dc,d,a&&b?f:null);v.el.classList.toggle("dxo-l",v.outline==="l");v.el.classList.toggle("dxo-d",v.outline==="d");
+  syncGalaxy(v);
   v.rest=null;   // redraw the resting 3D dice with the new colors
 }
 async function fetchWins(){
@@ -3951,6 +4008,11 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.17",time:"16:57",date:"2026.11.27",items:[
+    "데이터를 아꼈어요. 새 버전 확인은 아주 작은 파일만 받고(예전에는 사이트 전체), 방 목록 자리를 찾는 연결 시도를 줄였고, 쓰지 않는 글꼴 굵기를 뺐어요.",
+    "은하수 펠트에 흐르는 성운과 여러 박자로 반짝이는 별, 별똥별이 생겼고, 은하 주사위 안에서도 성운이 돌아요.",
+    "주사위와 펠트 색이 비슷하면 주사위에 자동으로 윤곽선이 생겨서 잘 구별돼요(3D 포함).",
+    "방 만들기를 빠르게 두 번 누를 때, 던지기 직후 취소할 때 생길 수 있던 오류를 고치고, 화면 다시 그리기를 줄여 불꽃·닉네임 효과가 끊기지 않게 했어요."]},
   {ver:"2.16",time:"16:32",date:"2026.11.27",items:[
     "다른 사람이 산 꾸미기가 내 화면에 늦게 보이던 문제를 고쳤어요. 누가 아이템을 장착하면 접속 중인 모두에게 바로 알려서 곧바로 바뀌어요.",
     "점수판 위쪽 이름, 점수판 아래 '현재 순위', 게임 중 채팅 이름에도 닉네임 효과가 보여요."]},
@@ -4471,13 +4533,15 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27r";
+const APP_VER="2026-11-27s";
+// version.txt (a few bytes, written on every deploy) instead of downloading the whole page
 function checkVersion(){
-  if(!/^https?:$/.test(location.protocol))return;
-  fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
-    const m=t.match(/const APP_VER="([^"]+)"/);if(m&&m[1]!==APP_VER)showUpdate();
+  if(!/^https?:$/.test(location.protocol)||document.hidden)return;
+  fetch(new URL("version.txt",location.href).href+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
+    t=t.trim();if(/^[0-9a-z-]{6,30}$/.test(t)&&t!==APP_VER)showUpdate();
   }).catch(()=>{});
 }
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
 function showUpdate(){
   if($("updBar"))return;
   const d=document.createElement("div");d.id="updBar";d.className="updbar";d.setAttribute("role","status");
