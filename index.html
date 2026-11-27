@@ -465,6 +465,41 @@ button.chip:hover{border-color:var(--accent)}
 .d3b{font-weight:800;font-size:12.5px;letter-spacing:.02em;min-width:34px;justify-content:center}
 .d3b[aria-pressed="false"]{color:var(--muted)}
 .vstyles{display:flex;gap:6px;flex-wrap:wrap}
+/* cosmetics */
+.nk{font-weight:inherit}
+.nk-gold{background:linear-gradient(180deg,#ffe99a 0%,#e2b53f 45%,#a8761a 70%,#f3d27a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(90,60,0,.35))}
+.nk-neon{color:#14b8d4;text-shadow:0 0 4px rgba(20,220,255,.9),0 0 12px rgba(20,220,255,.55)}
+:root[data-theme="dark"] .nk-neon{color:#7ff3ff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .nk-neon{color:#7ff3ff}}
+.nk-rainbow{background:linear-gradient(90deg,#ff4f6d,#ffa63d,#f2d43a,#3ccf7a,#3aa4ff,#9b6bff,#ff4f6d);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:nkflow 3s linear infinite}
+.nk-aurora{background:linear-gradient(90deg,#26e0b0,#3aa4ff,#b06bff,#ff6fc8,#26e0b0);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:nkflow 6s ease-in-out infinite;filter:drop-shadow(0 0 5px rgba(120,120,255,.55))}
+@keyframes nkflow{to{background-position:-200% 0}}
+.ttl{display:inline-block;font-size:11px;font-weight:700;line-height:1.5;padding:0 7px;border-radius:999px;margin-left:6px;white-space:nowrap;vertical-align:.1em;border:1px solid var(--line2);color:var(--muted);background:var(--panel2)}
+.ttl.t-silver{color:#3d4852;border-color:#9fb0bd;background:linear-gradient(180deg,#f7fafc,#d3dce3)}
+.ttl.t-gold{color:#4a3200;border-color:#c79a2a;background:linear-gradient(180deg,#fff1b8,#e2b443)}
+.ttl.t-legend{color:#fff;border:0;background:linear-gradient(90deg,#6d28d9,#db2777,#f59e0b,#6d28d9);background-size:200% 100%;animation:nkflow 4s linear infinite;box-shadow:0 0 8px rgba(219,39,119,.45)}
+@media (prefers-reduced-motion:reduce){.nk-rainbow,.nk-aurora,.ttl.t-legend{animation:none}}
+.pboard.ft-gold .tray:not(.c3),.pboard.ft-gold .tray .felt{box-shadow:inset 0 0 0 3px #d9b25a,inset 0 0 0 5px rgba(0,0,0,.5),inset 0 8px 22px rgba(0,0,0,.5)}
+.pboard.ft-velvet .tray:not(.c3),.pboard.ft-velvet .tray .felt{background:repeating-linear-gradient(45deg,rgba(255,215,120,.09) 0 2px,transparent 2px 16px),repeating-linear-gradient(-45deg,rgba(255,215,120,.09) 0 2px,transparent 2px 16px),radial-gradient(120% 90% at 50% 40%,var(--felt) 0%,var(--felt2) 100%);box-shadow:inset 0 0 0 3px #c9a24a,inset 0 8px 22px rgba(0,0,0,.5)}
+.pboard.ft-stars .tray:not(.c3),.pboard.ft-stars .tray .felt{background:radial-gradient(circle at 12% 20%,#fff 0 1px,transparent 1.6px),radial-gradient(circle at 38% 70%,#fff 0 1.2px,transparent 1.8px),radial-gradient(circle at 63% 28%,#e6dcff 0 1px,transparent 1.6px),radial-gradient(circle at 82% 62%,#fff 0 1.3px,transparent 2px),radial-gradient(circle at 27% 44%,#bfe6ff 0 .8px,transparent 1.4px),radial-gradient(circle at 55% 88%,#fff 0 .9px,transparent 1.5px),radial-gradient(circle at 90% 15%,#fff 0 .8px,transparent 1.4px),radial-gradient(60% 50% at 70% 35%,rgba(150,90,255,.35),transparent 70%),radial-gradient(120% 90% at 50% 40%,var(--felt) 0%,var(--felt2) 100%);background-size:140px 120px,140px 120px,140px 120px,140px 120px,140px 120px,140px 120px,140px 120px,100% 100%,100% 100%}
+/* shop */
+#shop{position:fixed;inset:0;z-index:36;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#shop .panel{width:min(620px,100%);max-height:min(720px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
+#shop h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
+.pts{display:flex;align-items:baseline;gap:6px 10px;flex-wrap:wrap;border:1px solid color-mix(in srgb,var(--brass) 45%,var(--line2));background:color-mix(in srgb,var(--brass) 8%,var(--panel));border-radius:12px;padding:10px 14px}
+.pts b{font-size:24px;font-variant-numeric:tabular-nums}
+.pts span{font-size:12.5px;color:var(--muted)}
+.pts .how{flex-basis:100%}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.sitem{border:1px solid var(--line2);border-radius:14px;background:var(--panel);padding:10px;display:flex;flex-direction:column;gap:8px}
+.sitem.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.sitem .pv{height:64px;border-radius:10px;display:grid;place-items:center;background:var(--panel2);overflow:hidden;font-weight:700;font-size:17px}
+.sitem .pv .die{--d:40px;pointer-events:none}
+.sitem .pv.felt{background:radial-gradient(120% 90% at 50% 40%,var(--felt) 0%,var(--felt2) 100%)}
+.sitem .nm2{display:flex;justify-content:space-between;gap:6px;font-size:13.5px;font-weight:700}
+.sitem .pr{color:var(--brass);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sitem .btn{width:100%;justify-content:center}
+.sitem .pv .ttl{margin:0;font-size:13px;padding:2px 10px}
 #prof{z-index:36}
 .records .vstyles label{min-width:64px}
 .records .vstyles span{padding:7px 6px;font-size:13.5px}
@@ -806,6 +841,20 @@ button.chip:hover{border-color:var(--accent)}
       <div id="ranksBody"></div>
       <p class="note" style="margin:0">1등 횟수로 순위를 매기고, 같으면 평균 등수가 더 좋은 사람이 앞서요. 로그인한 참가자가 2명 이상인 온라인 판만 기록돼요.</p>
       <div class="medals-key"><span><span class="medal m1"></span> 1승</span><span><span class="medal m2"></span> 10승</span><span><span class="medal m3"></span> 30승</span><span><span class="medal m4"></span> 100승</span></div>
+    </div>
+  </div>
+  <div id="shop" hidden>
+    <div class="panel" role="dialog" aria-labelledby="shopTitle">
+      <div class="row" style="align-items:center"><h2 id="shopTitle" style="flex:1">꾸미기 상점</h2><button id="shopClose" class="btn ghost small" type="button">닫기</button></div>
+      <div class="pts" id="shopPts"></div>
+      <div class="vstyles" id="shopTabs">
+        <label><input type="radio" name="shopkind" value="nick"><span>닉네임</span></label>
+        <label><input type="radio" name="shopkind" value="title"><span>칭호</span></label>
+        <label><input type="radio" name="shopkind" value="dice"><span>주사위</span></label>
+        <label><input type="radio" name="shopkind" value="felt"><span>펠트</span></label>
+      </div>
+      <div id="shopBody"></div>
+      <p class="note" style="margin:0">꾸미기는 보이기만 하고 게임에는 영향이 없어요. 장착한 닉네임·칭호·주사위·펠트는 다른 사람 화면에도 보여요.</p>
     </div>
   </div>
   <div id="prof" hidden>
@@ -1184,7 +1233,7 @@ const Dir={cpeer:null,hpeer:null,hubSlot:-1,hubConns:new Map(),reg:null,rooms:nu
   slots:HUBS.map((id,i)=>({i,id,conn:null,heard:0,retryAt:0,free:0,deadUntil:0,rooms:[],lastReg:0,regSent:""}))};
 // release our ids right away when the page goes, so others can take over quickly
 window.addEventListener("pagehide",()=>{try{if(Dir.cpeer)Dir.cpeer.destroy()}catch(e){}try{if(Dir.hpeer)Dir.hpeer.destroy()}catch(e){}});
-if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok,restQ}},setBoard:(c,b)=>setBoard(c,b)};
+if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get wc(){return winsCache},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok,restQ}},setBoard:(c,b)=>setBoard(c,b)};
 // A private room is listed by name only: its code never leaves the table.
 function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)&&(r.sc===undefined||isInt(r.sc,0,30))&&(r.ts===undefined||(typeof r.ts==="number"&&isFinite(r.ts)))}
 function liveHubs(){return Dir.slots.filter(s=>s.conn&&s.conn.open).length+(Dir.hubSlot>=0?1:0)}
@@ -1869,24 +1918,32 @@ function paintDice3d(){const b=$("d3Btn");if(!b)return;b.textContent=D3.on&&!red
 // local "up" direction of each face's picture, in BoxGeometry face order (+x,-x,+y,-y,+z,-z)
 const TEXUP=[[0,1,0],[0,1,0],[0,0,-1],[0,0,1],[0,1,0],[0,1,0]];
 const D3LIGHT={amb:1.15,dir:1.9};
-function d3Mats(){
-  const cs=getComputedStyle(document.documentElement);
-  const die=cs.getPropertyValue("--die").trim()||"#fbf8f1",pip=cs.getPropertyValue("--pip").trim()||"#1c2422",red=cs.getPropertyValue("--pipred").trim()||"#c33f2b";
-  const key=die+pip+red;if(D3.tex&&D3.texKey===key)return D3.tex;
-  const T3=D3.T3;D3.texKey=key;D3.tex=[null];
+const matCache=new Map();
+function d3Mats(v){
+  const cs=getComputedStyle(document.documentElement),dl=v&&v.look&&v.look.dice,dc=dl&&diceCSS(dl);
+  const base=cs.getPropertyValue("--die").trim()||"#fbf8f1";
+  const stops=dc?dl.bg.map(x=>hex(x,null)).filter(Boolean):[base],pip=dc?dc.pip:cs.getPropertyValue("--pip").trim()||"#1c2422",red=dc?dc.red:cs.getPropertyValue("--pipred").trim()||"#c33f2b",fx=dc?dl.fx:null;
+  const key=[stops.join(","),pip,red,fx].join("|");if(matCache.has(key))return matCache.get(key);
+  const T3=D3.T3,mats=[null];mats.key=key;
+  if(matCache.size>10){const k0=matCache.keys().next().value;matCache.delete(k0)}
+  matCache.set(key,mats);
   // same pip layout as the flat dice: 16% padding, 5% gaps, 3x3 grid
   const N=256,cell=.58/3;
   for(let v=1;v<=6;v++){
     const c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d");
-    x.fillStyle=die;x.fillRect(0,0,N,N);
+    const gr=x.createLinearGradient(0,0,N,N);stops.forEach((c,i)=>gr.addColorStop(stops.length>1?i/(stops.length-1):0,c));
+    x.fillStyle=gr;x.fillRect(0,0,N,N);
+    if(fx==="stars"){let sd=v*97;const r=()=>(sd=(sd*9301+49297)%233280)/233280;for(let k=0;k<40;k++){x.fillStyle=`rgba(255,255,255,${.35+r()*.6})`;x.beginPath();x.arc(r()*N,r()*N,.6+r()*1.8,0,7);x.fill()}}
+    else if(fx==="marble"){x.strokeStyle="rgba(120,118,126,.35)";x.lineWidth=3;for(let k=0;k<3;k++){x.beginPath();x.moveTo(0,N*(.2+k*.3));x.bezierCurveTo(N*.3,N*(.05+k*.3),N*.6,N*(.45+k*.25),N,N*(.25+k*.3));x.stroke()}}
+    else if(fx==="sheen"){const sh=x.createLinearGradient(0,0,N,N);sh.addColorStop(.35,"rgba(255,255,255,0)");sh.addColorStop(.47,"rgba(255,255,255,.6)");sh.addColorStop(.58,"rgba(255,255,255,0)");x.fillStyle=sh;x.fillRect(0,0,N,N)}
     for(const [rr,cc] of PIPS[v]){
       const cx=(.16+(cc-1)*(cell+.05)+cell/2)*N,cy=(.16+(rr-1)*(cell+.05)+cell/2)*N,rad=cell/2*N*(v===1?1.35:1);
       x.fillStyle=v===1?red:pip;x.beginPath();x.arc(cx,cy,rad,0,Math.PI*2);x.fill();
     }
     const t=new T3.CanvasTexture(c);t.colorSpace=T3.SRGBColorSpace;t.anisotropy=4;
-    D3.tex.push(new T3.MeshStandardMaterial({map:t,roughness:.55,metalness:0}));
+    mats.push(new T3.MeshStandardMaterial({map:t,roughness:fx==="sheen"?.3:.55,metalness:0}));
   }
-  return D3.tex;
+  return mats;
 }
 // a cube with rounded edges (a segmented box whose vertices are pushed onto a rounded shape)
 function d3Geo(){
@@ -2013,7 +2070,7 @@ function d3Shake(v,b,idx){
     bd.addEventListener("collide",e=>{try{const sp=Math.abs(e.contact.getImpactVelocityAlongNormal()),t=performance.now();if(sp>2.2&&t-lastClack>35&&ready()){lastClack=t;clack(S.ctx.currentTime,Math.min(.45,sp/22)*vol,2300+rnd()*1500)}}catch(_){}});
     w.addBody(bd);bodies.push(bd);
   });
-  const st=d3Stage(Wu,Hu,W,H),mats=d3Mats(),geo=d3Geo(),cupM=d3Cup(g);st.scene.add(cupM);
+  const st=d3Stage(Wu,Hu,W,H),mats=d3Mats(v),geo=d3Geo(),cupM=d3Cup(g);st.scene.add(cupM);
   const meshes=bodies.map(()=>{const m=new T3.Mesh(geo,faceVals(Math.floor(rnd()*6),1+Math.floor(rnd()*6)).map(x=>mats[x]));m.castShadow=true;st.scene.add(m);return m});
   const pr=Math.min(2,window.devicePixelRatio||1),cv=document.createElement("canvas");
   cv.className="d3";cv.width=Math.round(W*pr);cv.height=Math.round(H*pr);v.tray.appendChild(cv);
@@ -2208,7 +2265,7 @@ function d3Roll(v,b,idx){
     taken.push([x,z]);out[i]={x:50+x/Wu*100,y:50+z/Hu*100,r:Math.round(Math.random()*40-20)};
   }
   posCache.set(b.rollId,out);
-  const scene=new T3.Scene(),mats=d3Mats(),geo=d3Geo(),keep={},cupM=d3Cup(cupGeom(Wu,Hu));scene.add(cupM);
+  const scene=new T3.Scene(),mats=d3Mats(v),geo=d3Geo(),keep={},cupM=d3Cup(cupGeom(Wu,Hu));scene.add(cupM);
   const meshes=idx.map((i,k)=>{const fv=faceVals(sim.ups[k],b.dice[i]),f=last[k];keep[i]={fv,v:b.dice[i],y:f[1],q:[f[3],f[4],f[5],f[6]]};const m=new T3.Mesh(geo,fv.map(x=>mats[x]));m.castShadow=true;scene.add(m);return m});
   restQ.set(b.rollId,keep);if(restQ.size>60)restQ.delete(restQ.keys().next().value);
   // the moment the dice have (nearly) stopped: the combo is announced then, not after the last wobble
@@ -2246,7 +2303,7 @@ function d3Rest(v,b){
   if(!v.probe){v.probe=document.createElement("div");v.probe.style.cssText="position:absolute;left:0;top:0;width:var(--td);height:0;visibility:hidden;pointer-events:none";v.tray.appendChild(v.probe)}
   const W=v.tray.clientWidth,H=v.tray.clientHeight,d=v.probe.offsetWidth;
   if(W<60||H<40||d<8)return drop();
-  const mats=d3Mats(),sig=[b?b.rollId:0,tray.join(""),tray.map(i=>b.dice[i]).join(""),W,H,d,D3.texKey].join("|");
+  const mats=d3Mats(v),sig=[b?b.rollId:0,tray.join(""),tray.map(i=>b.dice[i]).join(""),W,H,d,mats.key].join("|");
   if(v.rest&&v.rest.sig===sig&&v.restCv&&v.restCv.isConnected)return tray.length>0;
   try{
     const T3=D3.T3,Wu=W/d,Hu=H/d,pos=positions(b?b.rollId:0),keep=(b&&restQ.get(b.rollId))||{},geo=d3Geo(),scene=new T3.Scene();
@@ -2508,7 +2565,8 @@ function paintView(v,p){
   const b=boardOf(p.cid),away=isAway(p.cid),mine=isMine(p.cid)&&(mode==="local"||seated()),act=canAct(p.cid)&&!away;
   v.el.classList.toggle("me",meMode()&&p.cid===myCid);
   v.el.classList.toggle("away",away);
-  v.name.innerHTML=esc(p.name)+medalOfCid(p.cid);
+  const lk=lookOfCid(p.cid);applyLook(v,lk);
+  v.name.innerHTML=nickHTML(p.name,lk)+medalOfCid(p.cid);
   const fin=done(b);
   v.tags.innerHTML=(meMode()&&p.cid===myCid?'<span class="tag">나</span> ':"")+(away?'<span class="tag bad">연결 끊김</span>':fin?'<span class="tag ok">완료</span>':"");
   const filled=b?b.scores.filter(x=>x!==null).length:0;
@@ -2565,7 +2623,7 @@ function renderLobby(){
   G.players.forEach(p=>{
     const li=document.createElement("li");
     const away=!pr.has(p.cid);
-    li.innerHTML=`<span class="av" aria-hidden="true">${esc([...p.name][0]||"?")}</span><b>${esc(p.name)}${medalOfCid(p.cid)}</b>${p.cid===myCid?' <span class="tag">나</span>':""}<span class="sp"></span>${away?'<span class="tag bad">자리 비움</span> ':""}${p.cid===host?'<span class="tag host">방장</span>':(p.ready?'<span class="tag ok">준비 완료</span>':'<span class="tag">대기 중</span>')}`;
+    li.innerHTML=`<span class="av" aria-hidden="true">${esc([...p.name][0]||"?")}</span><b>${nickHTML(p.name,lookOfCid(p.cid))}${medalOfCid(p.cid)}</b>${titleHTML(lookOfCid(p.cid))}${p.cid===myCid?' <span class="tag">나</span>':""}<span class="sp"></span>${away?'<span class="tag bad">자리 비움</span> ':""}${p.cid===host?'<span class="tag host">방장</span>':(p.ready?'<span class="tag ok">준비 완료</span>':'<span class="tag">대기 중</span>')}`;
     if(amHost&&p.cid!==myCid){
       if(!away){const g=document.createElement("button");g.type="button";g.className="btn ghost small";g.textContent="방장 넘기기";g.onclick=()=>giveOwner(p.cid);li.appendChild(g)}
       const k=document.createElement("button");k.type="button";k.className="btn ghost small";k.textContent="내보내기";k.onclick=()=>kick(p.cid);li.appendChild(k);
@@ -2694,7 +2752,7 @@ function renderOver(){
   const {list,gone}=standings();
   const winners=list.filter(x=>x.rank===1);
   $("winner").innerHTML=winners.length?`<div class="wn">${winners.map(w=>`"${esc(w.name)}"`).join(" · ")}</div><div class="wr">1ST!</div><div class="ws">${winners[0].t}점${winners.length>1?" · 공동 우승":""}</div>`:"";
-  $("rank").innerHTML=list.map(p=>`<li class="${p.rank===1?"first":""}"><span class="pl">${ordinal(p.rank)}</span><span class="nm">"${esc(p.name)}"${medalOfCid(p.cid)} ${ordinal(p.rank)}!</span><span class="sc">${p.t}</span></li>`).join("")
+  $("rank").innerHTML=list.map(p=>`<li class="${p.rank===1?"first":""}"><span class="pl">${ordinal(p.rank)}</span><span class="nm">"${nickHTML(p.name,lookOfCid(p.cid))}"${medalOfCid(p.cid)} ${ordinal(p.rank)}!</span><span class="sc">${p.t}</span></li>`).join("")
     +gone.map(p=>`<li class="gone"><span class="pl">접속 끊김</span><span class="nm">"${esc(p.name)}"</span><span class="sc">${p.t}</span></li>`).join("");
   $("overRec").textContent=recNote();
   const host=isOwner();
@@ -2727,15 +2785,60 @@ function winsOf(uid){
   return c?c.w:0;
 }
 function medalOfCid(cid){return mode==="local"?"":medalHTML(winsOf(uidOf(cid)))}
+// keep known wins but make sure the cosmetics get fetched too
+function setW(uid,w){const c=winsCache.get(uid);winsCache.set(uid,c?Object.assign({},c,{w}):{w,t:0,lk:null})}
+function lookOfUid(uid){if(!isUUID(uid))return null;winsOf(uid);const c=winsCache.get(uid);return c&&c.lk||null}
+function lookOfCid(cid){
+  if(mode==="local"||cid===BOT_CID)return null;
+  const uid=uidOf(cid);if(!isUUID(uid))return null;
+  // a player who changes their look bumps "lkv" in their presence; then we fetch it again
+  const pr=peerByCid(cid),lkv=pr&&pr.presence&&pr.presence.lkv,c=winsCache.get(uid);
+  if(c&&typeof lkv==="number"&&c.lkv!==lkv){c.lkv=lkv;c.t=0}
+  return lookOfUid(uid);
+}
+const HEX=/^#[0-9a-f]{6}$/i,hex=(x,d)=>typeof x==="string"&&HEX.test(x)?x:d;
+const NICK_FX=new Set(["gold","neon","rainbow","aurora"]),TIERS=new Set(["plain","silver","gold","legend"]);
+function nickHTML(name,lk){
+  const n=lk&&lk.nick;if(!n)return esc(name);
+  if(NICK_FX.has(n.fx))return`<span class="nk nk-${n.fx}">${esc(name)}</span>`;
+  const c=hex(n.c,null);return c?`<span class="nk" style="color:${c}">${esc(name)}</span>`:esc(name);
+}
+function titleHTML(lk){const t=lk&&lk.title;if(!t||typeof t.t!=="string")return"";return`<span class="ttl t-${TIERS.has(t.tier)?t.tier:"plain"}">${esc(t.t.slice(0,16))}</span>`}
+// dice look → CSS for the flat dice
+function diceCSS(d){
+  const st=(Array.isArray(d.bg)?d.bg:[]).map(x=>hex(x,null)).filter(Boolean);if(!st.length)return null;
+  let bg=`linear-gradient(145deg,${st.join(",")})`;
+  if(d.fx==="stars")bg="radial-gradient(circle at 24% 30%,#fff 0 1px,transparent 1.6px),radial-gradient(circle at 70% 22%,#fff 0 .8px,transparent 1.4px),radial-gradient(circle at 62% 74%,#fff 0 1px,transparent 1.6px),radial-gradient(circle at 30% 80%,#cfc3ff 0 .8px,transparent 1.4px),radial-gradient(circle at 85% 55%,#fff 0 .7px,transparent 1.3px),"+bg;
+  else if(d.fx==="marble")bg="linear-gradient(118deg,transparent 0 30%,rgba(120,118,126,.35) 31%,transparent 34% 58%,rgba(150,146,150,.28) 60%,transparent 63%),linear-gradient(62deg,transparent 0 44%,rgba(130,128,136,.22) 45%,transparent 48%),"+bg;
+  else if(d.fx==="sheen")bg="linear-gradient(125deg,transparent 0 35%,rgba(255,255,255,.75) 45%,transparent 56%),"+bg;
+  return{bg,pip:hex(d.pip,"#1c2422"),red:hex(d.red,"#c33f2b")};
+}
+const FELT_FX=new Set(["gold","velvet","stars"]);
+function applyLook(v,lk){
+  const d=lk&&lk.dice,f=lk&&lk.felt,dc=d?diceCSS(d):null;
+  const key=JSON.stringify([dc,f&&[hex(f.a,""),hex(f.b,""),f.fx]]);
+  if(v.lookKey===key)return;v.lookKey=key;v.look=lk&&{dice:dc?d:null,felt:f};
+  const st=v.el.style;
+  if(dc){st.setProperty("--die",dc.bg);st.setProperty("--pip",dc.pip);st.setProperty("--pipred",dc.red)}else for(const k of["--die","--pip","--pipred"])st.removeProperty(k);
+  const a=f&&hex(f.a,null),b=f&&hex(f.b,null);
+  if(a&&b){st.setProperty("--felt",a);st.setProperty("--felt2",b)}else{st.removeProperty("--felt");st.removeProperty("--felt2")}
+  for(const x of FELT_FX)v.el.classList.toggle("ft-"+x,!!(a&&b&&f.fx===x));
+  v.rest=null;   // redraw the resting 3D dice with the new colors
+}
 async function fetchWins(){
   winsT=0;
   if(!ACC.sb){if(!ACC.failed&&winsWant.size)winsT=setTimeout(fetchWins,1500);return}
   const ids=[...winsWant];winsWant.clear();if(!ids.length)return;
-  for(const u of ids){const c=winsCache.get(u);winsCache.set(u,{w:c?c.w:0,t:Date.now()})}
+  for(const u of ids){const c=winsCache.get(u);winsCache.set(u,Object.assign({w:0,lk:null},c,{t:Date.now()}))}
   try{
-    const {data,error}=await ACC.sb.rpc("wins_of",{ids});if(error)throw error;
-    let ch=false;for(const r of data||[]){const c=winsCache.get(r.user_id);if(!c||c.w!==r.wins)ch=true;winsCache.set(r.user_id,{w:r.wins,t:Date.now()})}
-    if(ch)render();
+    const {data,error}=await ACC.sb.rpc("looks_of",{ids});if(error)throw error;
+    let ch=false;
+    for(const r of data||[]){
+      const c=winsCache.get(r.user_id),lk={nick:r.nick,title:r.title,dice:r.dice,felt:r.felt},ks=JSON.stringify(lk);
+      if(!c||c.w!==r.wins||c.lks!==ks)ch=true;
+      winsCache.set(r.user_id,{w:r.wins,t:Date.now(),lk,lks:ks,lkv:c&&c.lkv});
+    }
+    if(ch){render();if(!$("home").hidden)refreshNames()}
   }catch(e){}
 }
 function setAcct(sess){
@@ -2765,7 +2868,7 @@ function acctUI(){
   if(ACC.failed)h='<span class="who note">전적 서버에 연결하지 못했어요. 게임은 그대로 할 수 있어요.</span>';
   else if(!ACC.ready)h='<span class="who note">전적 서버에 연결하는 중…</span>';
   else if(!ACC.uid)h='<span class="who note">로그인하면 전적과 순위, 메달이 남아요.</span><button class="btn small" type="button" data-a="login">로그인 / 가입</button><button class="btn ghost small" type="button" data-a="ranks">순위</button>';
-  else{const w=winsOf(ACC.uid);h=`<span class="who"><button class="plink" type="button" data-prof="${ACC.uid}" title="내 프로필 보기"><b>${esc(ACC.username)}</b></button>${medalHTML(w)} <span class="note">· 통산 ${w}승</span></span><button class="btn small" type="button" data-prof="${ACC.uid}">마이페이지</button><button class="btn ghost small" type="button" data-a="ranks">순위</button><button class="btn ghost small" type="button" data-a="logout">로그아웃</button>`}
+  else{const w=winsOf(ACC.uid);h=`<span class="who"><button class="plink" type="button" data-raw="1" data-prof="${ACC.uid}" title="내 프로필 보기"><b>${esc(ACC.username)}</b></button>${medalHTML(w)} <span class="note">· 통산 ${w}승</span></span><button class="btn small" type="button" data-prof="${ACC.uid}">마이페이지</button><button class="btn ghost small" type="button" data-a="shop">상점</button><button class="btn ghost small" type="button" data-a="ranks">순위</button><button class="btn ghost small" type="button" data-a="logout">로그아웃</button>`}
   if(h!==ACC.shown){ACC.shown=h;el.innerHTML=h}
   if(ACC.uid&&mode==="online"&&G)syncNick();
   reportTick();
@@ -2774,6 +2877,7 @@ $("acctBox").addEventListener("click",e=>{
   const a=e.target.closest("button")&&e.target.closest("button").dataset.a;
   if(a==="login")openAcct();
   else if(a==="ranks")openRanks();
+  else if(a==="shop")openShop();
   else if(a==="logout"&&ACC.sb){ACC.sb.auth.signOut().then(()=>toast("로그아웃했어요."),()=>{})}
 });
 function openAcct(){$("acctMsg").textContent="";$("acct").hidden=false;setTimeout(()=>$("acctId").focus(),30)}
@@ -2889,7 +2993,7 @@ async function loadRanks(p){
     const {data,error}=await ACC.sb.rpc("leaderboard",{period:p});if(error)throw error;
     if(rPeriod!==p)return;
     if(!data||!data.length){body.innerHTML='<p class="note">아직 기록이 없어요. 로그인한 친구들과 한 판 해 보세요!</p>';return}
-    for(const r of data)winsCache.set(r.user_id,{w:r.total_wins,t:Date.now()});
+    for(const r of data)setW(r.user_id,r.total_wins);
     body.innerHTML=`<table class="rtab"><thead><tr><th>#</th><th>이름</th><th class="num">1등</th><th class="num">판</th><th class="num">평균 등수</th></tr></thead><tbody>${data.map((r,i)=>`<tr class="${r.user_id===ACC.uid?"mine":""}"><td class="num">${i+1}</td><td class="nm">${plink(r.user_id,r.name)}${medalHTML(r.total_wins)}</td><td class="num">${r.wins}</td><td class="num">${r.games}</td><td class="num">${Number(r.avg_rank).toFixed(1)}</td></tr>`).join("")}</tbody></table>`;
   }catch(e){if(rPeriod===p)body.innerHTML='<p class="note">순위를 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
 }
@@ -2899,10 +3003,11 @@ $("ranks").addEventListener("click",e=>{if(e.target.id==="ranks")$("ranks").hidd
 $("overRanks").onclick=openRanks;
 
 /* ---------- lobby records board and player profiles ---------- */
-function plink(uid,name){return isUUID(uid)?`<button class="plink" type="button" data-prof="${uid}">${esc(name)}</button>`:esc(name)}
+function plink(uid,name){return isUUID(uid)?`<button class="plink" type="button" data-prof="${uid}">${nickHTML(name,lookOfUid(uid))}</button>`:esc(name)}
 const p2=n=>String(n).padStart(2,"0");
 function shortWhen(s,period){const d=new Date(s);return period==="day"?`${p2(d.getHours())}:${p2(d.getMinutes())}`:`${d.getMonth()+1}.${d.getDate()}`}
-let recPeriod="week",recSeq=0;
+let recPeriod="week",recSeq=0,recData=null;
+let refreshT=0;function refreshNames(){clearTimeout(refreshT);refreshT=setTimeout(()=>{document.querySelectorAll(".plink[data-prof]").forEach(b=>{const lk=lookOfUid(b.dataset.prof);if(lk&&lk.nick&&!b.querySelector(".nk")&&!b.dataset.raw)b.innerHTML=nickHTML(b.textContent,lk)})},50)}
 async function loadRec(p){
   recPeriod=p;document.querySelectorAll("#recTabs input").forEach(i=>i.checked=i.value===p);
   const body=$("recBody"),seq=++recSeq;
@@ -2913,13 +3018,80 @@ async function loadRec(p){
     if(seq!==recSeq)return;
     const name={day:"오늘은",week:"이번 주는",month:"이번 달은",year:"올해는"}[p];
     if(!data||!data.length){body.innerHTML=`<p class="note">${name} 아직 기록이 없어요. 로그인한 친구들과 한 판 해 보세요!</p>`;return}
-    for(const r of data)winsCache.set(r.user_id,{w:r.total_wins,t:Date.now()});
+    for(const r of data)setW(r.user_id,r.total_wins);
+    recData=data;
     body.innerHTML=`<table class="rtab"><thead><tr><th>#</th><th>이름</th><th class="num">최고점</th><th class="num">${p==="day"?"시각":"날짜"}</th><th class="num">판</th></tr></thead><tbody>${data.map((r,i)=>`<tr class="pl${i+1}${r.user_id===ACC.uid?" mine":""}"><td class="num rk">${i+1}</td><td class="nm">${plink(r.user_id,r.name)}${medalHTML(r.total_wins)}</td><td class="num big">${r.best}</td><td class="num when">${shortWhen(r.best_at,p)}</td><td class="num">${r.games}</td></tr>`).join("")}</tbody></table>`;
   }catch(e){if(seq===recSeq)body.innerHTML='<p class="note">기록을 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
 }
 $("recTabs").addEventListener("change",e=>{if(e.target.name==="recperiod")loadRec(e.target.value)});
 $("recWins").onclick=()=>{rPeriod=recPeriod;openRanks()};
 let profSeq=0;
+const SHOP={kind:"nick",items:null,owned:new Set(),eq:{},pts:null,busy:false};
+const SLOT_COL={nick:"eq_nick",title:"eq_title",dice:"eq_dice",felt:"eq_felt"};
+function ptsHTML(pt){return pt?`<span>내 포인트</span><b>${pt.balance}P</b><span class="how">1등 ${pt.wins}번 × 10P = ${pt.win_pts}P · 봇전 승리 ${pt.bot_pts}P${pt.spent?` · 사용 ${pt.spent}P`:""}</span><span class="how">온라인 1등 10P, 봇전 승리 쉬움 1P·보통 2P·어려움 3P (봇전은 하루 10P까지)</span>`:'<span>포인트를 불러오지 못했어요.</span>'}
+async function openShop(){
+  $("shop").hidden=false;
+  if(!ACC.sb||!ACC.uid){$("shopPts").innerHTML='<span>로그인하면 포인트를 모으고 꾸미기를 살 수 있어요.</span>';}
+  document.querySelectorAll("#shopTabs input").forEach(i=>i.checked=i.value===SHOP.kind);
+  $("shopBody").innerHTML='<p class="note">불러오는 중…</p>';
+  await loadShop();
+}
+async function loadShop(){
+  if(!ACC.sb){$("shopBody").innerHTML='<p class="note">전적 서버에 연결하지 못했어요.</p>';return}
+  try{
+    const jobs=[SHOP.items?null:ACC.sb.from("items").select("id,kind,name,price,data").order("sort")];
+    if(ACC.uid)jobs.push(ACC.sb.from("owned").select("item_id"),ACC.sb.rpc("my_points"),ACC.sb.from("profiles").select("eq_nick,eq_title,eq_dice,eq_felt").eq("id",ACC.uid).single());
+    const [it,ow,pt,pr]=await Promise.all(jobs.map(j=>j||Promise.resolve(null)));
+    if(it){if(it.error)throw it.error;SHOP.items=it.data||[]}
+    if(ACC.uid){SHOP.owned=new Set((ow&&ow.data||[]).map(r=>r.item_id));SHOP.pts=pt&&!pt.error?pt.data:null;SHOP.eq=pr&&pr.data||{};$("shopPts").innerHTML=ptsHTML(SHOP.pts)}
+    else{SHOP.owned=new Set();SHOP.pts=null;SHOP.eq={}}
+    renderShop();
+  }catch(e){$("shopBody").innerHTML='<p class="note">상점을 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
+}
+function itemPreview(it){
+  const d=it.data||{};
+  if(it.kind==="nick")return`<div class="pv">${nickHTML(myName||$("nick").value.trim()||ACC.username||"닉네임",{nick:d})}</div>`;
+  if(it.kind==="title")return`<div class="pv">${titleHTML({title:d})}</div>`;
+  if(it.kind==="dice"){const c=diceCSS(d);if(!c)return'<div class="pv"></div>';const pip=[[1,1],[1,3],[2,2],[3,1],[3,3]].map(([r,cc])=>`<i style="grid-area:${r}/${cc}"></i>`).join("");
+    return`<div class="pv" style="--die:${c.bg};--pip:${c.pip};--pipred:${c.red}"><span class="die v5">${pip}</span></div>`}
+  const a=hex(d.a,"#165a4d"),b=hex(d.b,"#0c3a32");
+  return`<div class="pboard ft-${FELT_FX.has(d.fx)?d.fx:"none"}" style="--felt:${a};--felt2:${b};display:block;padding:0;border:0;background:none;box-shadow:none"><div class="tray" style="height:64px;min-height:0;border-radius:10px"></div></div>`;
+}
+function renderShop(){
+  const list=(SHOP.items||[]).filter(i=>i.kind===SHOP.kind),bal=SHOP.pts?SHOP.pts.balance:0,eq=SHOP.eq[SLOT_COL[SHOP.kind]];
+  $("shopBody").innerHTML=`<div class="sgrid">${list.map(it=>{
+    const own=SHOP.owned.has(it.id),on=eq===it.id;
+    const btn=!ACC.uid?`<button class="btn ghost small" type="button" data-a="login">로그인하고 사기</button>`
+      :on?`<button class="btn ghost small" type="button" data-eq="">해제</button>`
+      :own?`<button class="btn small" type="button" data-eq="${it.id}">장착</button>`
+      :`<button class="btn small" type="button" data-buy="${it.id}" ${bal<it.price?"disabled":""}>${bal<it.price?`${it.price-bal}P 부족`:"사기"}</button>`;
+    return`<div class="sitem${on?" on":""}">${itemPreview(it)}<div class="nm2"><span>${esc(it.name)}</span><span class="pr">${own?"보유":it.price+"P"}</span></div>${btn}</div>`}).join("")}</div>`;
+}
+$("shopTabs").addEventListener("change",e=>{if(e.target.name==="shopkind"){SHOP.kind=e.target.value;renderShop()}});
+$("shopBody").addEventListener("click",async e=>{
+  const b=e.target.closest("button");if(!b||SHOP.busy)return;
+  if(b.dataset.a==="login"){$("shop").hidden=true;openAcct();return}
+  const buy=b.dataset.buy,eqv=b.dataset.eq;
+  if(buy){
+    const it=SHOP.items.find(i=>i.id===buy);if(!it||!confirm(`'${it.name}'을(를) ${it.price}P에 살까요?`))return;
+    SHOP.busy=true;b.disabled=true;
+    const {data,error}=await ACC.sb.rpc("buy_item",{item:buy});SHOP.busy=false;
+    if(error){toast(/enough/.test(error.message)?"포인트가 모자라요.":/owned/.test(error.message)?"이미 가지고 있어요.":"사지 못했어요. 잠시 후 다시 해 주세요.");return loadShop()}
+    SHOP.owned.add(buy);SHOP.pts=data;$("shopPts").innerHTML=ptsHTML(data);toast(`'${it.name}'을(를) 샀어요! 장착을 눌러 써 보세요.`);renderShop();return;
+  }
+  if(eqv!==undefined){
+    SHOP.busy=true;b.disabled=true;
+    const {error}=await ACC.sb.rpc("equip_item",{slot:SHOP.kind,item:eqv||null});SHOP.busy=false;
+    if(error){toast("바꾸지 못했어요. 잠시 후 다시 해 주세요.");return loadShop()}
+    SHOP.eq[SLOT_COL[SHOP.kind]]=eqv||null;renderShop();
+    // fetch my look again and tell the table
+    const c=winsCache.get(ACC.uid);if(c)c.t=0;winsOf(ACC.uid);
+    if(T)T.presence({lkv:Date.now()}).catch(()=>{});
+    toast(eqv?"장착했어요.":"해제했어요.");
+  }
+});
+$("shopClose").onclick=()=>{$("shop").hidden=true};
+$("shop").addEventListener("click",e=>{if(e.target.id==="shop")$("shop").hidden=true});
 const LV={easy:"쉬움",normal:"보통",hard:"어려움"};
 function practiceHTML(pr){
   if(!pr)return'<h3>봇전 · 혼자 한 판</h3><p class="note">기록을 불러오지 못했어요.</p>';
@@ -2940,20 +3112,25 @@ async function openProfile(uid){
     const {data:d,error}=await ACC.sb.rpc("profile_of",{uid});if(error)throw error;
     if(seq!==profSeq)return;
     if(!d){body.innerHTML='<p class="note">없는 계정이에요.</p>';return}
-    winsCache.set(d.id,{w:d.wins,t:Date.now()});
+    setW(d.id,d.wins);
     const day=s=>fmtDate(s).slice(0,10),top=d.top||[];
     const mine=d.id===ACC.uid;
     $("profTitle").textContent=mine?"마이페이지":"프로필";
     const pr=mine?await ACC.sb.rpc("my_practice").then(r=>r.error?null:r.data,()=>null):null;
     if(seq!==profSeq)return;
     const lose=d.games-d.wins,best=top[0];
-    body.innerHTML=`<div class="phead"><b>${esc(d.name)}${medalHTML(d.wins)}</b><span class="note">@${esc(d.username)} · ${day(d.joined)} 가입${d.last_played?` · 마지막 판 ${day(d.last_played)}`:""}</span></div>
+    const lk=await ACC.sb.rpc("looks_of",{ids:[d.id]}).then(r=>r.data&&r.data[0]?{nick:r.data[0].nick,title:r.data[0].title}:null,()=>null);
+    const pt=mine?await ACC.sb.rpc("my_points").then(r=>r.error?null:r.data,()=>null):null;
+    if(seq!==profSeq)return;
+    body.innerHTML=`<div class="phead"><b>${nickHTML(d.name,lk)}${medalHTML(d.wins)}${titleHTML(lk)}</b><span class="note">@${esc(d.username)} · ${day(d.joined)} 가입${d.last_played?` · 마지막 판 ${day(d.last_played)}`:""}</span></div>
       <h3>온라인 대전</h3>
       <div class="pbest">${best?`<span>최고 점수</span><b>${best.score}점</b><span class="dt">${fmtDate(best.played_at)} · ${best.players}명 중 ${best.rank}등</span>`:'<span>아직 기록된 온라인 판이 없어요.</span>'}</div>
       <div class="pstats"><div><b>${d.wins}승 ${lose}패</b><span>${d.games}판${d.games?` · 승률 ${Math.round(d.wins/d.games*100)}%`:""}</span></div><div><b>${d.games?Number(d.avg_rank).toFixed(1):"-"}</b><span>평균 등수</span></div><div><b>${d.games?Math.round(d.avg_score):"-"}</b><span>평균 점수</span></div></div>
       <h3>최고 기록 TOP 5</h3>
       ${top.length?`<ol class="ptop">${top.map((t,i)=>`<li><span class="no">${i+1}</span><span class="sc">${t.score}</span><span class="pl">${t.players}명 중 ${t.rank}등${t.rank===1?" 🏆":""}</span><span class="dt">${fmtDate(t.played_at)}</span></li>`).join("")}</ol>`:'<p class="note">로그인한 친구와 온라인으로 한 판 하면 남아요. 승패는 1등이면 승, 아니면 패로 세요.</p>'}
-      ${mine?practiceHTML(pr):""}`;
+      ${mine?practiceHTML(pr):""}
+      ${mine?`<h3>포인트</h3><div class="pts">${ptsHTML(pt)}</div><button class="btn small" type="button" id="profShop">꾸미기 상점 열기</button>`:""}`;
+    const ps=$("profShop");if(ps)ps.onclick=()=>{$("prof").hidden=true;openShop()};
   }catch(e){if(seq===profSeq)body.innerHTML='<p class="note">프로필을 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-prof]");if(b){e.preventDefault();openProfile(b.dataset.prof)}});
@@ -3116,6 +3293,10 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.5",time:"13:23",date:"2026.11.27",items:[
+    "포인트가 생겼어요. 온라인에서 1등 하면 10P, 봇전에서 이기면 난이도에 따라 1~3P(하루 10P까지). 지금까지 이긴 판도 포인트로 쳐 드렸어요.",
+    "꾸미기 상점: 포인트로 닉네임 색·효과, 칭호, 주사위, 펠트를 살 수 있어요. 화려할수록 비싸요. 장착하면 친구 화면에도 보여요.",
+    "로그인하면 아이디 옆 '상점' 버튼이나 마이페이지에서 열 수 있어요."]},
   {ver:"2.4",time:"13:07",date:"2026.11.27",items:[
     "위쪽에 화면 버튼이 생겼어요. 누를 때마다 자동 → 밝게 → 어둡게로 바뀌고, 고른 건 이 기기에 저장돼요.",
     "휴대폰 브라우저가 화면을 강제로 어둡게 바꿔서 글자와 버튼이 잘 안 보이던 문제를 막았어요. 이제 어두운 화면도 사이트에서 직접 만든 색으로 보여요."]},
@@ -3370,7 +3551,7 @@ function renderPeople(players,specs){
     if(isPlayer&&p.away)tags+='<span class="tag bad">연결 끊김</span>';
     else if(isPlayer&&lobby&&p.cid!==own){const gp=G.players.find(x=>x.cid===p.cid);tags+=gp&&gp.ready?'<span class="tag ok">준비 완료</span>':'<span class="tag">대기 중</span>'}
     const kb=canKick&&p.cid!==myCid?`<button class="btn ghost small" type="button" data-kick="${esc(p.cid)}">내보내기</button>`:"";
-    return `<li class="${isPlayer&&p.away?"away":""}"><span class="av" aria-hidden="true">${esc([...p.name][0]||"?")}</span><b>${esc(p.name)}${medalOfCid(p.cid)}</b>${tags}<span class="sp" style="flex:1"></span>${kb}</li>`;
+    return `<li class="${isPlayer&&p.away?"away":""}"><span class="av" aria-hidden="true">${esc([...p.name][0]||"?")}</span><b>${nickHTML(p.name,lookOfCid(p.cid))}${medalOfCid(p.cid)}</b>${titleHTML(lookOfCid(p.cid))}${tags}<span class="sp" style="flex:1"></span>${kb}</li>`;
   };
   const html=`<h3>플레이어 ${players.length}명</h3><ul class="pplist">${players.map(p=>item(p,true)).join("")}</ul>`
     +`<h3>관전 ${specs.length}명</h3><ul class="pplist">${specs.length?specs.map(p=>item(p,false)).join(""):'<li class="empty">관전하는 사람이 없어요.</li>'}</ul>`;
@@ -3396,7 +3577,7 @@ $("voices").addEventListener("click",e=>{
 });
 $("vStyles").addEventListener("change",e=>{if(VSTYLES[e.target.value]){V.style=e.target.value;store.set("yd-vstyle",V.style);speakNow("풀하우스!",Math.max(.3,S.vol),curVoice())}});
 $("people").addEventListener("click",e=>{if(e.target.id==="people")$("people").hidden=true});
-document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("prof").hidden){$("prof").hidden=true;return}for(const id of ["people","voices","acct","ranks","news","board"])if(!$(id).hidden)$(id).hidden=true});
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("prof").hidden){$("prof").hidden=true;return}if(!$("shop").hidden){$("shop").hidden=true;return}for(const id of ["people","voices","acct","ranks","news","board"])if(!$(id).hidden)$(id).hidden=true});
 $("watchBtn").onclick=()=>enterTable($("joinCode").value,false,undefined,undefined,false,true);
 $("specBtn").onclick=()=>setSpec(seated());
 $("joinPlayBtn").onclick=()=>setSpec(false);
@@ -3575,7 +3756,7 @@ function startLocal(names){
 document.addEventListener("keydown",e=>{
   if(!meMode()||!G||G.phase!=="play"||e.target.tagName==="INPUT")return;
   if(e.code==="Space"){e.preventDefault();doRoll(myCid)}
-  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks,#news,#board,#prof")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
+  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks,#news,#board,#prof,#shop")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
   else if(/^Digit[1-5]$/.test(e.code))toggleHold(myCid,+e.code.slice(5)-1);
 });
 
@@ -3585,7 +3766,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27e";
+const APP_VER="2026-11-27f";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
