@@ -433,10 +433,10 @@ body.chat-on #app{padding-bottom:96px}
 button.chip{cursor:pointer;font:inherit;font-size:13px;color:var(--ink)}
 button.chip:hover{border-color:var(--accent)}
 .chip svg{width:16px;height:16px;flex:none}
-#people,#voices,#acct,#ranks,#news,#board,#prof{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-#people .panel,#voices .panel,#acct .panel,#ranks .panel,#news .panel,#board .panel,#prof .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
-#people h2,#voices h2,#acct h2,#ranks h2,#news h2,#board h2,#prof h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
-#people h3,#voices h3,#acct h3,#ranks h3,#news h3,#board h3,#prof h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
+#people,#voices,#acct,#ranks,#news,#board,#prof,#rep,#admin,#banned{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:rgba(8,14,12,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#people .panel,#voices .panel,#acct .panel,#ranks .panel,#news .panel,#board .panel,#prof .panel,#rep .panel,#admin .panel,#banned .panel{width:min(460px,100%);max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;gap:12px;padding:18px;overflow:auto}
+#people h2,#voices h2,#acct h2,#ranks h2,#news h2,#board h2,#prof h2,#rep h2,#admin h2,#banned h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
+#people h3,#voices h3,#acct h3,#ranks h3,#news h3,#board h3,#prof h3,#rep h3,#admin h3,#banned h3{font-size:13px;letter-spacing:.04em;color:var(--muted);margin:4px 0 0;font-weight:700}
 .pplist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .pplist li{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);flex-wrap:wrap}
 .pplist li.away{opacity:.6}
@@ -501,6 +501,21 @@ button.chip:hover{border-color:var(--accent)}
 .sitem .btn{width:100%;justify-content:center}
 .sitem .pv .ttl{margin:0;font-size:13px;padding:2px 10px}
 #prof{z-index:36}
+#rep{z-index:38}#banned{z-index:60;background:rgba(8,14,12,.82)}
+#admin .panel{width:min(720px,100%);max-height:min(780px,calc(100vh - 32px))}
+#rep textarea{width:100%;resize:vertical;font:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line2);background:var(--field);color:var(--ink)}
+#repWhy label{min-width:120px}
+.alist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.alist li{border:1px solid var(--line2);border-radius:12px;padding:10px 12px;background:var(--panel);display:flex;flex-direction:column;gap:5px;font-size:13.5px}
+.alist li.done{opacity:.6}
+.alist .ah{display:flex;gap:6px 10px;flex-wrap:wrap;align-items:baseline}
+.alist .ah .d{color:var(--muted);font-size:12px;margin-left:auto}
+.alist pre{white-space:pre-wrap;word-break:break-all;margin:4px 0 0;font:12.5px/1.5 var(--f-body);background:var(--panel2);padding:8px;border-radius:8px}
+.alist .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.alist .acts select,.alist .acts input[type=text]{font:inherit;font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid var(--line2);background:var(--field);color:var(--ink)}
+.alist .acts input[type=text]{flex:1;min-width:140px}
+.warnc{color:var(--warn);font-weight:700}
+.repb{font-size:12px;padding:4px 9px}
 .records .vstyles label{min-width:64px}
 .records .vstyles span{padding:7px 6px;font-size:13.5px}
 .plink{all:unset;cursor:pointer;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom}
@@ -842,6 +857,40 @@ button.chip:hover{border-color:var(--accent)}
       <div id="ranksBody"></div>
       <p class="note" style="margin:0">1등 횟수로 순위를 매기고, 같으면 평균 등수가 더 좋은 사람이 앞서요. 로그인한 참가자가 2명 이상인 온라인 판만 기록돼요.</p>
       <div class="medals-key"><span><span class="medal m1"></span> 1승</span><span><span class="medal m2"></span> 10승</span><span><span class="medal m3"></span> 30승</span><span><span class="medal m4"></span> 100승</span></div>
+    </div>
+  </div>
+  <div id="banned" hidden>
+    <div class="panel" role="alertdialog" aria-labelledby="banTitle">
+      <h2 id="banTitle">이용이 제한됐어요</h2>
+      <p>관리자가 이 계정 또는 기기의 이용을 제한했어요.</p>
+      <p class="note"><b>사유</b> <span id="banWhy"></span><br><b>기간</b> <span id="banUntil"></span></p>
+      <p class="note">잘못된 제한이라고 생각하면 관리자에게 알려 주세요.</p>
+    </div>
+  </div>
+  <div id="rep" hidden>
+    <div class="panel" role="dialog" aria-labelledby="repTitle">
+      <div class="row" style="align-items:center"><h2 id="repTitle" style="flex:1">신고하기</h2><button id="repClose" class="btn ghost small" type="button">닫기</button></div>
+      <p class="note" id="repWho" style="margin:0"></p>
+      <div class="vstyles" id="repWhy">
+        <label><input type="radio" name="repwhy" value="abuse" checked><span>욕설·비매너</span></label>
+        <label><input type="radio" name="repwhy" value="spam"><span>광고·스팸</span></label>
+        <label><input type="radio" name="repwhy" value="cheat"><span>부정행위</span></label>
+        <label><input type="radio" name="repwhy" value="nickname"><span>부적절한 닉네임</span></label>
+        <label><input type="radio" name="repwhy" value="other"><span>기타</span></label>
+      </div>
+      <textarea id="repDetail" maxlength="300" rows="3" placeholder="무슨 일이 있었는지 적어 주세요 (선택, 300자까지)"></textarea>
+      <p class="note" style="margin:0">신고 내용은 관리자만 봐요. 누가 신고했는지는 상대에게 알리지 않아요. 방에서 신고하면 그 사람의 최근 채팅이 증거로 함께 가요.</p>
+      <div class="row" style="align-items:center"><button id="repSend" class="btn" type="button">신고 보내기</button><span class="note" id="repMsg"></span></div>
+    </div>
+  </div>
+  <div id="admin" hidden>
+    <div class="panel" role="dialog" aria-labelledby="adminTitle">
+      <div class="row" style="align-items:center"><h2 id="adminTitle" style="flex:1">관리</h2><button id="adminClose" class="btn ghost small" type="button">닫기</button></div>
+      <div class="vstyles" id="adminTabs">
+        <label><input type="radio" name="admtab" value="reports" checked><span>신고</span></label>
+        <label><input type="radio" name="admtab" value="bans"><span>이용 제한</span></label>
+      </div>
+      <div id="adminBody"></div>
     </div>
   </div>
   <div id="shop" hidden>
@@ -1234,7 +1283,7 @@ const Dir={cpeer:null,hpeer:null,hubSlot:-1,hubConns:new Map(),reg:null,rooms:nu
   slots:HUBS.map((id,i)=>({i,id,conn:null,heard:0,retryAt:0,free:0,deadUntil:0,rooms:[],lastReg:0,regSent:""}))};
 // release our ids right away when the page goes, so others can take over quickly
 window.addEventListener("pagehide",()=>{try{if(Dir.cpeer)Dir.cpeer.destroy()}catch(e){}try{if(Dir.hpeer)Dir.hpeer.destroy()}catch(e){}});
-if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get wc(){return winsCache},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok,restQ}},setBoard:(c,b)=>setBoard(c,b)};
+if(new URLSearchParams(location.search).has("debug"))window.__yd={Dir,get G(){return G},get T(){return T},get code(){return code},get boards(){return boards},get myBoard(){return myBoard},get myCid(){return myCid},get acc(){return ACC},get wc(){return winsCache},get ban(){return BAN},get d3(){return{cupGeom,cupThrowAt,d3SimFrom,CUPH,CUPTH,ok:D3.ok,restQ}},setBoard:(c,b)=>setBoard(c,b)};
 // A private room is listed by name only: its code never leaves the table.
 function validRoom(r){return !!r&&typeof r==="object"&&typeof r.id==="string"&&/^[a-z0-9]{6,20}$/.test(r.id)&&typeof r.pub==="boolean"&&(r.pub?typeof r.code==="string"&&/^[A-Z0-9]{4}$/.test(r.code):r.code===undefined)&&typeof r.title==="string"&&r.title.length<=20&&typeof r.lock==="boolean"&&isInt(r.count,0,MAXP)&&["lobby","play","over"].includes(r.phase)&&(r.sc===undefined||isInt(r.sc,0,30))&&(r.ts===undefined||(typeof r.ts==="number"&&isFinite(r.ts)))}
 function liveHubs(){return Dir.slots.filter(s=>s.conn&&s.conn.open).length+(Dir.hubSlot>=0?1:0)}
@@ -1600,6 +1649,7 @@ async function enterTable(c,isCreate,pwIn,restoreG,quick,spec){
   const nick=$("nick").value.trim().slice(0,12);
   if(!nick){$("homeMsg").textContent="닉네임을 먼저 적어 주세요.";$("nick").focus();return "nonick"}
   if(badKind(nick)==="abuse"){$("homeMsg").textContent="닉네임에 쓸 수 없는 말이 있어요.";$("nick").focus();return "badnick"}
+  if(BAN.info){$("banned").hidden=false;return "banned"}
   if(isCreate&&!restoreG&&badKind($("roomTitle").value)==="abuse"){$("homeMsg").textContent="방 이름에 쓸 수 없는 말이 있어요.";$("roomTitle").focus();return "badtitle"}
   c=c.toUpperCase().replace(/[^A-Z0-9]/g,"");
   if(c.length<4){$("homeMsg").textContent="4글자 테이블 코드를 입력해 주세요.";$("joinCode").focus();return "nocode"}
@@ -1713,6 +1763,7 @@ function onPeers(ch){
 }
 function hostDuties(){
   if(mode!=="online"||!G||dutyCid()!==myCid)return;
+  banSweep();
   checkOwnerAway();
   if(G.phase==="play"){seatLateJoiners();return}
   if(G.phase!=="lobby")return;
@@ -2868,7 +2919,7 @@ function setAcct(sess){
   const su=sess&&sess.user,u=su&&!su.is_anonymous?su:null,uid=u?u.id:null;   // an anonymous session is only for voting
   ACC.username=u?((u.user_metadata&&u.user_metadata.username)||(u.email||"").split("@")[0]):null;
   if(uid===ACC.uid)return;
-  ACC.uid=uid;ACC.nickSent=null;setTimeout(checkAdmin,0);
+  ACC.uid=uid;ACC.nickSent=null;setTimeout(checkAdmin,0);if(ACC.ready)setTimeout(checkBan,0);
   if(T)T.presence({uid}).catch(()=>{});
   try{render()}catch(e){}
 }
@@ -2878,7 +2929,7 @@ if(!new URLSearchParams(location.search).has("nodb"))
     const {data}=await ACC.sb.auth.getSession();
     setAcct(data&&data.session);
     ACC.sb.auth.onAuthStateChange((ev,sess)=>setTimeout(()=>setAcct(sess),0));
-    ACC.ready=true;acctUI();loadRec(recPeriod);loadWords();
+    ACC.ready=true;acctUI();loadRec(recPeriod);loadWords();checkBan();
   }).catch(()=>{ACC.failed=true;acctUI();loadRec(recPeriod)});
 else{ACC.failed=true;setTimeout(()=>loadRec(recPeriod),0)}
 // keep the nickname shown on the rankings up to date
@@ -2891,7 +2942,7 @@ function acctUI(){
   if(ACC.failed)h='<span class="who note">전적 서버에 연결하지 못했어요. 게임은 그대로 할 수 있어요.</span>';
   else if(!ACC.ready)h='<span class="who note">전적 서버에 연결하는 중…</span>';
   else if(!ACC.uid)h='<span class="who note">로그인하면 전적과 순위, 메달이 남아요.</span><button class="btn small" type="button" data-a="login">로그인 / 가입</button><button class="btn ghost small" type="button" data-a="ranks">순위</button>';
-  else{const w=winsOf(ACC.uid);h=`<span class="who"><button class="plink" type="button" data-raw="1" data-prof="${ACC.uid}" title="내 프로필 보기"><b>${esc(ACC.username)}</b></button>${medalHTML(w)} <span class="note">· 통산 ${w}승</span></span><button class="btn small" type="button" data-prof="${ACC.uid}">마이페이지</button><button class="btn ghost small" type="button" data-a="shop">상점</button><button class="btn ghost small" type="button" data-a="ranks">순위</button><button class="btn ghost small" type="button" data-a="logout">로그아웃</button>`}
+  else{const w=winsOf(ACC.uid);h=`<span class="who"><button class="plink" type="button" data-raw="1" data-prof="${ACC.uid}" title="내 프로필 보기"><b>${esc(ACC.username)}</b></button>${medalHTML(w)} <span class="note">· 통산 ${w}승</span></span><button class="btn small" type="button" data-prof="${ACC.uid}">마이페이지</button><button class="btn ghost small" type="button" data-a="shop">상점</button>${ACC.admin?'<button class="btn ghost small" type="button" data-a="admin">관리</button>':""}<button class="btn ghost small" type="button" data-a="ranks">순위</button><button class="btn ghost small" type="button" data-a="logout">로그아웃</button>`}
   if(h!==ACC.shown){ACC.shown=h;el.innerHTML=h}
   if(ACC.uid&&mode==="online"&&G)syncNick();
   reportTick();
@@ -2901,6 +2952,7 @@ $("acctBox").addEventListener("click",e=>{
   if(a==="login")openAcct();
   else if(a==="ranks")openRanks();
   else if(a==="shop")openShop();
+  else if(a==="admin")openAdmin();
   else if(a==="logout"&&ACC.sb){ACC.sb.auth.signOut().then(()=>toast("로그아웃했어요."),()=>{})}
 });
 function openAcct(){$("acctMsg").textContent="";$("acct").hidden=false;setTimeout(()=>$("acctId").focus(),30)}
@@ -3049,6 +3101,112 @@ async function loadRec(p){
 $("recTabs").addEventListener("change",e=>{if(e.target.name==="recperiod")loadRec(e.target.value)});
 $("recWins").onclick=()=>{rPeriod=recPeriod;openRanks()};
 let profSeq=0;
+/* ---------- moderation: ban check, reports, admin panel ---------- */
+const BAN={info:null};
+async function checkBan(){
+  if(!ACC.sb)return;
+  try{const {data,error}=await ACC.sb.rpc("checkin",{p_cid:myCid,p_name:myName||null});if(error)return;BAN.info=data||null}catch(e){return}
+  const b=BAN.info;$("banned").hidden=!b;if(!b)return;
+  $("banWhy").textContent=b.reason;$("banUntil").textContent=b.until?fmtDate(b.until)+"까지":"영구";
+  if(mode){try{leave()}catch(e){}}
+}
+// the 방장 (or whoever does the table's chores) turns away restricted players and devices
+const banChecked=new Map();let banSweepT=0,banSweepLater=0;
+function banSweep(){
+  if(!ACC.sb||mode!=="online"||!G||dutyCid()!==myCid)return;
+  const cids=[],uids=[];
+  for(const p of peers){const c=peerCid(p);if(!c||c===myCid)continue;const t=banChecked.get(c);if(t&&Date.now()-t<120000)continue;cids.push(c);const u=p.presence&&p.presence.uid;if(isUUID(u))uids.push(u)}
+  if(!cids.length)return;
+  const wait=8000-(Date.now()-banSweepT);
+  if(wait>0){if(!banSweepLater)banSweepLater=setTimeout(()=>{banSweepLater=0;banSweep()},wait);return}
+  banSweepT=Date.now();for(const c of cids)banChecked.set(c,Date.now());
+  ACC.sb.rpc("banned_among",{cids,uids}).then(({data})=>{
+    if(!Array.isArray(data)||!data.length||!G||mode!=="online"||dutyCid()!==myCid)return;
+    const bad=new Set();for(const p of peers){const c=peerCid(p),u=p.presence&&p.presence.uid;if(c&&(data.includes(c)||(isUUID(u)&&data.includes("uid:"+u))))bad.add(c)}
+    if(!bad.size)return;
+    const ng=clone(G);ng.players=ng.players.filter(x=>!bad.has(x.cid));ng.banned=[...new Set([...(G.banned||[]),...bad])].slice(-50);
+    if(ng.players.length)commitG(ng);
+  },()=>{});
+}
+const REP={t:null,busy:false};
+const REASON={abuse:"욕설·비매너",spam:"광고·스팸",cheat:"부정행위",nickname:"부적절한 닉네임",other:"기타"};
+function openReport(t){
+  REP.t=t;$("repWho").textContent=t.post?`게시글: "${t.name}"`:`신고할 사람: ${t.name}`;
+  $("repDetail").value="";$("repMsg").textContent="";$("rep").hidden=false;
+}
+function reportContext(t){
+  const lines=[];
+  if(code)lines.push("방 "+code+(G&&G.title?` 「${G.title}」`:""));
+  if(t.cid){const mine=chat.log.filter(m=>m.cid===t.cid).slice(-10);for(const m of mine)lines.push(new Date(m.t).toTimeString().slice(0,5)+" "+(m.name||"")+": "+m.x)}
+  if(t.post){const p=BD.posts.find(x=>x.id===t.post);if(p)lines.push("제목: "+p.title,"내용: "+p.body.slice(0,800))}
+  return lines.join("\n").slice(0,1500);
+}
+$("repSend").onclick=async()=>{
+  if(REP.busy||!REP.t)return;if(!ACC.sb){$("repMsg").textContent="서버에 연결하지 못했어요.";return}
+  REP.busy=true;$("repMsg").textContent="보내는 중…";
+  try{
+    await voterId();   // a session is needed; people who aren't logged in get an anonymous one
+    const t=REP.t,why=document.querySelector('input[name=repwhy]:checked').value;
+    const {error}=await ACC.sb.rpc("report_user",{p_cid:myCid,t_uid:isUUID(t.uid)?t.uid:null,t_cid:t.cid||null,t_name:(t.name||"").slice(0,40),t_post:t.post||null,p_reason:why,p_detail:$("repDetail").value.trim().slice(0,300)||null,p_context:reportContext(t)||null});
+    if(error)throw error;
+    $("rep").hidden=true;toast("신고를 보냈어요. 관리자가 확인할게요.");
+  }catch(e){const m=String(e&&e.message);$("repMsg").textContent=/too many/.test(m)?"신고는 10분에 5번까지 할 수 있어요.":/banned/.test(m)?"이용이 제한된 상태라 신고할 수 없어요.":"보내지 못했어요. 잠시 후 다시 해 주세요."}
+  REP.busy=false;
+};
+$("repClose").onclick=()=>{$("rep").hidden=true};
+$("rep").addEventListener("click",e=>{if(e.target.id==="rep")$("rep").hidden=true});
+// admin panel
+let admTab="reports";
+function openAdmin(){$("admin").hidden=false;loadAdmin()}
+async function loadAdmin(){
+  const body=$("adminBody");body.innerHTML='<p class="note">불러오는 중…</p>';
+  try{
+    const {data,error}=await ACC.sb.rpc(admTab==="reports"?"admin_reports":"admin_bans");if(error)throw error;
+    body.innerHTML=admTab==="reports"?admReportsHTML(data||[]):admBansHTML(data||[]);
+  }catch(e){body.innerHTML='<p class="note">불러오지 못했어요. 관리자 계정으로 로그인했는지 확인해 주세요.</p>'}
+}
+const devTag=c=>c?"기기 "+esc(String(c).slice(-6)):"";
+function admReportsHTML(list){
+  if(!list.length)return'<p class="note">아직 신고가 없어요.</p>';
+  return`<ul class="alist">${list.map(r=>{
+    const who=r.target_username?`${esc(r.target_name||"")} (@${esc(r.target_username)})`:`${esc(r.target_name||"")} <span class="note">${devTag(r.target_cid)}</span>`;
+    const banBtn=r.target_uid||r.target_cid?`<span class="acts"><select data-days><option value="1">1일</option><option value="3">3일</option><option value="7" selected>7일</option><option value="30">30일</option><option value="">영구 제명</option></select><label class="chk"><input type="checkbox" data-ip> IP도 막기</label><input type="text" data-why maxlength="200" value="${esc(REASON[r.reason]+(r.detail?": "+r.detail.slice(0,80):""))}" aria-label="제한 사유"><button class="btn small" type="button" data-ban="${r.id}">이용 제한</button></span>`:"";
+    return`<li class="${r.status==="done"?"done":""}" data-rid="${r.id}" data-uid="${r.target_uid||""}" data-cid="${esc(r.target_cid||"")}" data-name="${esc(r.target_name||"")}">
+      <div class="ah"><b>[${esc(REASON[r.reason]||r.reason)}]</b><span>대상 ${who}</span>${r.times_reported>1?`<span class="warnc">누적 ${r.times_reported}회</span>`:""}<span class="d">${fmtDate(r.created_at)}${r.status==="done"?" · 처리함":""}</span></div>
+      <div>신고자 ${r.reporter_name?esc(r.reporter_name):"로그인 안 함"} <span class="note">${devTag(r.reporter_cid)}</span>${r.same_ip?' <span class="warnc">· 신고자와 같은 IP</span>':""}</div>
+      ${r.detail?`<div>${esc(r.detail)}</div>`:""}
+      ${r.context?`<details><summary>증거 보기 (채팅·글)</summary><pre>${esc(r.context)}</pre></details>`:""}
+      <div class="acts">${r.status!=="done"?`<button class="btn ghost small" type="button" data-done="${r.id}">처리 완료</button>`:""}</div>
+      ${banBtn}
+    </li>`}).join("")}</ul>`;
+}
+function admBansHTML(list){
+  if(!list.length)return'<p class="note">이용 제한 기록이 없어요.</p>';
+  return`<ul class="alist">${list.map(b=>`<li class="${b.active?"":"done"}">
+    <div class="ah"><b>${esc(b.target_name||"")}${b.target_username?" (@"+esc(b.target_username)+")":""}</b><span class="note">${devTag(b.target_cid)}${b.ip_count?" · IP "+b.ip_count+"개":""}</span><span class="d">${fmtDate(b.created_at)}</span></div>
+    <div>사유: ${esc(b.reason)}</div>
+    <div>${b.lifted_at?"해제됨 ("+fmtDate(b.lifted_at)+")":b.until?(b.active?fmtDate(b.until)+"까지":"기간 끝남"):"영구 제명"}</div>
+    ${b.active?`<div class="acts"><button class="btn ghost small" type="button" data-unban="${b.id}">제한 풀기</button></div>`:""}
+  </li>`).join("")}</ul>`;
+}
+$("adminTabs").addEventListener("change",e=>{if(e.target.name==="admtab"){admTab=e.target.value;loadAdmin()}});
+$("adminBody").addEventListener("click",async e=>{
+  const b=e.target.closest("button");if(!b)return;
+  let r;
+  if(b.dataset.done){r=await ACC.sb.rpc("admin_report_done",{rep_id:+b.dataset.done})}
+  else if(b.dataset.unban){if(!confirm("이 제한을 풀까요?"))return;r=await ACC.sb.rpc("admin_unban",{ban_id:+b.dataset.unban})}
+  else if(b.dataset.ban){
+    const li=b.closest("li"),days=li.querySelector("[data-days]").value,ip=li.querySelector("[data-ip]").checked,why=li.querySelector("[data-why]").value.trim()||"관리자 판단";
+    const name=li.dataset.name||"이 사용자";
+    if(!confirm(`${name}님을 ${days?days+"일 동안":"영구히"} 이용 제한할까요?${ip?" (같은 IP도 함께 막아요)":""}`))return;
+    r=await ACC.sb.rpc("admin_ban",{t_uid:li.dataset.uid||null,t_cid:li.dataset.cid||null,t_name:name,p_reason:why,days:days?+days:null,with_ip:ip});
+    if(!r.error){await ACC.sb.rpc("admin_report_done",{rep_id:+li.dataset.rid});toast("이용을 제한했어요.")}
+  }else return;
+  if(r&&r.error){toast(/cannot ban admin/.test(r.error.message)?"관리자는 제한할 수 없어요.":"처리하지 못했어요.");return}
+  loadAdmin();
+});
+$("adminClose").onclick=()=>{$("admin").hidden=true};
+$("admin").addEventListener("click",e=>{if(e.target.id==="admin")$("admin").hidden=true});
 const SHOP={kind:"nick",items:null,owned:new Set(),eq:{},pts:null,busy:false};
 const SLOT_COL={nick:"eq_nick",title:"eq_title",dice:"eq_dice",felt:"eq_felt"};
 function ptsHTML(pt){return pt?`<span>내 포인트</span><b>${pt.balance}P</b><span class="how">1등 ${pt.wins}번 × 10P = ${pt.win_pts}P · 봇전 승리 ${pt.bot_pts}P${pt.spent?` · 사용 ${pt.spent}P`:""}</span><span class="how">온라인 1등 10P, 봇전 승리 쉬움 1P·보통 2P·어려움 3P (봇전은 하루 10P까지)</span>`:'<span>포인트를 불러오지 못했어요.</span>'}
@@ -3154,6 +3312,7 @@ async function openProfile(uid){
       ${mine?practiceHTML(pr):""}
       ${mine?`<h3>포인트</h3><div class="pts">${ptsHTML(pt)}</div><button class="btn small" type="button" id="profShop">꾸미기 상점 열기</button>`:""}`;
     const ps=$("profShop");if(ps)ps.onclick=()=>{$("prof").hidden=true;openShop()};
+    if(!mine){const rb=document.createElement("button");rb.className="btn ghost small repb";rb.type="button";rb.textContent="이 사람 신고하기";rb.style.alignSelf="flex-start";rb.onclick=()=>openReport({uid:d.id,name:d.name+" (@"+d.username+")"});body.appendChild(rb)}
   }catch(e){if(seq===profSeq)body.innerHTML='<p class="note">프로필을 불러오지 못했어요. 잠시 후 다시 해 주세요.</p>'}
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-prof]");if(b){e.preventDefault();openProfile(b.dataset.prof)}});
@@ -3177,6 +3336,7 @@ async function checkAdmin(){
   try{const {data}=await ACC.sb.from("admins").select("user_id").eq("user_id",ACC.uid);ACC.admin=!!(data&&data.length)}catch(e){}
   if(!$("board").hidden)renderBoard();
   if(!$("news").hidden)renderNewsBody();
+  acctUI();
 }
 function fmtDate(s){const d=new Date(s),p=n=>String(n).padStart(2,"0");return`${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`}
 function openBoard(which){
@@ -3261,12 +3421,14 @@ function renderBoard(){
         <button class="vote up${my===1?" on":""}" type="button" data-act="vote" data-v="1" aria-pressed="${my===1}" title="추천">${THUMB(1)}<span>추천</span> <b>${p.up}</b></button>
         <button class="vote down${my===-1?" on":""}" type="button" data-act="vote" data-v="-1" aria-pressed="${my===-1}" title="비추천">${THUMB(-1)}<span>비추천</span> <b>${p.down}</b></button>
         ${canDel?`<button class="btn ghost small" type="button" data-act="del">삭제</button>`:""}
+        ${p.board==="feedback"?`<button class="btn ghost small repb" type="button" data-act="report">신고</button>`:""}
       </div></li>`}).join("")}</ul>`;
 }
 $("boardList").addEventListener("click",async e=>{
   const b=e.target.closest("button[data-act]");if(!b)return;
   const li=b.closest("li.post"),id=+li.dataset.id,p=BD.posts.find(x=>x.id===id);if(!p)return;
   if(b.dataset.act==="toggle"){BD.open.has(id)?BD.open.delete(id):BD.open.add(id);renderBoard();return}
+  if(b.dataset.act==="report"){openReport({post:id,uid:p.author||null,name:p.title});return}
   if(b.dataset.act==="del"){
     if(!confirm("이 글을 지울까요? 지우면 되돌릴 수 없어요."))return;
     const {error}=await ACC.sb.from("posts").delete().eq("id",id);
@@ -3325,6 +3487,9 @@ $("feedbackBtn").onclick=()=>openBoard("feedback");
    One line on the start screen shows the newest version ("2026.11.25 ver 1.6 업데이트 공지");
    clicking it lists what changed, newest first. Add an entry at the top for every release. */
 const CHANGELOG=[
+  {ver:"2.7",time:"13:46",date:"2026.11.27",items:[
+    "신고하기: 접속자 목록, 프로필, 피드백 글에서 부적절한 사람이나 글을 신고할 수 있어요. 방에서 신고하면 그 사람의 최근 채팅이 증거로 함께 가요.",
+    "관리자는 신고를 확인하고 기간(1·3·7·30일)이나 영구로 이용을 제한할 수 있어요. 제한된 계정·기기는 방에 들어갈 수 없어요."]},
   {ver:"2.6",time:"13:38",date:"2026.11.27",items:[
     "채팅에서 욕설·비속어는 *로 가려져요. 띄어쓰기나 숫자를 섞어 써도 가려지고, 받는 쪽에서도 한 번 더 걸러요.",
     "닉네임과 방 이름에는 욕설을 쓸 수 없어요.",
@@ -3586,7 +3751,7 @@ function renderPeople(players,specs){
     let tags=(p.cid===myCid?'<span class="tag">나</span>':"")+(p.cid===own?'<span class="tag host">방장</span>':"");
     if(isPlayer&&p.away)tags+='<span class="tag bad">연결 끊김</span>';
     else if(isPlayer&&lobby&&p.cid!==own){const gp=G.players.find(x=>x.cid===p.cid);tags+=gp&&gp.ready?'<span class="tag ok">준비 완료</span>':'<span class="tag">대기 중</span>'}
-    const kb=canKick&&p.cid!==myCid?`<button class="btn ghost small" type="button" data-kick="${esc(p.cid)}">내보내기</button>`:"";
+    const kb=(p.cid!==myCid?`<button class="btn ghost small repb" type="button" data-rep="${esc(p.cid)}">신고</button>`:"")+(canKick&&p.cid!==myCid?`<button class="btn ghost small" type="button" data-kick="${esc(p.cid)}">내보내기</button>`:"");
     return `<li class="${isPlayer&&p.away?"away":""}"><span class="av" aria-hidden="true">${esc([...p.name][0]||"?")}</span><b>${nickHTML(p.name,lookOfCid(p.cid))}${medalOfCid(p.cid)}</b>${titleHTML(lookOfCid(p.cid))}${tags}<span class="sp" style="flex:1"></span>${kb}</li>`;
   };
   const html=`<h3>플레이어 ${players.length}명</h3><ul class="pplist">${players.map(p=>item(p,true)).join("")}</ul>`
@@ -3594,6 +3759,7 @@ function renderPeople(players,specs){
   if(html===peopleShown)return;peopleShown=html;
   const body=$("peopleBody");body.innerHTML=html;
   body.querySelectorAll("button[data-kick]").forEach(b=>b.onclick=()=>kick(b.dataset.kick));
+  body.querySelectorAll("button[data-rep]").forEach(b=>b.onclick=()=>{const c=b.dataset.rep,pr=peerByCid(c);openReport({cid:c,uid:uidOf(c),name:pr?peerName(pr):(G.players.find(x=>x.cid===c)||{}).name||"손님"})});
 }
 $("peopleBtn").onclick=()=>{peopleShown="";$("people").hidden=false;peopleUI()};
 $("peopleClose").onclick=()=>{$("people").hidden=true};
@@ -3613,7 +3779,7 @@ $("voices").addEventListener("click",e=>{
 });
 $("vStyles").addEventListener("change",e=>{if(VSTYLES[e.target.value]){V.style=e.target.value;store.set("yd-vstyle",V.style);speakNow("풀하우스!",Math.max(.3,S.vol),curVoice())}});
 $("people").addEventListener("click",e=>{if(e.target.id==="people")$("people").hidden=true});
-document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("prof").hidden){$("prof").hidden=true;return}if(!$("shop").hidden){$("shop").hidden=true;return}for(const id of ["people","voices","acct","ranks","news","board"])if(!$(id).hidden)$(id).hidden=true});
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("rep").hidden){$("rep").hidden=true;return}if(!$("prof").hidden){$("prof").hidden=true;return}if(!$("shop").hidden){$("shop").hidden=true;return}for(const id of ["people","voices","acct","ranks","news","board","admin"])if(!$(id).hidden)$(id).hidden=true});
 $("watchBtn").onclick=()=>enterTable($("joinCode").value,false,undefined,undefined,false,true);
 $("specBtn").onclick=()=>setSpec(seated());
 $("joinPlayBtn").onclick=()=>setSpec(false);
@@ -3638,6 +3804,7 @@ function stopBot(){botGen++;clearTimeout(botTimer)}
 function startAI(level){
   let nick=($("nick").value.trim()||myName||"나").slice(0,12);
   if(badKind(nick)==="abuse"){$("homeMsg").textContent="닉네임에 쓸 수 없는 말이 있어요.";$("nick").focus();return}
+  if(BAN.info){$("banned").hidden=false;return}
   myName=nick;store.set("yd-nick",nick);
   stopBot();botLevel=level;store.set("yd-ailevel",level);
   mode="ai";overDismissed=null;boards.clear();lastK.clear();busy.clear();resetViews();
@@ -3796,7 +3963,7 @@ function startLocal(names){
 document.addEventListener("keydown",e=>{
   if(!meMode()||!G||G.phase!=="play"||e.target.tagName==="INPUT")return;
   if(e.code==="Space"){e.preventDefault();doRoll(myCid)}
-  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks,#news,#board,#prof,#shop")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
+  else if(e.code==="Escape"&&[...document.querySelectorAll("#people,#voices,#acct,#ranks,#news,#board,#prof,#shop,#rep,#admin,#banned")].every(m=>m.hidden)){const b=boardOf(myCid);if(b&&b.rolling)cancelShake(myCid)}
   else if(/^Digit[1-5]$/.test(e.code))toggleHold(myCid,+e.code.slice(5)-1);
 });
 
@@ -3806,7 +3973,7 @@ $("netErr").hidden=netReady();
 renderRooms();dirStart();
 // New-version notice: every few minutes, compare our version with the one now on the site.
 // (Reloading mid-game is safe: the page rejoins the table and keeps the scores.)
-const APP_VER="2026-11-27g";
+const APP_VER="2026-11-27h";
 function checkVersion(){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.pathname+"?vcheck="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
